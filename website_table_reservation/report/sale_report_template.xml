@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- -*- coding: utf-8 -*-
+Developed by Bizople Solutions Pvt. Ltd.
+See LICENSE file for full copyright and licensing details. -->
+<odoo>
+	<template id="report_saleorder_document_booking_info" name="Sale Order Report Booking Info" inherit_id="sale.report_saleorder_document">
+		<xpath expr="//div[hasclass('page')]" position="inside">
+			<t t-if="doc.booked_table_ids">
+				<div class="mb-2"><strong>Table Booking Info:</strong></div>
+				<p class="mb-0">
+					<strong>Table:</strong>
+					<span t-field="doc.booked_table_ids[0].floor_id.name"/>
+					<t t-foreach="doc.booked_table_ids" t-as="table">
+						<span>, <t t-esc="table.name"/></span>
+					</t>
+				</p>
+				<p class="mb-0"><strong>Selected Date: </strong><span t-field="doc.reserve_start" t-options="{'date_only': 'true'}"/></p>
+				<div class="d-flex mx-0">
+					<p class="mb-0"><strong>Selected Time:</strong> </p>
+					<div>
+						<t t-foreach="doc.selected_time_slots" t-as="time_slot">
+							<p class="mb-0">
+								<span t-field="time_slot.start_date" t-options="{'format': 'H:mm'}"/> – 
+								<span t-field="time_slot.end_date" t-options="{'format': 'H:mm'}"/>
+							</p>
+						</t>
+					</div>
+				</div>
+			</t>
+		</xpath>
+	</template>
+</odoo>

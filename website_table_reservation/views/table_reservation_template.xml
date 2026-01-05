@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- -*- coding: utf-8 -*-
+Developed by Bizople Solutions Pvt. Ltd.
+See LICENSE file for full copyright and licensing details. -->
+<odoo>
+	<template id="table_reservation_info" name="Table Reservation Info">
+		<t t-call="website.layout">
+			<div class="oe_structure oe_empty" id="wrap">
+				<div class="container table_reservation">
+					<t t-call="website_table_reservation.table_reservation_calendar"/>
+				</div>
+			</div>
+		</t>
+	</template>
+
+	<template id="table_reservation_calendar" name="Table Reservation Calendar">
+        <div id="slots_availabilities" class="row pt32 pb32">
+            <div id="calendar" class="col-lg-8">
+            	<section class="s_carousel_wrapper date_carousel o_not_editable">
+			        <div class="s_carousel s_carousel_default carousel slide" data-bs-interval="false" id="reservetablecarousel">
+			          	<div class="carousel-inner">
+			          		<t t-set="count" t-value="0"/>
+			          		<t t-foreach="monthly_dates" t-as="month">
+			          			<div t-attf-class="carousel-item {{ 'active' if count == 0 else '' }}" data-name="Slide">
+			              			<h5 class="text-center mb-3"><t t-esc="month['month']"/></h5>
+			              			<div class="row">
+			              				<t t-foreach="month['dates']" t-as="day">
+			              					<div class="col-3 col-md-2 text-center">
+			              						<div class="select_slot p-2 mb-3 border border-primary" t-att-full_date="day.strftime('%Y-%m-%d')">
+				              						<p class="mb-0 date" t-esc="day.strftime('%d')"/>
+				              						<p class="day mb-0" t-att-full_day_number="day.strftime('%w')" t-esc="day.strftime('%a')"/>
+				              					</div>
+			              					</div>
+			              				</t>
+			              			</div>
+			            		</div>
+			            		<t t-set="count" t-value="count+1"/>
+			          		</t>
+			          	</div>
+		          		<a class="carousel-control-prev o_not_editable o_we_no_overlay" data-bs-slide="prev" role="img" aria-label="Previous" title="Previous" href="#reservetablecarousel">
+				            <span class="carousel-control-prev-icon"></span>
+				            <span class="sr-only o_default_snippet_text">Previous</span>
+			          	</a>
+			          	<a class="carousel-control-next o_not_editable o_we_no_overlay" data-bs-slide="next" role="img" aria-label="Next" title="Next" href="#reservetablecarousel">
+				            <span class="carousel-control-next-icon"></span>
+				            <span class="sr-only o_default_snippet_text">Next</span>
+			          	</a>
+			        </div>
+		      	</section>
+            </div>
+            <div id="slotsList" class="table_reservation_availabilities col-lg-4"/>
+        </div>
+    </template>
+
+    <template id="table_reservation_slot" name="Table Reservation Slot">
+    	<div class="row">
+    		<div class="col-12 text-center mb-3">
+    			Select Time Slots for <b class="selected_date" t-esc="selected_date"/>
+    		</div>
+    		<t t-foreach="day_slots" t-as="ds">
+    			<div class="col-6 mb-3">
+    				<div class="p-2 border border-primary text-center slot-btn">
+    					<span class="start_hour" t-esc="ds['start_hour']"/> – <span class="end_hour" t-esc="ds['end_hour']"/>
+    				</div>
+    			</div>
+    		</t>
+    		<div class="confirm_slot_btn col-12 text-center">
+    			<a class="btn btn-primary d-block flat disabled" href="#">Confirm Slots</a>
+    		</div>
+    	</div>
+    </template>
+
+    <template id="table_preview" name="Table Preview">
+		<t t-set="pricelist" t-value="website.get_current_pricelist()"/>
+    	<div class="row pt32">
+    		<div class="col-lg-12 mb-4">
+    			<h3 class="text-primary mb-0">Select Tables</h3>
+    		</div>
+    	</div>
+    	<div class="row pb32 table_booking_info">
+    		<div class="col-lg-8 mb-4 mb-lg-0">
+    			<div class="available_tables">
+		    		<t t-foreach="pos_id.floor_ids" t-as="floor">
+		    			<div class="d-flex align-items-center">
+			    			<h4 class="floor_name fw-bold mb-4"><t t-out="floor.name"/></h4>
+			    			<a type="button" class="fa fa-info-circle ms-3 mb-4" data-bs-toggle="modal" t-att-data-bs-target="'#table_preview_%s'%(floor.id)"></a>
+			    		</div>
+		    			<div t-att-id="'table_preview_%s'%(floor.id)" class="modal fade" role="dialog">
+						  <div class="modal-dialog modal-xl table-modal">
+						    <div class="modal-content h-100">
+						      <div class="modal-header">
+						        <button type="button" class="close btn" data-bs-dismiss="modal">x</button>
+						      </div>
+						      <div class="modal-body table_view_modal_body">
+						      	<div class="table-dynamic-data position-relative mx-auto h-100" style="width:1024px;">
+							        <t t-foreach="floor.table_ids" t-as="table">
+							        	<t t-if="table.shape=='square'">
+								        	<div class="text-center position-absolute d-flex align-items-center justify-content-center flex-column" t-attf-style="width:{{ table.width}}px; height:{{table.height}}px; left:{{table.position_h}}px; top:{{table.position_v}}px; background:{{table.color}};">
+								        		<span t-out="table.name"/>
+								        		<span class="fa fa-user-o">  <t t-out="table.seats"/></span>
+								        	</div>
+								        </t>
+								        <t t-else="">
+								        	<div class="text-center position-absolute d-flex align-items-center justify-content-center flex-column" t-attf-style="width:{{ table.width}}px; height:{{table.height}}px; left:{{table.position_h}}px; top:{{table.position_v}}px; background:{{table.color}}; border-radius: 1000px;">
+								        		<span t-out="table.name"/>
+								        		<span class="fa fa-user-o">  <t t-out="table.seats"/></span>
+								        	</div>
+								        </t>
+							        </t>
+						       </div>
+						      </div>
+						    </div>
+						  </div>
+						</div>
+
+				    	<div class="row mb-5 floor_plan">
+				    		<t t-foreach="floor.table_ids" t-as="table">
+				    			<div class="col-lg-4 col-6 mb-4">
+				    				<div class="position-relative">
+					    				<div t-att-table_id="table.id" t-attf-class="table_preview border border-primary p-4 {{ 'rounded-table' if table.shape == 'round' else '' }}">
+					    					<h5 class="mb-0 fw-bold table_name"><t t-out="table.name"/></h5>
+					    					<div class="seats_amount">
+						    					<p class="mb-0 table_seats">
+						    						<span class="fa fa-user-o me-1"/>
+						    						<span t-out="table.seats"/>
+						    					</p>
+						    					<p class="mb-0 table_amount">
+						    						<span class="fa fa-money me-1"/>
+						    						<span class="" t-if="pricelist.sudo().currency_id.position == 'before'"><t t-out="pricelist.sudo().currency_id.symbol"/></span>
+						    						<span class="table_price" t-out="'{:,.2f}'.format(table.price)"/>
+						    						<span class="" t-if="pricelist.sudo().currency_id.position == 'after'"><t t-out="pricelist.sudo().currency_id.symbol"/></span>
+						    						<span> / slot</span>
+						    					</p>
+						    				</div>
+					    				</div>
+					    				<t t-foreach="reserved_tables" t-as="rt">
+					    					<t t-foreach="rt.table_ids" t-as="rt_table">
+						    					<t t-if="rt_table.id == table.id">
+						    						<div class="table_booked">Booked</div>
+						    						<div class="restrict_clicking"/>
+						    					</t>
+						    				</t>
+					    				</t>
+					    			</div>
+				    			</div>
+				    		</t>
+				    	</div>
+				    </t>
+			    </div>
+    		</div>
+    		<div class="col-lg-4 mb-4 mb-md-0">
+    			<div class="slot_info">
+    				<h4 class="fw-bold mb-4">Booking Info</h4>
+    				<table class="table table-borderless">
+    					<tbody>
+					      	<tr>
+						        <td class="ps-0 pt-0 pb-2">Number Of Slots Selected</td>
+						        <td class="pe-0 pt-0 pb-2 text-end"><span class="slot_count" t-esc="slot_list_length"/></td>
+					      	</tr>
+					      	<tr>
+						        <td class="ps-0 pt-0 pb-2">Selected Date</td>
+						        <td class="pe-0 pt-0 pb-2 text-end">
+						        	<div class="select_date">
+					    				<span t-esc="selected_date"/>
+					    			</div>
+					    		</td>
+					      	</tr>
+					      	<tr>
+						        <td class="ps-0 pt-0 pb-2">Selected Slots:</td>
+						        <td class="pe-0 pt-0 pb-2 text-end">
+						        	<div class="slot_time">
+					    				<t t-foreach="slot_list" t-as="sl">
+					    					<p class="mb-0"><span class="start_hour" t-esc="sl['start_hour']"/> – <span class="end_hour" t-esc="sl['end_hour']"/></p>
+					    				</t>
+					    			</div>
+					    		</td>
+					      	</tr>
+					      	<tr class="booking_amount border-top fw-bold">
+						        <td class="ps-0 py-2">Booking Amount For <span class="table_numbers">0</span> Tables</td>
+						        <td class="pe-0 py-2 text-end">
+						        	<span class="" t-if="pricelist.sudo().currency_id.position == 'before'"><t t-out="pricelist.sudo().currency_id.symbol"/></span>
+						        	<span class="booking_price">0.00</span>
+						        	<span class="" t-if="pricelist.sudo().currency_id.position == 'after'"><t t-out="pricelist.sudo().currency_id.symbol"/></span>
+						        </td>
+					      	</tr>
+				      	</tbody>
+    				</table>
+		    		<div class="booking_amount">
+		    			<a class="btn btn-primary confirm_booking d-block flat disabled" href="#">Confirm Booking</a>
+			    	</div>
+		    	</div>
+		    	
+    		</div>
+    	</div>
+    	
+    </template>
+
+</odoo>
