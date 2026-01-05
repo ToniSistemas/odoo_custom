@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- -*- coding: utf-8 -*-
+Developed by Bizople Solutions Pvt. Ltd.
+See LICENSE file for full copyright and licensing details. -->
+<odoo>
+    <data>
+        <record id="view_table_reservation_tree" model="ir.ui.view">
+            <field name="name">table.reservation.tree</field>
+            <field name="model">table.reservation</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="8"/>
+            <field name="arch" type="xml">
+                <tree string="Table Reservation">
+                    <field name="name"/>
+                    <field name="customer_id"/>
+                    <field name="table_ids" widget="many2many_tags"/>
+                    <field name="floor"/>
+                    <field name="selected_time_slots" widget="many2many_tags"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record id="view_table_reservation_form" model="ir.ui.view">
+            <field name="name">table.reservation.form</field>
+            <field name="model">table.reservation</field>
+            <field name="type">form</field>
+            <field name="priority" eval="8"/>
+            <field name="arch" type="xml">
+                <form string="Table Reservation">
+                    <sheet>
+                        <group colspan="4">
+                            <field name="name"/>
+                            <field name="customer_id"/>
+                            <field name="order_id"/>
+                            <field name="pos_id"/>
+                            <field name="table_ids" widget="many2many_tags"/>
+                            <field name="floor"/>
+                        </group>
+                        <notebook>
+                            <page name="timeslots" string="Time Slots">
+                                <field name ="selected_time_slots">
+                                    <tree string="Table Time" >
+                                        <field name="start_date" />
+                                        <field name="end_date" />
+                                    </tree>
+                                </field>                           
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+       
+        <record id="view_table_reservation_search" model="ir.ui.view">
+            <field name="name">table.reservation.search</field>
+            <field name="model">table.reservation</field>
+            <field name="type">search</field>
+            <field name="priority" eval="8"/>
+            <field name="arch" type="xml">
+                <search string="Table Reservation">
+                    <field name="name" select="True"/>
+                    <field name="customer_id" select="True"/>
+                    <field name="table_ids" select="True"/>
+                    <field name="floor"/>
+                </search>
+            </field>
+        </record>
+        
+        <record model="ir.actions.act_window" id="act_open_table_reservation_view">
+            <field name="name">Table Reservation</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">table.reservation</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_table_reservation_search"/>
+        </record>
+        
+        <record model="ir.actions.act_window.view" id="act_open_table_reservation_view_form">
+            <field name="act_window_id" ref="act_open_table_reservation_view"/>
+            <field name="sequence" eval="20"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_table_reservation_form"/>
+        </record>
+        
+        <record model="ir.actions.act_window.view" id="act_open_table_reservation_view_tree">
+            <field name="act_window_id" ref="act_open_table_reservation_view"/>
+            <field name="sequence" eval="10"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_table_reservation_tree"/>
+        </record>
+    </data>
+
+    <menuitem id="main_menu_table_reservation_settings"
+            name="Table Reservation"
+            sequence="11"
+            parent="website.menu_website_configuration"/>
+    
+    <menuitem name="Table Reservation"
+        id="menu_table_reservation_settings" 
+        parent="website_table_reservation.main_menu_table_reservation_settings" 
+        action="website_table_reservation.act_open_table_reservation_view" 
+        sequence="1"/>
+</odoo>

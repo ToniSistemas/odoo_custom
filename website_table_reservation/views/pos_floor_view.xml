@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- -*- coding: utf-8 -*-
+Developed by Bizople Solutions Pvt. Ltd.
+See LICENSE file for full copyright and licensing details. -->
+<odoo>
+    <data>
+        <record id="view_restaurant_floor_form_inherit_bizople" model="ir.ui.view">
+            <field name="name">Restaurant Floors</field>
+            <field name="model">restaurant.floor</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="pos_restaurant.view_restaurant_floor_form" />
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='table_ids']//field[@name='shape']" position="after">
+                    <!-- <button name="create_product" string="Create Product" type="object"/> -->
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

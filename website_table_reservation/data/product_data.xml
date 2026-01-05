@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- -*- coding: utf-8 -*-
+Developed by Bizople Solutions Pvt. Ltd.
+See LICENSE file for full copyright and licensing details. -->
+
+<odoo>
+	<data noupdate="1">
+		<record id="table_booking_service_product" model="product.template">
+			<field name="name">Table Booking</field>
+			<field name="booking_product">True</field>
+			<field name="detailed_type">service</field>
+		</record>
+	</data>
+</odoo>
