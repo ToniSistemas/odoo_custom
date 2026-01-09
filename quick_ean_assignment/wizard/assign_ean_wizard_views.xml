@@ -59,12 +59,6 @@
                         <group>
                             <field name="filter_categ_id" placeholder="Todas las categorías"/>
                         </group>
-                        <group>
-                            <label for="line_count" string="Total Variantes sin EAN:"/>
-                            <div>
-                                <field name="line_count" class="oe_inline"/> productos
-                            </div>
-                        </group>
                     </group>
                     <notebook>
                         <page string="Variantes sin EAN">
