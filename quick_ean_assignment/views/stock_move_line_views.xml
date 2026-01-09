@@ -8,17 +8,29 @@
         <field name="inherit_id" ref="stock.view_picking_form"/>
         <field name="arch" type="xml">
             <!-- Add to detailed operations -->
-            <xpath expr="//field[@name='move_line_ids_without_package']/tree//field[@name='product_id']" position="after">
-                <field name="quick_ean" 
-                       placeholder="Escanear EAN"
-                       optional="show"/>
+            <xpath expr="//page[@name='detailed_operations']" position="inside">
+                <group string="Asignación Rápida de EAN" name="quick_ean_group" invisible="1">
+                    <field name="id" invisible="1"/>
+                </group>
             </xpath>
-            <!-- Add to operations if move_line_nosuggest_ids exists -->
-            <xpath expr="//field[@name='move_line_nosuggest_ids']/tree//field[@name='product_id']" position="after">
-                <field name="quick_ean" 
-                       placeholder="Escanear EAN"
-                       optional="show"/>
-            </xpath>
+        </field>
+    </record>
+
+    <!-- Add quick_ean field directly to stock.move.line tree view -->
+    <record id="view_move_line_tree_ean" model="ir.ui.view">
+        <field name="name">stock.move.line.tree.ean</field>
+        <field name="model">stock.move.line</field>
+        <field name="arch" type="xml">
+            <tree string="Stock Moves" editable="bottom">
+                <field name="product_id" readonly="1"/>
+                <field name="lot_id" optional="show"/>
+                <field name="location_id" readonly="1" optional="show"/>
+                <field name="location_dest_id" readonly="1" optional="show"/>
+                <field name="quantity" readonly="1"/>
+                <field name="product_uom_id" readonly="1" optional="hide"/>
+                <field name="quick_ean" placeholder="Escanear EAN" optional="show"/>
+                <field name="state" column_invisible="1"/>
+            </tree>
         </field>
     </record>
 
