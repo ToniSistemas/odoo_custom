@@ -1,44 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Add quick_ean field to stock move line form view -->
-    <record id="view_stock_move_line_detailed_operation_form_ean" model="ir.ui.view">
-        <field name="name">stock.move.line.form.ean</field>
-        <field name="model">stock.move.line</field>
-        <field name="inherit_id" ref="stock.view_stock_move_line_detailed_operation"/>
-        <field name="arch" type="xml">
-            <xpath expr="//field[@name='product_id']" position="after">
-                <field name="quick_ean" 
-                       placeholder="Escanear código EAN..."
-                       class="oe_inline"
-                       attrs="{'invisible': [('product_id', '=', False)]}"/>
-            </xpath>
-        </field>
-    </record>
-
-    <!-- Add quick_ean field to stock move line tree view -->
-    <record id="view_stock_move_line_operation_tree_ean" model="ir.ui.view">
-        <field name="name">stock.move.line.tree.ean</field>
-        <field name="model">stock.move.line</field>
-        <field name="inherit_id" ref="stock.view_stock_move_line_operation_tree"/>
-        <field name="arch" type="xml">
-            <xpath expr="//field[@name='product_id']" position="after">
-                <field name="quick_ean" 
-                       placeholder="Escanear EAN..."
-                       optional="show"/>
-            </xpath>
-        </field>
-    </record>
-
-    <!-- Add to picking form view - detailed operations -->
+    <!-- Add quick_ean field to picking form view - Operations tab -->
     <record id="view_picking_form_ean" model="ir.ui.view">
         <field name="name">stock.picking.form.ean</field>
         <field name="model">stock.picking</field>
         <field name="inherit_id" ref="stock.view_picking_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='move_line_ids_without_package']/tree/field[@name='product_id']" position="after">
+            <!-- Add to detailed operations -->
+            <xpath expr="//field[@name='move_line_ids_without_package']/tree//field[@name='product_id']" position="after">
                 <field name="quick_ean" 
-                       placeholder="EAN"
+                       placeholder="Escanear EAN"
+                       optional="show"/>
+            </xpath>
+            <!-- Add to operations if move_line_nosuggest_ids exists -->
+            <xpath expr="//field[@name='move_line_nosuggest_ids']/tree//field[@name='product_id']" position="after">
+                <field name="quick_ean" 
+                       placeholder="Escanear EAN"
                        optional="show"/>
             </xpath>
         </field>
