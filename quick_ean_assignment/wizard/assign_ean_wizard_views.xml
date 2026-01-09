@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Wizard form view for single product template -->
+    <record id="view_assign_ean_wizard_form" model="ir.ui.view">
+        <field name="name">assign.ean.wizard.form</field>
+        <field name="model">assign.ean.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Asignar Códigos EAN">
+                <sheet>
+                    <group>
+                        <field name="product_template_id" readonly="1"/>
+                    </group>
+                    <notebook>
+                        <page string="Variantes sin EAN">
+                            <field name="line_ids">
+                                <tree editable="bottom" create="0" delete="0">
+                                    <field name="product_id" readonly="1"/>
+                                    <field name="product_name" readonly="1"/>
+                                    <field name="current_ean" readonly="1"/>
+                                    <field name="new_ean" placeholder="Escanear código EAN..."/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <footer>
+                    <button string="Asignar EAN" 
+                            name="action_assign_ean_codes" 
+                            type="object" 
+                            class="btn-primary"/>
+                    <button string="Cancelar" 
+                            class="btn-secondary" 
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Mass assignment wizard form view -->
+    <record id="view_assign_ean_mass_wizard_form" model="ir.ui.view">
+        <field name="name">assign.ean.mass.wizard.form</field>
+        <field name="model">assign.ean.mass.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Asignación Masiva de Códigos EAN">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_refresh_list" 
+                                type="object" 
+                                class="oe_stat_button" 
+                                icon="fa-refresh">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Actualizar</span>
+                                <span class="o_stat_text">Lista</span>
+                            </div>
+                        </button>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="filter_categ_id" placeholder="Todas las categorías"/>
+                        </group>
+                        <group>
+                            <label for="line_ids" string="Total Variantes sin EAN:"/>
+                            <div>
+                                <span class="text-muted"><field name="line_ids" readonly="1" widget="integer"/> productos</span>
+                            </div>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Variantes sin EAN">
+                            <field name="line_ids" nolabel="1">
+                                <tree editable="bottom" create="0" delete="0" decoration-success="new_ean">
+                                    <field name="product_id" readonly="1" invisible="1"/>
+                                    <field name="product_name" readonly="1" string="Producto"/>
+                                    <field name="product_category" readonly="1" string="Categoría"/>
+                                    <field name="current_ean" readonly="1" string="EAN Actual"/>
+                                    <field name="new_ean" placeholder="Escanear código EAN..." string="Nuevo EAN"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <footer>
+                    <button string="Asignar Códigos EAN" 
+                            name="action_assign_ean_codes" 
+                            type="object" 
+                            class="btn-primary"/>
+                    <button string="Cerrar" 
+                            class="btn-secondary" 
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action for mass EAN assignment -->
+    <record id="action_assign_ean_mass_wizard" model="ir.actions.act_window">
+        <field name="name">Asignación Masiva de EAN</field>
+        <field name="res_model">assign.ean.mass.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="product.model_product_product"/>
+    </record>
+
+    <!-- Menu item in Inventory -->
+    <menuitem id="menu_assign_ean_mass"
+              name="Asignar Códigos EAN"
+              parent="stock.menu_stock_warehouse_mgmt"
+              action="action_assign_ean_mass_wizard"
+              sequence="100"/>
+
+</odoo>
