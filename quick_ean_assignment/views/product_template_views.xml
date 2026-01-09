@@ -12,7 +12,7 @@
                         type="object"
                         class="oe_stat_button"
                         icon="fa-barcode"
-                        attrs="{'invisible': [('variants_without_ean_count', '=', 0)]}">
+                        invisible="variants_without_ean_count == 0">
                     <field name="variants_without_ean_count" widget="statinfo" string="Sin EAN"/>
                 </button>
             </xpath>
