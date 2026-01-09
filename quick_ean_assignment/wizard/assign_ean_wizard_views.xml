@@ -60,9 +60,9 @@
                             <field name="filter_categ_id" placeholder="Todas las categorías"/>
                         </group>
                         <group>
-                            <label for="line_ids" string="Total Variantes sin EAN:"/>
+                            <label for="line_count" string="Total Variantes sin EAN:"/>
                             <div>
-                                <span class="text-muted"><field name="line_ids" readonly="1" widget="integer"/> productos</span>
+                                <field name="line_count" class="oe_inline"/> productos
                             </div>
                         </group>
                     </group>

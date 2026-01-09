@@ -131,10 +131,19 @@ class AssignEanMassWizard(models.TransientModel):
         'wizard_id',
         string='Product Variants Without EAN'
     )
+    line_count = fields.Integer(
+        string='Total Lines',
+        compute='_compute_line_count'
+    )
     filter_categ_id = fields.Many2one(
         'product.category',
         string='Filter by Category'
     )
+
+    @api.depends('line_ids')
+    def _compute_line_count(self):
+        for wizard in self:
+            wizard.line_count = len(wizard.line_ids)
 
     @api.model
     def default_get(self, fields_list):
