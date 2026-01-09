@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Add quick_ean field directly to stock.move.line tree view -->
+    <!-- Add quick_ean field directly to stock.move.line list view -->
     <record id="view_move_line_tree_ean" model="ir.ui.view">
         <field name="name">stock.move.line.tree.ean</field>
         <field name="model">stock.move.line</field>
         <field name="arch" type="xml">
-            <tree string="Stock Moves" editable="bottom">
+            <list string="Stock Moves" editable="bottom">
                 <field name="product_id" readonly="1"/>
                 <field name="lot_id" optional="show"/>
                 <field name="location_id" readonly="1" optional="show"/>
@@ -15,7 +15,7 @@
                 <field name="product_uom_id" readonly="1" optional="hide"/>
                 <field name="quick_ean" placeholder="Escanear EAN" optional="show"/>
                 <field name="state" column_invisible="1"/>
-            </tree>
+            </list>
         </field>
     </record>
 
