@@ -1,21 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Add quick_ean field to picking form view - Operations tab -->
-    <record id="view_picking_form_ean" model="ir.ui.view">
-        <field name="name">stock.picking.form.ean</field>
-        <field name="model">stock.picking</field>
-        <field name="inherit_id" ref="stock.view_picking_form"/>
-        <field name="arch" type="xml">
-            <!-- Add to detailed operations -->
-            <xpath expr="//page[@name='detailed_operations']" position="inside">
-                <group string="Asignación Rápida de EAN" name="quick_ean_group" invisible="1">
-                    <field name="id" invisible="1"/>
-                </group>
-            </xpath>
-        </field>
-    </record>
-
     <!-- Add quick_ean field directly to stock.move.line tree view -->
     <record id="view_move_line_tree_ean" model="ir.ui.view">
         <field name="name">stock.move.line.tree.ean</field>
