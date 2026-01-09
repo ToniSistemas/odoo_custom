@@ -14,12 +14,12 @@
                     <notebook>
                         <page string="Variantes sin EAN">
                             <field name="line_ids">
-                                <tree editable="bottom" create="0" delete="0">
+                                <list editable="bottom" create="0" delete="0">
                                     <field name="product_id" readonly="1"/>
                                     <field name="product_name" readonly="1"/>
                                     <field name="current_ean" readonly="1"/>
                                     <field name="new_ean" placeholder="Escanear código EAN..."/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                     </notebook>
@@ -69,13 +69,13 @@
                     <notebook>
                         <page string="Variantes sin EAN">
                             <field name="line_ids" nolabel="1">
-                                <tree editable="bottom" create="0" delete="0" decoration-success="new_ean">
+                                <list editable="bottom" create="0" delete="0" decoration-success="new_ean">
                                     <field name="product_id" readonly="1" invisible="1"/>
                                     <field name="product_name" readonly="1" string="Producto"/>
                                     <field name="product_category" readonly="1" string="Categoría"/>
                                     <field name="current_ean" readonly="1" string="EAN Actual"/>
                                     <field name="new_ean" placeholder="Escanear código EAN..." string="Nuevo EAN"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                     </notebook>
