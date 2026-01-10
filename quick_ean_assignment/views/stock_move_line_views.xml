@@ -1,20 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Add quick_ean field to stock.picking form view -->
-    <record id="view_picking_form_inherit_ean" model="ir.ui.view">
-        <field name="name">stock.picking.form.inherit.ean</field>
-        <field name="model">stock.picking</field>
-        <field name="inherit_id" ref="stock.view_picking_form"/>
-        <field name="arch" type="xml">
-            <!-- Add field in Detailed Operations tab after product_id -->
-            <xpath expr="//field[@name='move_line_ids_without_package']//field[@name='product_id']" position="after">
-                <field name="quick_ean" placeholder="Escanear EAN" optional="show"/>
-            </xpath>
-        </field>
-    </record>
-
-    <!-- Add quick_ean field directly to stock.move.line list view -->
+    <!-- Custom list view for stock.move.line with quick_ean field -->
     <record id="view_move_line_tree_ean" model="ir.ui.view">
         <field name="name">stock.move.line.tree.ean</field>
         <field name="model">stock.move.line</field>
@@ -31,5 +18,29 @@
             </list>
         </field>
     </record>
+
+    <!-- Menu action to access stock move lines with EAN assignment -->
+    <record id="action_stock_move_line_ean" model="ir.actions.act_window">
+        <field name="name">Asignar EAN en Movimientos</field>
+        <field name="res_model">stock.move.line</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_move_line_tree_ean"/>
+        <field name="domain">[]</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No hay líneas de movimiento
+            </p>
+            <p>
+                Desde aquí puedes asignar códigos EAN a productos escaneándolos directamente.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_stock_move_line_ean"
+              name="Asignar EAN (Movimientos)"
+              parent="stock.menu_stock_warehouse_mgmt"
+              action="action_stock_move_line_ean"
+              sequence="102"/>
 
 </odoo>
