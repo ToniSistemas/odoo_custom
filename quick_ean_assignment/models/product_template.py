@@ -6,6 +6,11 @@ from odoo import models, fields, api
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
 
+    x_referencia = fields.Char(
+        string='Referencia',
+        help='Campo de referencia libre para el producto'
+    )
+
     variants_without_ean_count = fields.Integer(
         string='Variants Without EAN',
         compute='_compute_variants_without_ean_count'

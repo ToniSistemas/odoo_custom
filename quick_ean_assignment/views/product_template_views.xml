@@ -1,6 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!-- Add referencia field to product template form -->
+    <record id="view_product_template_form_referencia" model="ir.ui.view">
+        <field name="name">product.template.form.referencia</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_only_form_view"/>
+        <field name="arch" type="xml">
+            <field name="default_code" position="after">
+                <field name="x_referencia" placeholder="Referencia del producto"/>
+            </field>
+        </field>
+    </record>
+
     <!-- Add button to product template form -->
     <record id="view_product_template_form_ean_button" model="ir.ui.view">
         <field name="name">product.template.form.ean.button</field>
