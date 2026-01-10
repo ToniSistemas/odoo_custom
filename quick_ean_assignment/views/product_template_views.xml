@@ -19,40 +19,4 @@
         </field>
     </record>
 
-    <!-- Enhanced product variant tree view -->
-    <record id="view_product_product_tree_ean" model="ir.ui.view">
-        <field name="name">product.product.tree.ean</field>
-        <field name="model">product.product</field>
-        <field name="inherit_id" ref="product.product_product_tree_view"/>
-        <field name="arch" type="xml">
-            <xpath expr="//field[@name='barcode']" position="attributes">
-                <attribute name="decoration-danger">not barcode</attribute>
-            </xpath>
-        </field>
-    </record>
-
-    <!-- Action to show products without EAN -->
-    <record id="action_product_without_ean" model="ir.actions.act_window">
-        <field name="name">Productos sin EAN</field>
-        <field name="res_model">product.product</field>
-        <field name="view_mode">tree,form</field>
-        <field name="domain">[('barcode', '=', False)]</field>
-        <field name="context">{'search_default_filter_to_sell': 1}</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                No hay productos sin código EAN
-            </p>
-            <p>
-                Todos los productos tienen código EAN asignado.
-            </p>
-        </field>
-    </record>
-
-    <!-- Menu item -->
-    <menuitem id="menu_product_without_ean"
-              name="Productos sin EAN"
-              parent="stock.menu_stock_warehouse_mgmt"
-              action="action_product_without_ean"
-              sequence="101"/>
-
 </odoo>
