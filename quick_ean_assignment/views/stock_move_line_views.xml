@@ -1,26 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Inherit stock.move.line tree view to add quick_ean field -->
+    <!-- Add quick_ean to stock.move.line tree view (general) -->
     <record id="view_stock_move_line_tree_inherit_ean" model="ir.ui.view">
         <field name="name">stock.move.line.tree.inherit.ean</field>
         <field name="model">stock.move.line</field>
         <field name="inherit_id" ref="stock.view_move_line_tree"/>
         <field name="arch" type="xml">
             <field name="product_id" position="after">
-                <field name="quick_ean" placeholder="Escanear EAN" optional="show"/>
-            </field>
-        </field>
-    </record>
-
-    <!-- Inherit stock.move.line form view to add quick_ean field -->
-    <record id="view_stock_move_line_form_inherit_ean" model="ir.ui.view">
-        <field name="name">stock.move.line.form.inherit.ean</field>
-        <field name="model">stock.move.line</field>
-        <field name="inherit_id" ref="stock.view_move_line_form"/>
-        <field name="arch" type="xml">
-            <field name="product_id" position="after">
-                <field name="quick_ean" placeholder="Escanear código EAN"/>
+                <field name="quick_ean" string="EAN" placeholder="Escanear"/>
             </field>
         </field>
     </record>
