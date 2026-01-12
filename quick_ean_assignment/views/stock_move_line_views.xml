@@ -8,7 +8,7 @@
         <field name="inherit_id" ref="stock.view_picking_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='move_ids_without_package']/list//field[@name='product_id']" position="after">
-                <field name="quick_ean" string="Código EAN" placeholder="Escanear EAN"/>
+                <field name="quick_ean" string="EAN" placeholder="Escanear EAN"/>
             </xpath>
         </field>
     </record>
@@ -20,7 +20,7 @@
         <field name="inherit_id" ref="stock.view_move_line_tree_detailed"/>
         <field name="arch" type="xml">
             <field name="product_id" position="after">
-                <field name="quick_ean" string="Código EAN" placeholder="Escanear EAN"/>
+                <field name="quick_ean" string="EAN" placeholder="Escanear EAN"/>
             </field>
         </field>
     </record>
@@ -32,7 +32,7 @@
         <field name="inherit_id" ref="stock.view_stock_move_line_operation_tree"/>
         <field name="arch" type="xml">
             <field name="product_id" position="after">
-                <field name="quick_ean" string="Código EAN" placeholder="Escanear EAN"/>
+                <field name="quick_ean" string="EAN" placeholder="Escanear EAN"/>
             </field>
         </field>
     </record>
@@ -44,9 +44,8 @@
         <field name="inherit_id" ref="stock.view_move_line_tree"/>
         <field name="arch" type="xml">
             <field name="product_id" position="after">
-                <field name="quick_ean" string="Código EAN" placeholder="Escanear EAN"/>
+                <field name="quick_ean" string="EAN" placeholder="Escanear EAN"/>
             </field>
         </field>
     </record>
 
-</odoo>
