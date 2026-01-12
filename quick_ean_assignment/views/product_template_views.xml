@@ -13,6 +13,18 @@
         </field>
     </record>
 
+    <!-- Add referencia field to product template list view -->
+    <record id="view_product_template_tree_referencia" model="ir.ui.view">
+        <field name="name">product.template.tree.referencia</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_tree_view"/>
+        <field name="arch" type="xml">
+            <field name="default_code" position="after">
+                <field name="x_referencia" optional="show"/>
+            </field>
+        </field>
+    </record>
+
     <!-- Add button to product template form -->
     <record id="view_product_template_form_ean_button" model="ir.ui.view">
         <field name="name">product.template.form.ean.button</field>
