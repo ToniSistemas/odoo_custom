@@ -50,6 +50,14 @@ class ProductTemplate(models.Model):
 class ProductProduct(models.Model):
     _inherit = 'product.product'
 
+    @api.model
+    def _name_search(self, name='', domain=None, operator='ilike', limit=None, order=None):
+        """Extend name search to include x_referencia field from template"""
+        domain = domain or []
+        if name:
+            domain = ['|', '|', '|', ('product_tmpl_id.x_referencia', operator, name), ('default_code', operator, name), ('barcode', operator, name), ('name', operator, name)] + domain
+        return self._search(domain, limit=limit, order=order)
+
     def action_open_product_form(self):
         """Open product variant form view"""
         return {

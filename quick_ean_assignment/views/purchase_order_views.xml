@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Add x_referencia to purchase order line tree view -->
+    <record id="view_purchase_order_line_tree_referencia" model="ir.ui.view">
+        <field name="name">purchase.order.line.tree.referencia</field>
+        <field name="model">purchase.order.line</field>
+        <field name="inherit_id" ref="purchase.purchase_order_line_tree"/>
+        <field name="arch" type="xml">
+            <field name="product_id" position="after">
+                <field name="product_tmpl_id" string="Referencia" invisible="1"/>
+                <field name="x_referencia" string="Ref" optional="show"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- Add x_referencia to purchase order form view -->
+    <record id="view_purchase_order_form_referencia" model="ir.ui.view">
+        <field name="name">purchase.order.form.referencia</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.view_purchase_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='order_line']/list//field[@name='product_id']" position="after">
+                <field name="x_referencia" string="Ref" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

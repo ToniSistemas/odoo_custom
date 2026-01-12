@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Quick EAN Assignment',
-    'version': '18.0.1.1.8',
+    'version': '18.0.1.2.0',
     'category': 'Inventory',
     'summary': 'Assign EAN codes quickly from purchase receipts and mass assignment view',
     'description': """
@@ -25,6 +25,7 @@
         'views/stock_move_line_views.xml',
         'wizard/assign_ean_wizard_views.xml',
         'views/product_template_views.xml',
+        'views/purchase_order_views.xml',
     ],
     'installable': True,
     'application': False,
