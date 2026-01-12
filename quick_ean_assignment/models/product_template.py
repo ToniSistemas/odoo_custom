@@ -8,13 +8,22 @@ class ProductTemplate(models.Model):
 
     x_referencia = fields.Char(
         string='Referencia',
-        help='Campo de referencia libre para el producto'
+        help='Campo de referencia libre para el producto',
+        index=True
     )
 
     variants_without_ean_count = fields.Integer(
         string='Variants Without EAN',
         compute='_compute_variants_without_ean_count'
     )
+
+    @api.model
+    def _name_search(self, name='', domain=None, operator='ilike', limit=None, order=None):
+        """Extend name search to include x_referencia field"""
+        domain = domain or []
+        if name:
+            domain = ['|', '|', ('x_referencia', operator, name), ('default_code', operator, name), ('name', operator, name)] + domain
+        return self._search(domain, limit=limit, order=order)
 
     @api.depends('product_variant_ids.barcode')
     def _compute_variants_without_ean_count(self):
