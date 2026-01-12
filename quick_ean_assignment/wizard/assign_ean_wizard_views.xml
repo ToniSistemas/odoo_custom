@@ -96,11 +96,13 @@
         <field name="binding_model_id" ref="product.model_product_product"/>
     </record>
 
-    <!-- Menu item in Inventory -->
+    <!-- Menu item in Inventory - COMMENTED OUT -->
+    <!--
     <menuitem id="menu_assign_ean_mass"
               name="Asignar Códigos EAN"
               parent="stock.menu_stock_warehouse_mgmt"
               action="action_assign_ean_mass_wizard"
               sequence="100"/>
+    -->
 
 </odoo>
