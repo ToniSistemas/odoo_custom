@@ -13,7 +13,8 @@
         </field>
     </record>
 
-    <!-- Add x_referencia to purchase order form view -->
+    <!-- Add x_referencia to purchase order form view - COMMENTED: view ID not found in Odoo 18 -->
+    <!--
     <record id="view_purchase_order_form_referencia" model="ir.ui.view">
         <field name="name">purchase.order.form.referencia</field>
         <field name="model">purchase.order</field>
@@ -24,5 +25,6 @@
             </xpath>
         </field>
     </record>
+    -->
 
 </odoo>
