@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Product Labels APLI 4x11',
-    'version': '18.0.1.0.0',
+    'version': '18.0.1.0.1',
     'category': 'Inventory',
     'summary': 'APLI MF-O1718 label format (4x11)',
     'depends': ['product'],
