@@ -12,13 +12,25 @@
         </t>
     </template>
 
-    <!-- Template for Product Variant -->
+    <!-- Template for Product Variant with price -->
     <template id="report_productlabel4x11">
         <t t-call="web.basic_layout">
             <div class="page">
                 <t t-set="columns" t-value="4"/>
                 <t t-set="rows" t-value="11"/>
                 <t t-set="price_included" t-value="True"/>
+                <t t-call="product.report_productlabel"/>
+            </div>
+        </t>
+    </template>
+
+    <!-- Template for Product Variant without price -->
+    <template id="report_productlabel4x11_noprice">
+        <t t-call="web.basic_layout">
+            <div class="page">
+                <t t-set="columns" t-value="4"/>
+                <t t-set="rows" t-value="11"/>
+                <t t-set="price_included" t-value="False"/>
                 <t t-call="product.report_productlabel"/>
             </div>
         </t>
