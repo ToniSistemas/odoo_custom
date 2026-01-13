@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!-- Template 4x11 con precio -->
-    <template id="report_producttemplatelabel4x12_apli" inherit_id="product.report_producttemplatelabel4x12">
-        <xpath expr="//t[@t-set='rows']" position="replace">
-            <t t-set="rows" t-value="11"/>
-        </xpath>
+    <template id="report_producttemplatelabel4x11">
+        <t t-call="web.basic_layout">
+            <div class="page">
+                <t t-set="columns" t-value="4"/>
+                <t t-set="rows" t-value="11"/>
+                <t t-set="price_included" t-value="True"/>
+                <t t-call="product.report_productlabel"/>
+            </div>
+        </t>
     </template>
 </odoo>

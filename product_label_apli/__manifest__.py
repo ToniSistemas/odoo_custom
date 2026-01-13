@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Product Labels APLI 4x11',
-    'version': '18.0.1.0.1',
+    'version': '18.0.1.0.2',
     'category': 'Inventory',
     'summary': 'APLI MF-O1718 label format (4x11)',
     'depends': ['product'],
     'data': [
+        'report/product_label_report.xml',
         'views/product_label_template.xml',
     ],
     'installable': True,
