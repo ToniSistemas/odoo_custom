@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Product Labels 4x11',
-    'version': '18.0.1.0.8',
+    'version': '18.0.1.0.9',
     'category': 'Inventory',
     'summary': 'Add 4x11 product label format',
     'description': """

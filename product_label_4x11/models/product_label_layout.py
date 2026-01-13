@@ -18,18 +18,15 @@ class ProductLabelLayout(models.TransientModel):
     )
 
     def _prepare_report_data(self):
+        # Get default data first
         xml_id, data = super()._prepare_report_data()
         
-        if self.print_format in ('4x11', '4x11_with_price'):
-            # Modify the data to use 4x11 format
+        # For 4x11 formats, we change rows from 12 to 11 but keep everything else
+        if self.print_format == '4x11':
             data['rows'] = 11
-            data['columns'] = 4
-            data['price_included'] = self.print_format == '4x11_with_price'
-            
-            # Use the same report template but with different data
-            if self.print_format == '4x11':
-                xml_id = 'product_label_4x11.action_report_product_variant_label_4x11'
-            else:
-                xml_id = 'product_label_4x11.action_report_product_variant_label_4x11_price'
+            data['price_included'] = False
+        elif self.print_format == '4x11_with_price':
+            data['rows'] = 11
+            data['price_included'] = True
         
         return xml_id, data
