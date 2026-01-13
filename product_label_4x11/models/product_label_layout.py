@@ -18,13 +18,22 @@ class ProductLabelLayout(models.TransientModel):
     )
 
     def _prepare_report_data(self):
-        if self.print_format == '4x11':
-            xml_id = 'product_label_4x11.action_report_product_variant_label_4x11'
-            data = {'price_included': False}
-            return xml_id, data
-        elif self.print_format == '4x11_with_price':
-            xml_id = 'product_label_4x11.action_report_product_variant_label_4x11_price'
-            data = {'price_included': True}
+        if self.print_format in ('4x11', '4x11_with_price'):
+            if self.print_format == '4x11':
+                xml_id = 'product_label_4x11.action_report_product_variant_label_4x11'
+            else:
+                xml_id = 'product_label_4x11.action_report_product_variant_label_4x11_price'
+            
+            # Calculate quantities and page data
+            active_model = self.env.context.get('active_model', 'product.template')
+            quantity_by_product = {p.id: p.quantity for p in self.product_line_ids}
+            
+            data = {
+                'quantity_by_product': quantity_by_product,
+                'price_included': self.print_format == '4x11_with_price',
+                'rows': 11,
+                'columns': 4,
+            }
             return xml_id, data
         
         return super()._prepare_report_data()
