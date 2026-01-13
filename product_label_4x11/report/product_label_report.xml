@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- Report for Product Template -->
     <record id="action_report_product_label_4x11" model="ir.actions.report">
         <field name="name">Product Labels 4x11</field>
         <field name="model">product.template</field>
@@ -8,6 +9,19 @@
         <field name="report_file">product_label_4x11.report_producttemplatelabel4x11</field>
         <field name="print_report_name">'Product Labels 4x11'</field>
         <field name="binding_model_id" ref="product.model_product_template"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="paperformat_label_4x11"/>
+    </record>
+
+    <!-- Report for Product Variant -->
+    <record id="action_report_product_variant_label_4x11" model="ir.actions.report">
+        <field name="name">Product Labels 4x11</field>
+        <field name="model">product.product</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">product_label_4x11.report_productlabel4x11</field>
+        <field name="report_file">product_label_4x11.report_productlabel4x11</field>
+        <field name="print_report_name">'Product Labels 4x11'</field>
+        <field name="binding_model_id" ref="product.model_product_product"/>
         <field name="binding_type">report</field>
         <field name="paperformat_id" ref="paperformat_label_4x11"/>
     </record>
