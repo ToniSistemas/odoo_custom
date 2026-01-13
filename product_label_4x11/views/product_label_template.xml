@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_producttemplatelabel4x11">
+        <t t-call="web.basic_layout">
+            <div class="page">
+                <t t-set="columns" t-value="4"/>
+                <t t-set="rows" t-value="11"/>
+                <t t-set="price_included" t-value="True"/>
+                <t t-call="product.report_productlabel"/>
+            </div>
+        </t>
+    </template>
+</odoo>
