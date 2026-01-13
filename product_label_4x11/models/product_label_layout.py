@@ -24,9 +24,12 @@ class ProductLabelLayout(models.TransientModel):
             else:
                 xml_id = 'product_label_4x11.action_report_product_variant_label_4x11_price'
             
-            # Calculate quantities and page data
-            active_model = self.env.context.get('active_model', 'product.template')
-            quantity_by_product = {p.id: p.quantity for p in self.product_line_ids}
+            # Build quantity by product dict
+            quantity_by_product = {}
+            if hasattr(self, 'product_line_ids'):
+                quantity_by_product = {p.id: p.quantity for p in self.product_line_ids}
+            elif hasattr(self, 'move_line_ids'):
+                quantity_by_product = {p.product_id.id: p.qty_done for p in self.move_line_ids}
             
             data = {
                 'quantity_by_product': quantity_by_product,
