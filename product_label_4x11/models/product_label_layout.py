@@ -21,10 +21,8 @@ class ProductLabelLayout(models.TransientModel):
         xml_id, data = super()._prepare_report_data()
         
         if self.print_format == '4x11':
-            xml_id = 'product_label_4x11.report_productlabel4x11_noprice'
-            data['price_included'] = False
+            xml_id = 'product_label_4x11.action_report_product_variant_label_4x11'
         elif self.print_format == '4x11_with_price':
-            xml_id = 'product_label_4x11.report_productlabel4x11'
-            data['price_included'] = True
+            xml_id = 'product_label_4x11.action_report_product_variant_label_4x11_price'
             
         return xml_id, data

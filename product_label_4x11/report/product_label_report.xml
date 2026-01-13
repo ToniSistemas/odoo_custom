@@ -13,16 +13,25 @@
         <field name="paperformat_id" ref="paperformat_label_4x11"/>
     </record>
 
-    <!-- Report for Product Variant -->
+    <!-- Report for Product Variant (no price) -->
     <record id="action_report_product_variant_label_4x11" model="ir.actions.report">
         <field name="name">Product Labels 4x11</field>
         <field name="model">product.product</field>
         <field name="report_type">qweb-pdf</field>
+        <field name="report_name">product_label_4x11.report_productlabel4x11_noprice</field>
+        <field name="report_file">product_label_4x11.report_productlabel4x11_noprice</field>
+        <field name="print_report_name">'Product Labels 4x11'</field>
+        <field name="paperformat_id" ref="paperformat_label_4x11"/>
+    </record>
+
+    <!-- Report for Product Variant (with price) -->
+    <record id="action_report_product_variant_label_4x11_price" model="ir.actions.report">
+        <field name="name">Product Labels 4x11 con precio</field>
+        <field name="model">product.product</field>
+        <field name="report_type">qweb-pdf</field>
         <field name="report_name">product_label_4x11.report_productlabel4x11</field>
         <field name="report_file">product_label_4x11.report_productlabel4x11</field>
-        <field name="print_report_name">'Product Labels 4x11'</field>
-        <field name="binding_model_id" ref="product.model_product_product"/>
-        <field name="binding_type">report</field>
+        <field name="print_report_name">'Product Labels 4x11 con precio'</field>
         <field name="paperformat_id" ref="paperformat_label_4x11"/>
     </record>
 </odoo>
