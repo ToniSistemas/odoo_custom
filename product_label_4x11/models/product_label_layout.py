@@ -18,11 +18,19 @@ class ProductLabelLayout(models.TransientModel):
     )
 
     def _prepare_report_data(self):
-        xml_id, data = super()._prepare_report_data()
-        
         if self.print_format == '4x11':
             xml_id = 'product_label_4x11.action_report_product_variant_label_4x11'
+            data = {
+                'price_included': False,
+                'custom_barcodes': self.custom_barcodes,
+            }
+            return xml_id, data
         elif self.print_format == '4x11_with_price':
             xml_id = 'product_label_4x11.action_report_product_variant_label_4x11_price'
-            
-        return xml_id, data
+            data = {
+                'price_included': True,
+                'custom_barcodes': self.custom_barcodes,
+            }
+            return xml_id, data
+        
+        return super()._prepare_report_data()
