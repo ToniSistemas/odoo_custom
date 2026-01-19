@@ -73,8 +73,7 @@
                                         
                                         <t t-if="current_product.barcode">
                                             <div class="product-barcode">
-                                                <t t-set="barcode_url" t-value="'/report/barcode/?type=EAN13&amp;value=%s&amp;width=180&amp;height=50' % current_product.barcode"/>
-                                                <img t-att-src="barcode_url" alt="Barcode" style="max-width:95%; height:auto;"/>
+                                                <div t-out="current_product.barcode" t-options="{'widget': 'barcode', 'symbology': 'auto', 'img_style': 'width:95%;height:18mm;'}"/>
                                             </div>
                                         </t>
                                         
