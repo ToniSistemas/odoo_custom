@@ -4,87 +4,10 @@
     <template id="report_producttemplatelabel4x11">
         <t t-call="web.html_container">
             <div class="page">
-                <style>
-                    @page {
-                        size: A4;
-                        margin: 2mm;
-                    }
-                    body {
-                        margin: 0;
-                        padding: 0;
-                    }
-                    .label-table {
-                        width: 100%;
-                        border-collapse: collapse;
-                        table-layout: fixed;
-                    }
-                    .label-table td {
-                        width: 25%;
-                        height: 26.5mm;
-                        border: 0.5px solid #ccc;
-                        padding: 1mm;
-                        text-align: center;
-                        vertical-align: middle;
-                        page-break-inside: avoid;
-                    }
-                    .product-name {
-                        font-weight: bold;
-                        font-size: 8pt;
-                        margin-bottom: 1mm;
-                        line-height: 1.1;
-                    }
-                    .product-code {
-                        font-size: 7pt;
-                        color: #666;
-                        margin-bottom: 1mm;
-                    }
-                    .product-barcode {
-                        margin: 1mm 0;
-                    }
-                    .product-barcode img {
-                        max-width: 95%;
-                        height: auto;
-                    }
-                    .product-price {
-                        font-size: 11pt;
-                        font-weight: bold;
-                        color: #000;
-                        margin-top: 1mm;
-                    }
-                </style>
-                
-                <table class="label-table">
-                    <t t-set="label_count" t-value="0"/>
-                    <!-- Crear 11 filas de 4 columnas -->
-                    <t t-foreach="range(11)" t-as="row">
-                        <tr>
-                            <t t-foreach="range(4)" t-as="col">
-                                <t t-set="current_product" t-value="docs[0] if docs else None"/>
-                                <td>
-                                    <t t-if="current_product and label_count == 0">
-                                        <div class="product-name">
-                                            <span t-field="current_product.display_name"/>
-                                        </div>
-                                        
-                                        <div class="product-code" t-if="current_product.default_code">
-                                            <span t-field="current_product.default_code"/>
-                                        </div>
-                                        
-                                        <t t-if="current_product.barcode">
-                                            <div class="product-barcode">
-                                                <div t-out="current_product.barcode" t-options="{'widget': 'barcode', 'symbology': 'auto', 'img_style': 'width:95%;height:18mm;'}"/>
-                                            </div>
-                                        </t>
-                                        
-                                        <div class="product-price">
-                                            <span t-field="current_product.list_price" t-options="{'widget': 'monetary', 'display_currency': current_product.currency_id}"/>
-                                        </div>
-                                    </t>
-                                    <t t-set="label_count" t-value="label_count + 1"/>
-                                </td>
-                            </t>
-                        </tr>
-                    </t>
+                <t t-set="columns" t-value="4"/>
+                <t t-set="rows" t-value="11"/>
+                <t t-set="price_included" t-value="True"/>
+                <t t-call="product.report_productlabel"/>
                 </table>
             </div>
         </t>
