@@ -1,11 +1,60 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Template 4x11 con precio -->
     <template id="report_producttemplatelabel4x11">
-        <t t-set="columns" t-value="4"/>
-        <t t-set="rows" t-value="11"/>
-        <t t-set="price_included" t-value="True"/>
-        <t t-set="page_numbers" t-value="1"/>
-        <t t-call="product.report_productlabel"/>
+        <t t-call="web.html_container">
+            <t t-set="columns" t-value="4"/>
+            <t t-set="rows" t-value="11"/>
+            <t t-set="price_included" t-value="True"/>
+            <t t-foreach="range(page_numbers)" t-as="page">
+                <div class="o_label_sheet" style="padding: 2mm;">
+                    <table class="my-0 table table-sm table-borderless">
+                        <t t-foreach="range(rows)" t-as="row">
+                            <tr>
+                                <t t-foreach="range(columns)" t-as="column">
+                                    <t t-if="not current_quantity and quantity and not (current_data and current_data[1])">
+                                        <t t-set="current_data" t-value="quantity.popitem()"/>
+                                        <t t-set="product" t-value="current_data[0]"/>
+                                        <t t-set="barcode_and_qty" t-value="current_data[1].pop()"/>
+                                        <t t-set="barcode" t-value="barcode_and_qty[0]"/>
+                                        <t t-set="current_quantity" t-value="barcode_and_qty[1]"/>
+                                    </t>
+                                    <t t-if="current_quantity">
+                                        <t t-set="make_invisible" t-value="False"/>
+                                        <t t-set="current_quantity" t-value="current_quantity - 1"/>
+                                    </t>
+                                    <t t-elif="current_data and current_data[1]">
+                                        <t t-set="barcode_and_qty" t-value="current_data[1].pop()"/>
+                                        <t t-set="barcode" t-value="barcode_and_qty[0]"/>
+                                        <t t-set="current_quantity" t-value="barcode_and_qty[1] - 1"/>
+                                    </t>
+                                    <t t-else="">
+                                        <t t-set="make_invisible" t-value="True"/>
+                                    </t>
+                                    <td t-att-style="make_invisible and 'visibility:hidden;' or ''">
+                                        <div class="o_label_full o_label_small_text">
+                                            <div class="o_label_name">
+                                                <strong t-field="product.display_name"/>
+                                            </div>
+                                            <div class="o_label_left_column">
+                                                <span class="text-nowrap" t-field="product.default_code"/>
+                                            </div>
+                                            <div class="o_label_price_medium text-end">
+                                                <strong t-out="pricelist._get_product_price(product, 1, currency=pricelist.currency_id or product.currency_id)"
+                                                    t-options="{'widget': 'monetary', 'display_currency': pricelist.currency_id or product.currency_id, 'label_price': True}"/>
+                                            </div>
+                                            <div class="text-center o_label_small_barcode">
+                                                <t t-if="barcode">
+                                                    <div t-out="barcode" style="padding:0" t-options="{'widget': 'barcode', 'symbology': 'auto', 'img_style': 'width:95%;height:18mm;'}"/>
+                                                </t>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </t>
+                            </tr>
+                        </t>
+                    </table>
+                </div>
+            </t>
+        </t>
     </template>
 </odoo>
