@@ -3,103 +3,85 @@
     <!-- Template 4x11 con precio -->
     <template id="report_producttemplatelabel4x11">
         <t t-call="web.html_container">
-            <t t-foreach="docs" t-as="product">
-                <t t-set="quantity" t-value="quantity if quantity else 1"/>
-                <div class="page">
-                    <style>
-                        @page {
-                            size: A4;
-                            margin: 2mm;
-                        }
-                        body {
-                            font-family: Arial, sans-serif;
-                            margin: 0;
-                            padding: 0;
-                        }
-                        .label-table {
-                            width: 100%;
-                            border-collapse: collapse;
-                            table-layout: fixed;
-                        }
-                        .label-table td {
-                            width: 25%;
-                            height: 26.5mm;
-                            border: 0.5px solid #ccc;
-                            padding: 1mm;
-                            text-align: center;
-                            vertical-align: middle;
-                            page-break-inside: avoid;
-                        }
-                        .product-name {
-                            font-weight: bold;
-                            font-size: 8pt;
-                            margin-bottom: 1mm;
-                            line-height: 1.1;
-                        }
-                        .product-code {
-                            font-size: 7pt;
-                            color: #666;
-                            margin-bottom: 1mm;
-                        }
-                        .product-barcode {
-                            margin: 1mm 0;
-                        }
-                        .product-barcode img {
-                            max-width: 95%;
-                            height: auto;
-                        }
-                        .product-price {
-                            font-size: 11pt;
-                            font-weight: bold;
-                            color: #000;
-                            margin-top: 1mm;
-                        }
-                    </style>
-                    
-                    <table class="label-table">
-                        <t t-set="all_labels" t-value="[]"/>
-                        <t t-foreach="range(int(quantity))" t-as="q">
-                            <t t-set="all_labels" t-value="all_labels + [product]"/>
-                        </t>
-                        
-                        <!-- Rellenar hasta 44 etiquetas -->
-                        <t t-set="total_labels" t-value="len(all_labels)"/>
-                        <t t-set="empty_count" t-value="(44 - (total_labels % 44)) if total_labels % 44 != 0 else 0"/>
-                        <t t-foreach="range(int(empty_count))" t-as="e">
-                            <t t-set="all_labels" t-value="all_labels + [None]"/>
-                        </t>
-                        
-                        <!-- Crear 11 filas de 4 columnas -->
-                        <t t-foreach="range(11)" t-as="row">
-                            <tr>
-                                <t t-foreach="range(4)" t-as="col">
-                                    <t t-set="index" t-value="row * 4 + col"/>
-                                    <t t-set="label_product" t-value="all_labels[index] if index &lt; len(all_labels) else None"/>
-                                    <td>
-                                        <t t-if="label_product">
-                                            <div class="product-name">
-                                                <t t-out="label_product.name"/>
-                                            </div>
-                                            
-                                            <div class="product-code" t-if="label_product.default_code">
-                                                <t t-out="label_product.default_code"/>
-                                            </div>
-                                            
-                                            <div class="product-barcode" t-if="label_product.barcode">
-                                                <img t-attf-src="/report/barcode/?type=EAN13&amp;value={{label_product.barcode}}&amp;width=180&amp;height=50" alt="Barcode"/>
-                                            </div>
-                                            
-                                            <div class="product-price">
-                                                <t t-out="label_product.list_price" t-options="{'widget': 'monetary', 'display_currency': label_product.currency_id}"/>
-                                            </div>
-                                        </t>
-                                    </td>
-                                </t>
-                            </tr>
-                        </t>
-                    </table>
-                </div>
-            </t>
+            <div class="page">
+                <style>
+                    @page {
+                        size: A4;
+                        margin: 2mm;
+                    }
+                    body {
+                        font-family: Arial, sans-serif;
+                        margin: 0;
+                        padding: 0;
+                    }
+                    .label-table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        table-layout: fixed;
+                    }
+                    .label-table td {
+                        width: 25%;
+                        height: 26.5mm;
+                        border: 0.5px solid #ccc;
+                        padding: 1mm;
+                        text-align: center;
+                        vertical-align: middle;
+                        page-break-inside: avoid;
+                    }
+                    .product-name {
+                        font-weight: bold;
+                        font-size: 8pt;
+                        margin-bottom: 1mm;
+                        line-height: 1.1;
+                    }
+                    .product-code {
+                        font-size: 7pt;
+                        color: #666;
+                        margin-bottom: 1mm;
+                    }
+                    .product-barcode {
+                        margin: 1mm 0;
+                    }
+                    .product-barcode img {
+                        max-width: 95%;
+                        height: auto;
+                    }
+                    .product-price {
+                        font-size: 11pt;
+                        font-weight: bold;
+                        color: #000;
+                        margin-top: 1mm;
+                    }
+                </style>
+                
+                <table class="label-table">
+                    <t t-set="label_count" t-value="0"/>
+                    <!-- Crear 11 filas de 4 columnas -->
+                    <t t-foreach="range(11)" t-as="row">
+                        <tr>
+                            <t t-foreach="range(4)" t-as="col">
+                                <t t-set="current_product" t-value="docs[0] if docs else None"/>
+                                <td>
+                                    <t t-if="current_product and label_count == 0">
+                                        <div class="product-name" t-raw="current_product.name"/>
+                                        
+                                        <div class="product-code" t-if="current_product.default_code" t-raw="current_product.default_code"/>
+                                        
+                                        <div class="product-barcode" t-if="current_product.barcode">
+                                            <img t-attf-src="/report/barcode/?type=EAN13&amp;value={{current_product.barcode}}&amp;width=180&amp;height=50" alt="Barcode"/>
+                                        </div>
+                                        
+                                        <div class="product-price">
+                                            <t t-esc="'%.2f €' % current_product.list_price"/>
+                                        </div>
+                                    </t>
+                                    <t t-set="label_count" t-value="label_count + 1"/>
+                                </td>
+                            </t>
+                        </tr>
+                    </t>
+                </table>
+            </div>
         </t>
     </template>
 </odoo>
