@@ -1,4 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- No need to inherit view, selection_add in model is enough -->
+    <record id="view_product_label_layout_form_inherit" model="ir.ui.view">
+        <field name="name">product.label.layout.form.apli</field>
+        <field name="model">product.label.layout</field>
+        <field name="inherit_id" ref="product.view_product_label_layout"/>
+        <field name="arch" type="xml">
+            <field name="print_format" position="replace">
+                <field name="print_format" required="1"/>
+            </field>
+        </field>
+    </record>
 </odoo>
