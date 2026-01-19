@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from odoo import models, fields
+from odoo import models, fields, api
 
 
 class ProductLabelLayout(models.TransientModel):
@@ -12,9 +12,11 @@ class ProductLabelLayout(models.TransientModel):
     )
 
     def _prepare_report_data(self):
+        """Prepare data for report generation"""
         if self.print_format == '4x11_apli':
             xml_id = 'product_label_apli.action_report_product_label_4x11'
-        else:
-            return super()._prepare_report_data()
-        
-        return xml_id, {'quantity': self.product_print_quantity}
+            data = {
+                'quantity_by_product': {p.id: p.quantity for p in self.product_ids},
+            }
+            return xml_id, data
+        return super()._prepare_report_data()
