@@ -78,19 +78,19 @@
                                     <td>
                                         <t t-if="label_product">
                                             <div class="product-name">
-                                                <span t-field="label_product.name"/>
+                                                <t t-out="label_product.name"/>
                                             </div>
                                             
                                             <div class="product-code" t-if="label_product.default_code">
-                                                <span t-field="label_product.default_code"/>
+                                                <t t-out="label_product.default_code"/>
                                             </div>
                                             
                                             <div class="product-barcode" t-if="label_product.barcode">
-                                                <img t-att-src="'/report/barcode/?type=EAN13&amp;value=' + label_product.barcode + '&amp;width=180&amp;height=50'" alt="Barcode"/>
+                                                <img t-attf-src="/report/barcode/?type=EAN13&amp;value={{label_product.barcode}}&amp;width=180&amp;height=50" alt="Barcode"/>
                                             </div>
                                             
                                             <div class="product-price">
-                                                <span t-field="label_product.list_price" t-options="{'widget': 'monetary', 'display_currency': label_product.currency_id}"/>
+                                                <t t-out="label_product.list_price" t-options="{'widget': 'monetary', 'display_currency': label_product.currency_id}"/>
                                             </div>
                                         </t>
                                     </td>
