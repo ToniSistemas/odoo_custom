@@ -2,92 +2,104 @@
 <odoo>
     <!-- Template 4x11 con precio -->
     <template id="report_producttemplatelabel4x11">
-        <t t-call="web.basic_layout">
-            <div class="page">
-                <style>
-                    .product-label-grid {
-                        display: grid;
-                        grid-template-columns: repeat(4, 1fr);
-                        grid-template-rows: repeat(11, 1fr);
-                        width: 100%;
-                        height: 100%;
-                        gap: 1mm;
-                        padding: 0;
-                        margin: 0;
-                    }
-                    .product-label {
-                        border: 1px solid #ddd;
-                        padding: 1mm;
-                        display: flex;
-                        flex-direction: column;
-                        justify-content: center;
-                        align-items: center;
-                        text-align: center;
-                        font-size: 10pt;
-                        page-break-inside: avoid;
-                        min-height: 25mm;
-                    }
-                    .product-name {
-                        font-weight: bold;
-                        font-size: 9pt;
-                        margin-bottom: 1mm;
-                        word-wrap: break-word;
-                        max-width: 100%;
-                    }
-                    .product-code {
-                        font-size: 8pt;
-                        color: #666;
-                        margin-bottom: 1mm;
-                    }
-                    .product-barcode {
-                        margin: 1mm 0;
-                    }
-                    .product-price {
-                        font-size: 12pt;
-                        font-weight: bold;
-                        color: #000;
-                        margin-top: 1mm;
-                    }
-                </style>
-                
-                <div class="product-label-grid">
-                    <t t-foreach="docs" t-as="product">
-                        <!-- Repetir la etiqueta para cada cantidad solicitada -->
-                        <t t-set="quantity" t-value="quantity if quantity else 1"/>
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="product">
+                <t t-set="quantity" t-value="quantity if quantity else 1"/>
+                <div class="page">
+                    <style>
+                        @page {
+                            size: A4;
+                            margin: 2mm;
+                        }
+                        body {
+                            font-family: Arial, sans-serif;
+                        }
+                        .label-page {
+                            width: 206mm;
+                            height: 293mm;
+                            display: flex;
+                            flex-wrap: wrap;
+                            justify-content: space-between;
+                            align-content: space-between;
+                            padding: 0;
+                            margin: 0;
+                        }
+                        .product-label {
+                            width: 48mm;
+                            height: 25.4mm;
+                            border: 0.5px solid #ccc;
+                            box-sizing: border-box;
+                            padding: 1mm;
+                            display: flex;
+                            flex-direction: column;
+                            justify-content: center;
+                            align-items: center;
+                            text-align: center;
+                            margin-bottom: 1.5mm;
+                            page-break-inside: avoid;
+                        }
+                        .product-name {
+                            font-weight: bold;
+                            font-size: 8pt;
+                            margin-bottom: 0.5mm;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                            max-width: 100%;
+                            line-height: 1.1;
+                        }
+                        .product-code {
+                            font-size: 7pt;
+                            color: #666;
+                            margin-bottom: 0.5mm;
+                        }
+                        .product-barcode {
+                            margin: 0.5mm 0;
+                            max-height: 12mm;
+                        }
+                        .product-barcode img {
+                            max-width: 45mm;
+                            max-height: 12mm;
+                            height: auto;
+                        }
+                        .product-price {
+                            font-size: 11pt;
+                            font-weight: bold;
+                            color: #000;
+                            margin-top: 0.5mm;
+                        }
+                    </style>
+                    
+                    <div class="label-page">
                         <t t-foreach="range(int(quantity))" t-as="q">
                             <div class="product-label">
-                                <!-- Nombre del producto -->
                                 <div class="product-name">
                                     <t t-esc="product.name"/>
                                 </div>
                                 
-                                <!-- Código interno del producto -->
                                 <div class="product-code" t-if="product.default_code">
                                     <t t-esc="product.default_code"/>
                                 </div>
                                 
-                                <!-- Código de barras -->
                                 <div class="product-barcode" t-if="product.barcode">
-                                    <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('EAN13', product.barcode, 200, 60)" 
-                                         style="max-width: 100%; height: auto;"/>
+                                    <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('EAN13', product.barcode, 180, 50)"/>
                                 </div>
                                 
-                                <!-- Precio -->
                                 <div class="product-price">
                                     <t t-esc="product.list_price" t-options="{'widget': 'monetary', 'display_currency': product.currency_id}"/>
                                 </div>
                             </div>
                         </t>
-                    </t>
-                    
-                    <!-- Rellenar celdas vacías hasta completar 44 etiquetas (4x11) -->
-                    <t t-set="total_labels" t-value="sum([int(quantity if quantity else 1) for product in docs])"/>
-                    <t t-set="empty_labels" t-value="44 - (total_labels % 44) if total_labels % 44 != 0 else 0"/>
-                    <t t-foreach="range(int(empty_labels))" t-as="e">
-                        <div class="product-label" style="border: none;"/>
-                    </t>
+                        
+                        <!-- Rellenar hasta 44 etiquetas -->
+                        <t t-set="total_product_labels" t-value="int(quantity)"/>
+                        <t t-set="labels_in_page" t-value="44"/>
+                        <t t-set="empty_count" t-value="labels_in_page - (total_product_labels % labels_in_page) if total_product_labels % labels_in_page != 0 else 0"/>
+                        <t t-foreach="range(int(empty_count))" t-as="e">
+                            <div class="product-label" style="border: none; visibility: hidden;"/>
+                        </t>
+                    </div>
                 </div>
-            </div>
+            </t>
         </t>
     </template>
 </odoo>
