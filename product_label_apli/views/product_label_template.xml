@@ -63,16 +63,23 @@
                                 <t t-set="current_product" t-value="docs[0] if docs else None"/>
                                 <td>
                                     <t t-if="current_product and label_count == 0">
-                                        <div class="product-name" t-raw="current_product.name"/>
-                                        
-                                        <div class="product-code" t-if="current_product.default_code" t-raw="current_product.default_code"/>
-                                        
-                                        <div class="product-barcode" t-if="current_product.barcode">
-                                            <img t-attf-src="/report/barcode/?type=EAN13&amp;value={{current_product.barcode}}&amp;width=180&amp;height=50" alt="Barcode"/>
+                                        <div class="product-name">
+                                            <span t-field="current_product.display_name"/>
                                         </div>
                                         
+                                        <div class="product-code" t-if="current_product.default_code">
+                                            <span t-field="current_product.default_code"/>
+                                        </div>
+                                        
+                                        <t t-if="current_product.barcode">
+                                            <div class="product-barcode">
+                                                <t t-set="barcode_url" t-value="'/report/barcode/?type=EAN13&amp;value=%s&amp;width=180&amp;height=50' % current_product.barcode"/>
+                                                <img t-att-src="barcode_url" alt="Barcode" style="max-width:95%; height:auto;"/>
+                                            </div>
+                                        </t>
+                                        
                                         <div class="product-price">
-                                            <t t-esc="'%.2f €' % current_product.list_price"/>
+                                            <span t-field="current_product.list_price" t-options="{'widget': 'monetary', 'display_currency': current_product.currency_id}"/>
                                         </div>
                                     </t>
                                     <t t-set="label_count" t-value="label_count + 1"/>
