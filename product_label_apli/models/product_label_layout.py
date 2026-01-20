@@ -16,26 +16,33 @@ class ProductLabelLayout(models.TransientModel):
         xml_id, data = super()._prepare_report_data()
         if self.print_format == '4x11_apli':
             xml_id = 'product_label_apli.action_report_product_label_4x11_custom'
-            # Normalizar data['products'] para evitar strings o iterables no válidos
-            products = data.get('products')
             Product = self.env['product.product']
-            if products and not hasattr(products, 'ids'):
-                # Si viene como lista/tupla de ids (strings o ints)
-                if isinstance(products, (list, tuple)):
+            def ensure_recordset(val):
+                if hasattr(val, 'ids'):
+                    return val
+                if isinstance(val, (list, tuple)):
                     try:
-                        ids = [int(x) for x in products]
-                        products = Product.browse(ids)
+                        return Product.browse([int(x) for x in val])
                     except Exception:
-                        products = Product.browse([])
-                elif isinstance(products, str):
-                    # Intentar parsear '1,2,3' o '[1, 2, 3]'
+                        return Product.browse([])
+                if isinstance(val, int):
+                    return Product.browse([val])
+                if isinstance(val, str):
                     try:
-                        # extraer dígitos
-                        ids = [int(x) for x in products.replace('[', '').replace(']', '').split(',') if x.strip().isdigit()]
-                        products = Product.browse(ids)
+                        ids = [int(x) for x in val.replace('[', '').replace(']', '').split(',') if x.strip().isdigit()]
+                        return Product.browse(ids)
                     except Exception:
-                        products = Product.browse([])
-                else:
-                    products = Product.browse([])
-                data['products'] = products
+                        return Product.browse([])
+                return Product.browse([])
+
+            products = ensure_recordset(data.get('products'))
+            if not products.ids:
+                products = ensure_recordset(self.env.context.get('active_ids') or self.env.context.get('active_id'))
+            if not products.ids:
+                # try wizard fields
+                if hasattr(self, 'product_ids') and self.product_ids:
+                    products = ensure_recordset(self.product_ids)
+                elif hasattr(self, 'product_id') and self.product_id:
+                    products = ensure_recordset(self.product_id)
+            data['products'] = products
         return xml_id, data
