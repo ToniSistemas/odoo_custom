@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <template id="report_producttemplatelabel4x11">
+    <template id="report_producttemplatelabel4x11_custom">
         <t t-call="web.basic_layout">
             <div class="page">
                 <t t-set="columns" t-value="4"/>
