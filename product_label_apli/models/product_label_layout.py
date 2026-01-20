@@ -16,9 +16,18 @@ class ProductLabelLayout(models.TransientModel):
         xml_id, data = super()._prepare_report_data()
         if self.print_format == '4x11_apli':
             xml_id = 'product_label_apli.action_report_product_label_4x11_custom'
-            # Asegurar que 'products' contiene las variantes seleccionadas
-            if 'products' not in data or not data['products']:
-                # Si no está, intentar obtenerlas de los records
-                records = self.env['product.product'].browse(self.env.context.get('active_ids', []))
-                data['products'] = records
+            # Forzar que 'products' siempre tenga contenido
+            products = data.get('products')
+            if not products:
+                # Intentar con active_ids
+                active_ids = self.env.context.get('active_ids')
+                if active_ids:
+                    products = self.env['product.product'].browse(active_ids)
+            if not products:
+                # Intentar con los productos del propio wizard (soporta product_ids o product_id)
+                if hasattr(self, 'product_ids'):
+                    products = self.product_ids
+                elif hasattr(self, 'product_id'):
+                    products = self.product_id
+            data['products'] = products
         return xml_id, data
