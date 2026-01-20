@@ -8,7 +8,6 @@
                 <t t-set="price_included" t-value="True"/>
                 <t t-set="page_numbers" t-value="page_numbers or 1"/>
                 <div>products: <t t-esc="products"/></div>
-                <div>type: <t t-esc="type(products)"/></div>
                 <t t-foreach="products" t-as="product">
                     <t t-call="product.report_productlabel"/>
                 </t>
