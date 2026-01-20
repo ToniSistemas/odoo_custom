@@ -19,47 +19,37 @@ class ProductLabelLayout(models.TransientModel):
             # Forzar que 'products' siempre tenga contenido
             Product = self.env['product.product']
             products = data.get('products')
-            # Si es un string, int o lista, convertir a recordset
-            if isinstance(products, str):
-                products = Product.browse([])
-            elif isinstance(products, int):
-                products = Product.browse([products])
-            elif isinstance(products, (list, tuple)):
-                # Si es lista de ids o strings
-                try:
-                    products = Product.browse([int(x) for x in products])
-                except Exception:
-                    products = Product.browse([])
-            # Si sigue vacío, buscar en active_ids
-            if not products or not hasattr(products, 'ids'):
-                active_ids = self.env.context.get('active_ids')
-                if active_ids:
-                    try:
-                        products = Product.browse([int(x) for x in active_ids])
-                    except Exception:
-                        products = Product.browse([])
-            # Si sigue vacío, buscar en self.product_ids/product_id
-            if (not products or not hasattr(products, 'ids') or not products.ids):
-                if hasattr(self, 'product_ids') and self.product_ids:
-                    val = self.product_ids
+                # Refuerzo final: forzar siempre recordset
+                def to_recordset(val):
                     if hasattr(val, 'ids'):
-                        products = val
-                    elif isinstance(val, (list, tuple)):
+                        return val
+                    if isinstance(val, (list, tuple)):
                         try:
-                            products = Product.browse([int(x) for x in val])
+                            return Product.browse([int(x) for x in val])
                         except Exception:
-                            products = Product.browse([])
-                elif hasattr(self, 'product_id') and self.product_id:
-                    val = self.product_id
-                    if hasattr(val, 'ids'):
-                        products = val
-                    elif isinstance(val, (int, str)):
+                            return Product.browse([])
+                    if isinstance(val, int):
+                        return Product.browse([val])
+                    if isinstance(val, str):
                         try:
-                            products = Product.browse([int(val)])
+                            return Product.browse([int(val)])
                         except Exception:
-                            products = Product.browse([])
-            # Garantizar que es un recordset válido
-            if not products or not hasattr(products, 'ids'):
-                products = Product.browse([])
-            data['products'] = products
+                            return Product.browse([])
+                    return Product.browse([])
+
+                # Intentar con products de data
+                products = to_recordset(products)
+                # Si sigue vacío, buscar en active_ids
+                if not products or not products.ids:
+                    active_ids = self.env.context.get('active_ids')
+                    products = to_recordset(active_ids)
+                # Si sigue vacío, buscar en self.product_ids/product_id
+                if (not products or not products.ids):
+                    if hasattr(self, 'product_ids') and self.product_ids:
+                        products = to_recordset(self.product_ids)
+                    elif hasattr(self, 'product_id') and self.product_id:
+                        products = to_recordset(self.product_id)
+                # Refuerzo final: nunca string
+                products = to_recordset(products)
+                data['products'] = products
         return xml_id, data
