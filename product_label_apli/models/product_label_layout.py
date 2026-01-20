@@ -13,8 +13,7 @@ class ProductLabelLayout(models.TransientModel):
 
     def _prepare_report_data(self):
         """Prepare data for report generation"""
+        xml_id, data = super()._prepare_report_data()
         if self.print_format == '4x11_apli':
             xml_id = 'product_label_apli.action_report_product_label_4x11'
-            # Simplemente pasar los datos estándar
-            return xml_id, {}
-        return super()._prepare_report_data()
+        return xml_id, data
