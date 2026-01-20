@@ -44,5 +44,8 @@ class ProductLabelLayout(models.TransientModel):
                     products = ensure_recordset(self.product_ids)
                 elif hasattr(self, 'product_id') and self.product_id:
                     products = ensure_recordset(self.product_id)
-            data['products'] = products
+            # Pass a serializable list of ids to the report, avoid sending recordsets directly
+            data['products_ids'] = products.ids if products else []
+            # Do not pass the recordset itself (may be serialized as string); template will rebuild it
+            data['products'] = None
         return xml_id, data

@@ -7,10 +7,11 @@
                 <t t-set="rows" t-value="11"/>
                 <t t-set="price_included" t-value="True"/>
                 <t t-set="page_numbers" t-value="page_numbers or 1"/>
-                <t t-set="products" t-value="products or []"/>
+                <!-- Rebuild recordset from serializable ids to avoid recordset->string issues -->
+                <t t-set="products" t-value="env['product.product'].browse((data.get('products_ids') or doc_ids or []))"/>
                 <!-- DEBUG: mostrar ids y data para diagnóstico -->
                 <div style="font-size:10px;color:#900;margin-bottom:6px;">
-                    DEBUG products.ids: <t t-esc="products and products.ids"/> | doc_ids: <t t-esc="doc_ids"/> | data: <t t-esc="data"/>
+                    DEBUG products.ids: <t t-esc="products and products.ids or ''"/> | data.products_ids: <t t-esc="data.get('products_ids') if data else ''"/> | doc_ids: <t t-esc="doc_ids"/>
                 </div>
                 <t t-foreach="products" t-as="product">
                     <t t-call="product.report_productlabel"/>
