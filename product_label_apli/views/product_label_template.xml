@@ -8,6 +8,12 @@
                 <t t-set="price_included" t-value="True"/>
                 <t t-set="page_numbers" t-value="page_numbers or 1"/>
                 <t t-set="products" t-value="products or []"/>
+                <!-- DEBUG: mostrar ids y data para diagnóstico -->
+                <div style="font-size:10px;color:#900;margin-bottom:6px;">
+                    DEBUG products.ids: <t t-esc="products and products.ids"/>
+                    &nbsp;|&nbsp; doc_ids: <t t-esc="doc_ids"/>
+                    &nbsp;|&nbsp; data: <t t-esc="data"/>
+                </div>
                 <t t-foreach="products" t-as="product">
                     <t t-call="product.report_productlabel"/>
                 </t>
