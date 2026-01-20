@@ -6,6 +6,7 @@
                 <t t-set="columns" t-value="4"/>
                 <t t-set="rows" t-value="11"/>
                 <t t-set="price_included" t-value="True"/>
+                <t t-set="page_numbers" t-value="(data and data.get('page_numbers')) or 1"/>
                 <t t-call="product.report_productlabel"/>
             </div>
         </t>
