@@ -7,10 +7,9 @@
                 <t t-set="rows" t-value="11"/>
                 <t t-set="price_included" t-value="True"/>
                 <t t-set="page_numbers" t-value="page_numbers or 1"/>
-                <t t-if="products and hasattr(products, 'ids')">
-                    <t t-foreach="products" t-as="product">
-                        <t t-call="product.report_productlabel"/>
-                    </t>
+                <t t-set="products" t-value="products or []"/>
+                <t t-foreach="products" t-as="product">
+                    <t t-call="product.report_productlabel"/>
                 </t>
             </div>
         </t>
