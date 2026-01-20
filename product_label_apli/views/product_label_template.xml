@@ -10,9 +10,7 @@
                 <t t-set="products" t-value="products or []"/>
                 <!-- DEBUG: mostrar ids y data para diagnóstico -->
                 <div style="font-size:10px;color:#900;margin-bottom:6px;">
-                    DEBUG products.ids: <t t-esc="products and products.ids"/>
-                    &nbsp;|&nbsp; doc_ids: <t t-esc="doc_ids"/>
-                    &nbsp;|&nbsp; data: <t t-esc="data"/>
+                    DEBUG products.ids: <t t-esc="products and products.ids"/> | doc_ids: <t t-esc="doc_ids"/> | data: <t t-esc="data"/>
                 </div>
                 <t t-foreach="products" t-as="product">
                     <t t-call="product.report_productlabel"/>
