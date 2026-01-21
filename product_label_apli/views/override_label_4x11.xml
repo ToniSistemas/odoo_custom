@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <template id="report_producttemplatelabel4x11_inherit" inherit_id="product.report_producttemplatelabel4x12">
+    <xpath expr="//t[@t-set='rows']" position="replace">
+      <t t-set="rows" t-value="11"/>
+    </xpath>
+  </template>
+</odoo>

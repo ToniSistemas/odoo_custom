@@ -9,6 +9,7 @@
         'data/paperformat_data.xml',
         'report/product_label_report.xml',
         'views/product_label_template.xml',
+        'views/override_label_4x11.xml',
     ],
     'installable': True,
     'application': False,
