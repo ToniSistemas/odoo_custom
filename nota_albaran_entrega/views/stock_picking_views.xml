@@ -5,10 +5,8 @@
     <field name="model">stock.picking</field>
     <field name="inherit_id" ref="stock.view_picking_form"/>
     <field name="arch" type="xml">
-      <xpath expr="//sheet" position="inside">
-        <group>
-          <field name="sale_note"/>
-        </group>
+      <xpath expr="//field[@name='origin']" position="after">
+        <field name="sale_note" placeholder="Nota del pedido de venta..."/>
       </xpath>
     </field>
   </record>
@@ -16,10 +14,10 @@
   <record id="view_picking_tree_inherit_nota_albaran" model="ir.ui.view">
     <field name="name">stock.picking.tree.inherit.nota.albaran</field>
     <field name="model">stock.picking</field>
-    <field name="inherit_id" ref="stock.view_picking_tree"/>
+    <field name="inherit_id" ref="stock.vpicktree"/>
     <field name="arch" type="xml">
-      <xpath expr="//tree" position="inside">
-        <field name="sale_note"/>
+      <xpath expr="//field[@name='state']" position="before">
+        <field name="sale_note" optional="hide"/>
       </xpath>
     </field>
   </record>

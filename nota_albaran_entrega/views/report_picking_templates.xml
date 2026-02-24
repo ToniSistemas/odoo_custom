@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
   <!-- Add sale order note to the delivery slip PDF -->
-  <template id="report_picking_inherit_sale_note" inherit_id="stock.report_picking">
-    <xpath expr="//div[contains(@class,'page')]" position="inside">
+  <template id="report_picking_inherit_sale_note" inherit_id="stock.report_delivery_document">
+    <xpath expr="//t[@t-set='o']" position="after">
       <t t-if="o.sale_note">
-        <div class="row mt16">
+        <div class="row mt-3">
           <div class="col-12">
-            <h4>Nota del pedido</h4>
-            <p t-esc="o.sale_note"/>
+            <strong>Nota del pedido:</strong>
+            <p t-field="o.sale_note"/>
           </div>
         </div>
       </t>
