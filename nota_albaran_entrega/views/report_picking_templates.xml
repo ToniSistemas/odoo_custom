@@ -6,7 +6,7 @@
       <t t-if="o.sale_note_plain">
         <div class="row mt-5">
           <div class="col-12">
-            <strong>Nota del pedido:</strong>
+            <strong>Nota:</strong>
             <p t-esc="o.sale_note_plain"/>
           </div>
         </div>
