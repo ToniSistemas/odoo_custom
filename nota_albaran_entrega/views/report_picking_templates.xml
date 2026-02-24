@@ -7,7 +7,7 @@
         <div class="row mt-3">
           <div class="col-12">
             <strong>Nota del pedido:</strong>
-            <p t-field="o.sale_note"/>
+            <p t-out="o.sale_note"/>
           </div>
         </div>
       </t>
