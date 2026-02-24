@@ -6,7 +6,7 @@
     'author': 'Toni',
     'website': '',
     'license': 'LGPL-3',
-    'depends': ['base','stock','sale'],
+    'depends': ['base', 'stock', 'sale', 'sale_stock'],
     'data': [
         'security/ir.model.access.csv',
         'views/nota_albaran_views.xml',

@@ -11,15 +11,16 @@ class StockPicking(models.Model):
         readonly=False,
     )
 
-    @api.depends('sale_id', 'origin')
+    @api.depends('origin')
     def _compute_sale_note(self):
-        SaleOrder = self.env['sale.order']
         for pick in self:
             note = False
-            if hasattr(pick, 'sale_id') and pick.sale_id:
+            # Try to get note from sale_id if field exists (sale_stock installed)
+            if 'sale_id' in pick._fields and pick.sale_id:
                 note = pick.sale_id.note
+            # Fallback: search by origin
             elif pick.origin:
-                order = SaleOrder.search([('name', '=', pick.origin)], limit=1)
+                order = self.env['sale.order'].search([('name', '=', pick.origin)], limit=1)
                 if order:
                     note = order.note
             pick.sale_note = note
