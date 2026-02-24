@@ -1,4 +1,5 @@
 from odoo import models, fields, api
+from odoo.tools import html2plaintext
 
 
 class StockPicking(models.Model):
@@ -8,6 +9,18 @@ class StockPicking(models.Model):
         string='Nota del Pedido',
         copy=False,
     )
+    
+    sale_note_plain = fields.Text(
+        string='Nota del Pedido (texto plano)',
+        compute='_compute_sale_note_plain',
+        store=False,
+    )
+
+    @api.depends('sale_note')
+    def _compute_sale_note_plain(self):
+        """Convert HTML note to plain text for reports"""
+        for pick in self:
+            pick.sale_note_plain = html2plaintext(pick.sale_note or '') if pick.sale_note else ''
 
     @api.onchange('origin')
     def _onchange_origin_sale_note(self):

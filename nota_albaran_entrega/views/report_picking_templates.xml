@@ -3,11 +3,11 @@
   <!-- Add sale order note to the delivery slip PDF -->
   <template id="report_picking_inherit_sale_note" inherit_id="stock.report_delivery_document">
     <xpath expr="//t[@t-set='o']" position="after">
-      <t t-if="o.sale_note">
+      <t t-if="o.sale_note_plain">
         <div class="row mt-3">
           <div class="col-12">
             <strong>Nota del pedido:</strong>
-            <p t-out="o.sale_note"/>
+            <p t-esc="o.sale_note_plain"/>
           </div>
         </div>
       </t>
