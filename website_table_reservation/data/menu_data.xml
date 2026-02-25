@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- -*- coding: utf-8 -*-
+Developed by Bizople Solutions Pvt. Ltd.
+See LICENSE file for full copyright and licensing details. -->
+
+<odoo>
+	<record id="menu_table_reservation" model="website.menu">
+		<field name="name">Table Reservation</field>
+		<field name="parent_id" ref="website.main_menu" />
+		<field name="sequence" type="int">21</field>
+		<field name="url">/table/reservation</field>
+	</record>
+</odoo>

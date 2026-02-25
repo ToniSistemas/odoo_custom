@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- -*- coding: utf-8 -*-
+Developed by Bizople Solutions Pvt. Ltd.
+See LICENSE file for full copyright and licensing details. -->
+<odoo>
+    <data>
+        <record id="view_sale_order_form_inherit_bizople" model="ir.ui.view">
+            <field name="name">sale.order.form</field>
+            <field name="model">sale.order</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="sale.view_order_form" />
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='payment_term_id']" position="after">
+                    <field name="table_reservation_id"/>
+                    <!-- <field name="price" widget="monetary" options="{'currency_field': 'currency_id'}" optional="show"/> -->
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

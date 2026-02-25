@@ -8,8 +8,6 @@
     'license': 'LGPL-3',
     'depends': ['base', 'stock', 'sale', 'sale_stock'],
     'data': [
-        'security/ir.model.access.csv',
-        'views/nota_albaran_views.xml',
         'views/stock_picking_views.xml',
         'views/report_picking_templates.xml',
     ],

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- -*- coding: utf-8 -*-
+Developed by Bizople Solutions Pvt. Ltd.
+See LICENSE file for full copyright and licensing details. -->
+<odoo>
+    <data>
+        <record id="view_pos_config_form_inherit_bizople" model="ir.ui.view">
+            <field name="name">pos.config.form.view</field>
+            <field name="model">pos.config</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="point_of_sale.pos_config_view_form" />
+            <field name="arch" type="xml">
+                <xpath expr="//sheet//div[@id='other_devices']" position="after">
+                    <!-- <h2 class="mt16" name="Website Table Reservation">Website Table Reservation</h2> -->
+                    <!-- <div class="row mt16 o_settings_container"> -->
+                        <div class="col-12 col-lg-6 o_setting_box" id="website_publish">
+                            <div class="o_setting_left_pane">
+                                <field name="website_publish"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="website_publish"/>
+                                <div class="text-muted">
+                                    Allow Website Table Reservation
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-6 o_setting_box" id="reservation_duration" attrs="{'invisible': [('website_publish', '=', False)]}">
+                            <div class="o_setting_right_pane">
+                                <label for="reservation_duration"/>
+                                <div>
+                                    <field class="oe_inline" widget="float_time" name="reservation_duration"/>
+                                </div>
+                                <div class="text-muted">
+                                    Reserved Table Duration
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box" id="min__allow_reservation_hours" attrs="{'invisible': [('website_publish', '=', False)]}">
+                            <div class="o_setting_right_pane">
+                                <label for="min__allow_reservation_hours" class="o_form_label">Schedule Reservation</label>
+                                <div>
+                                    <span>at least </span><field name="min__allow_reservation_hours" class="oe_inline" widget="float_time"/><span> hours before</span>
+                                </div>
+                                <div>
+                                    <span>and not after </span><field name="max__allow_reservation_days" class="oe_inline"/><span> days</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box" id="table_reservation_slot_ids" 
+                            attrs="{'invisible': [('website_publish', '=', False)]}">
+                            <div class="o_setting_right_pane">
+                                <label for="table_reservation_slot_ids">Table Reservation Slot</label>
+                                <div class="content-group">
+                                    <div class="mt16">
+                                        <field name="table_reservation_slot_ids" widget="many2many_tags"/>
+                                    </div>
+                                    <div>
+                                        <button name="%(website_table_reservation.act_open_table_reservation_slot_view)d" icon="fa-arrow-right" type="action" string="Table Reservation Slots" class="btn-link"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <!-- </div> -->
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

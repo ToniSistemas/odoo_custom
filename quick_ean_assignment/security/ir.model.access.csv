@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_assign_ean_wizard,access.assign.ean.wizard,model_assign_ean_wizard,stock.group_stock_user,1,1,1,1
+access_assign_ean_wizard_line,access.assign.ean.wizard.line,model_assign_ean_wizard_line,stock.group_stock_user,1,1,1,1
+access_assign_ean_mass_wizard,access.assign.ean.mass.wizard,model_assign_ean_mass_wizard,stock.group_stock_user,1,1,1,1
+access_assign_ean_mass_wizard_line,access.assign.ean.mass.wizard.line,model_assign_ean_mass_wizard_line,stock.group_stock_user,1,1,1,1

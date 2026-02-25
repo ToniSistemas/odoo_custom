@@ -1,0 +1,94 @@
+.table_reservation{
+	.date_carousel {
+		.carousel-control-prev, .carousel-control-next{
+			.carousel-control-prev-icon:before, .carousel-control-next-icon:before{
+				color: #000;
+				font-size: 1rem;
+				margin: 0;
+			}
+			bottom: unset;
+		}
+
+		.select_slot {
+			cursor: pointer;
+			&.selected{
+				background-color: $primary;
+				color: #ffffff;
+			}
+		}
+	}
+
+	.table_reservation_availabilities{
+		.slot-btn{
+			cursor: pointer;
+			&.selected{
+				background-color: $primary;
+				color: #ffffff;
+			}
+		}
+	}
+
+	.available_tables{
+		.table_preview{
+		    min-height: 110px;
+		    display: flex;
+		    flex-direction: column;
+		    justify-content: center;
+		    cursor: pointer;
+		    .table_name{
+	    	    position: absolute;
+			    top: 10px;
+			    right: 10px;
+		    }
+		    .seats_amount{
+		    	position: absolute;
+			    bottom: 10px;
+			    left: 10px;
+		        font-size: 14px;
+		    }
+			&.selected{
+				background-color: $primary;
+				color: #ffffff;
+			}
+		}
+		.restrict_clicking{
+			position: absolute;
+		    top: 0;
+		    width: 100%;
+		    height: 100%;
+		    z-index: 1;
+		}
+		.table_booked{
+			position: absolute;
+		    top: 10px;
+		    padding: 3px 10px;
+		    font-size: 12px;
+		    background-color: #ff6464;
+		    color: white;
+		}
+
+		.floor_plan.disabled{
+			pointer-events: none;
+			opacity: 0.5;
+		}
+	}
+
+	.table_booking_info{
+		@include media-breakpoint-down(sm) {
+			.slot_info{
+				position: unset !important;
+				top: unset !important;
+			}
+			flex-direction: column-reverse;
+		}
+	}
+}
+
+@media (max-width: 767.98px) {
+	.modal-dialog.table-modal{
+		height:100%;
+	}
+	.table_view_modal_body{
+		overflow: scroll;
+	}
+}

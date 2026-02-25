@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- -*- coding: utf-8 -*-
+Developed by Bizople Solutions Pvt. Ltd.
+See LICENSE file for full copyright and licensing details. -->
+<odoo>
+    <data>
+        <record id="view_table_reservation_slot_tree" model="ir.ui.view">
+            <field name="name">table.reservation.slot.tree</field>
+            <field name="model">table.reservation.slot</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="8"/>
+            <field name="arch" type="xml">
+                <tree string="Time Slot">
+                    <field name="weekday"/>
+                    <field name="pos_id"/>
+                    <field name="start_hour" widget="float_time"/>
+                    <field name="end_hour" widget="float_time"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record id="view_table_reservation_slot_form" model="ir.ui.view">
+            <field name="name">table.reservation.slot.form</field>
+            <field name="model">table.reservation.slot</field>
+            <field name="type">form</field>
+            <field name="priority" eval="8"/>
+            <field name="arch" type="xml">
+                <form string="Time Slot">
+                    <sheet>
+                        <group colspan="4">
+                            <field name="weekday"/>
+                            <field name="pos_id"/>
+                            <field name="start_hour" widget="float_time"/>
+                            <field name="end_hour" widget="float_time"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        <record id="view_table_reservation_slot_search" model="ir.ui.view">
+            <field name="name">table.reservation.slot.search</field>
+            <field name="model">table.reservation.slot</field>
+            <field name="type">search</field>
+            <field name="priority" eval="8"/>
+            <field name="arch" type="xml">
+                <search string="Time Slot">
+                    <field name="weekday" select="True"/>
+                    <field name="start_hour" widget="float_time" select="True"/>
+                    <field name="end_hour" widget="float_time" select="True"/>
+                </search>
+            </field>
+        </record>
+        
+        <record model="ir.actions.act_window" id="act_open_table_reservation_slot_view">
+            <field name="name">Time Slot</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">table.reservation.slot</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_table_reservation_slot_search"/>
+        </record>
+        
+        <record model="ir.actions.act_window.view" id="act_open_table_reservation_slot_view_form">
+            <field name="act_window_id" ref="act_open_table_reservation_slot_view"/>
+            <field name="sequence" eval="20"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_table_reservation_slot_form"/>
+        </record>
+        
+        <record model="ir.actions.act_window.view" id="act_open_table_reservation_slot_view_tree">
+            <field name="act_window_id" ref="act_open_table_reservation_slot_view"/>
+            <field name="sequence" eval="10"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_table_reservation_slot_tree"/>
+        </record>
+    </data>
+
+    <menuitem id="menu_table_reservation_slot_settings" name="Time Slot" action="website_table_reservation.act_open_table_reservation_slot_view" parent="website_table_reservation.main_menu_table_reservation_settings" sequence="2"/>
+</odoo>

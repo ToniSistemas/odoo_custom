@@ -1,0 +1,10 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_table_reservation,access_table_reservation,model_table_reservation,base.group_user,1,1,1,1
+access_table_reservation_public,access_table_reservation_public,model_table_reservation,base.group_public,1,0,0,0
+access_table_reservation_portal,access_table_reservation_portal,model_table_reservation,base.group_portal,1,0,0,0
+access_table_reservation_slot,access_table_reservation_slot,model_table_reservation_slot,base.group_user,1,1,1,1
+access_table_reservation_slot_public,access_table_reservation_slot_public,model_table_reservation_slot,base.group_public,1,0,0,0
+access_table_reservation_slot_portal,access_table_reservation_slot_portal,model_table_reservation_slot,base.group_portal,1,0,0,0
+access_time_slot_line,access_time_slot_line,model_time_slot_line,base.group_user,1,1,1,1
+access_time_slot_line_public,access_time_slot_line_public,model_time_slot_line,base.group_public,1,0,0,0
+access_time_slot_line_portal,access_time_slot_line_portal,model_time_slot_line,base.group_portal,1,0,0,0
