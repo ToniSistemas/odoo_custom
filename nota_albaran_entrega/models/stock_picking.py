@@ -13,9 +13,9 @@ class StockPicking(models.Model):
     sale_note_plain = fields.Text(
         string='Nota del Pedido (texto plano)',
         compute='_compute_sale_note_plain',
+        store=False,
     )
 
-    @api.depends('sale_note')
     def _compute_sale_note_plain(self):
         """Convert HTML note to plain text for reports"""
         for pick in self:
