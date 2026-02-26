@@ -1,23 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
   <template id="report_delivery_document_inherit" inherit_id="stock.report_delivery_document">
-    <!-- Add VAT after partner address -->
-    <xpath expr="//div[@t-field='o.partner_id' and @t-options-widget='&quot;contact&quot;']" position="after">
+    <!-- Add VAT in delivery address section -->
+    <xpath expr="//div[@t-field='o.partner_id']" position="after">
       <div t-if="o.partner_id.vat">
         <span t-field="o.partner_id.vat"/>
       </div>
     </xpath>
     
-    <!-- Add note after the main content -->
-    <xpath expr="//div[hasclass('page')]" position="inside">
+    <!-- Add note at the end of the page -->
+    <xpath expr="//p[@t-if='o.note']" position="after">
       <t t-if="o.sale_note_plain">
-        <div class="row mt-4">
-          <div class="col-12">
-            <strong>Nota:</strong>
-            <br/>
-            <span t-esc="o.sale_note_plain"/>
-          </div>
-        </div>
+        <br/>
+        <strong>Nota:</strong>
+        <br/>
+        <span t-esc="o.sale_note_plain"/>
       </t>
     </xpath>
   </template>
