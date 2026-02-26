@@ -5,7 +5,7 @@ from odoo.tools import html2plaintext
 class StockPicking(models.Model):
     _inherit = 'stock.picking'
 
-    sale_note = fields.Text(
+    sale_note = fields.Html(
         string='Nota del Pedido',
         copy=False,
     )
@@ -13,7 +13,6 @@ class StockPicking(models.Model):
     sale_note_plain = fields.Text(
         string='Nota del Pedido (texto plano)',
         compute='_compute_sale_note_plain',
-        store=False,
     )
 
     @api.depends('sale_note')
@@ -21,15 +20,26 @@ class StockPicking(models.Model):
         """Convert HTML note to plain text for reports"""
         for pick in self:
             pick.sale_note_plain = html2plaintext(pick.sale_note or '') if pick.sale_note else ''
-
-    @api.onchange('origin')
-    def _onchange_origin_sale_note(self):
-        """Auto-fill sale note from related sale order"""
-        for pick in self:
-            if not pick.sale_note and pick.origin:
-                order = self.env['sale.order'].search([('name', '=', pick.origin)], limit=1)
-                if order and order.note:
-                    pick.sale_note = order.note
+    
+    def _get_sale_order(self):
+        """Get related sale order"""
+        self.ensure_one()
+        if 'sale_id' in self._fields and self.sale_id:
+            return self.sale_id
+        elif self.origin:
+            return self.env['sale.order'].search([('name', '=', self.origin)], limit=1)
+        return self.env['sale.order']
+    
+    def write(self, vals):
+        """Auto-fill sale note on write if origin changes"""
+        res = super().write(vals)
+        if 'origin' in vals or ('sale_id' in vals and 'sale_id' in self._fields):
+            for pick in self:
+                if not pick.sale_note:
+                    order = pick._get_sale_order()
+                    if order and order.note:
+                        pick.sale_note = order.note
+        return res
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -37,12 +47,7 @@ class StockPicking(models.Model):
         pickings = super().create(vals_list)
         for picking in pickings:
             if not picking.sale_note:
-                # Try sale_id if available
-                if 'sale_id' in picking._fields and picking.sale_id and picking.sale_id.note:
-                    picking.sale_note = picking.sale_id.note
-                # Fallback to origin search
-                elif picking.origin:
-                    order = self.env['sale.order'].search([('name', '=', picking.origin)], limit=1)
-                    if order and order.note:
-                        picking.sale_note = order.note
+                order = picking._get_sale_order()
+                if order and order.note:
+                    picking.sale_note = order.note
         return pickings
