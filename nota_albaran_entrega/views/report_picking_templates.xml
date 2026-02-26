@@ -2,8 +2,8 @@
 <odoo>
   <!-- Add customer VAT to delivery address -->
   <template id="report_picking_inherit_vat" inherit_id="stock.report_delivery_document">
-    <xpath expr="//div[@name='div_shipping_address']//span[@t-field='o.partner_id.country_id']" position="after">
-      <div t-if="o.partner_id.vat">
+    <xpath expr="//div[@name='div_shipping_address']" position="inside">
+      <div t-if="o.partner_id.vat" style="margin-top: 5px;">
         <span t-field="o.partner_id.vat"/>
       </div>
     </xpath>
