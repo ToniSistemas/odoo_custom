@@ -8,8 +8,8 @@
       </div>
     </xpath>
     
-    <!-- Add note at the end of the page -->
-    <xpath expr="//div[@name='signature']" position="before">
+    <!-- Add note after tables -->
+    <xpath expr="//table[@name='stock_move_line_table']" position="after">
       <t t-if="o.sale_note_plain">
         <div class="row mt-4">
           <div class="col-12">
