@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+  <!-- Add customer VAT to delivery address -->
+  <template id="report_picking_inherit_vat" inherit_id="stock.report_delivery_document">
+    <xpath expr="//div[@name='div_shipping_address']//span[@t-field='o.partner_id.country_id']" position="after">
+      <div t-if="o.partner_id.vat">
+        <span t-field="o.partner_id.vat"/>
+      </div>
+    </xpath>
+  </template>
+
   <!-- Add sale order note to the delivery slip PDF -->
   <template id="report_picking_inherit_sale_note" inherit_id="stock.report_delivery_document">
     <xpath expr="//div[hasclass('page')]" position="inside">
