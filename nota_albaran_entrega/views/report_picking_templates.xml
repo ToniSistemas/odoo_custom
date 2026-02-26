@@ -2,26 +2,25 @@
 <odoo>
   <!-- Add customer VAT to delivery address -->
   <template id="report_picking_inherit_vat" inherit_id="stock.report_delivery_document">
-    <xpath expr="//t[@t-set='information_block']" position="after">
-      <div t-if="o.partner_id.vat" class="col-auto">
-        <strong>NIF/VAT:</strong>
-        <div>
-          <span t-field="o.partner_id.vat"/>
-        </div>
+    <xpath expr="//t[@t-set='information_block']/div[@t-field='o.partner_id']" position="after">
+      <div t-if="o.partner_id.vat">
+        <span t-field="o.partner_id.vat"/>
       </div>
     </xpath>
   </template>
 
   <!-- Add sale order note to the delivery slip PDF -->
   <template id="report_picking_inherit_sale_note" inherit_id="stock.report_delivery_document">
-    <xpath expr="//div[hasclass('page')]" position="inside">
+    <xpath expr="//t[@t-foreach='o.move_line_ids']" position="after">
       <t t-if="o.sale_note_plain">
-        <div class="row mt-5">
-          <div class="col-12">
+        <tr>
+          <td colspan="99">
+            <br/>
             <strong>Nota:</strong>
-            <p t-esc="o.sale_note_plain"/>
-          </div>
-        </div>
+            <br/>
+            <span t-esc="o.sale_note_plain"/>
+          </td>
+        </tr>
       </t>
     </xpath>
   </template>
