@@ -6,8 +6,12 @@
                 <t t-set="columns" t-value="4"/>
                 <t t-set="rows" t-value="11"/>
                 <t t-set="price_included" t-value="True"/>
-                <t t-set="page_numbers" t-value="(data and data.get('page_numbers')) or 1"/>
-                <t t-call="product.report_productlabel"/>
+                <t t-set="page_numbers" t-value="(data and data.get('page_numbers', 1))"/>
+                <t t-set="products" t-value="docs if docs else (data.get('product_ids') and env['product.product'].browse(data.get('product_ids')))"/>
+                <t t-set="report_to_call" t-value="'4x12'"/>
+                <t t-call="product.report_productlabel">
+                    <t t-set="products" t-value="products"/>
+                </t>
             </div>
         </t>
     </template>
