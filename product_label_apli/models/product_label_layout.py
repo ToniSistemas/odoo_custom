@@ -15,7 +15,7 @@ class ProductLabelLayout(models.TransientModel):
         """Prepare data for report generation"""
         xml_id, data = super()._prepare_report_data()
         if self.print_format == '4x11_apli':
-            # Use the standard 4x12 report, but the override_label_4x11.xml
-            # template inheritance will change it to 11 rows
-            xml_id = 'product.report_product_template_label_4x12'
+            # Use our custom report which points to the 4x12 template
+            # The override_label_4x11.xml will apply the inheritance to change rows to 11
+            xml_id = 'product_label_apli.action_report_product_label_4x11_custom'
         return xml_id, data
