@@ -4,10 +4,20 @@
         <t t-call="web.basic_layout">
             <div class="page">
                 <style>
-                    .product_label { display: table-cell; height: 2.7cm; width: 4.85cm; page-break-inside: avoid; padding: 0.1cm; vertical-align: middle; text-align: center; }
-                    .product_label strong { font-size: 0.9em; }
-                    .product_label .price { font-size: 1.2em; font-weight: bold; }
+                    .product_label { 
+                        display: table-cell; 
+                        height: 2.7cm; 
+                        width: 4.85cm; 
+                        page-break-inside: avoid; 
+                        padding: 0.1cm; 
+                        vertical-align: middle; 
+                        text-align: center;
+                        border: 1px solid #ddd;
+                    }
+                    .product_label .name { font-size: 0.85em; font-weight: bold; margin-bottom: 0.1cm; }
+                    .product_label .price { font-size: 1.1em; font-weight: bold; margin: 0.1cm 0; }
                     .product_label .barcode { margin-top: 0.1cm; }
+                    table { border-collapse: collapse; }
                 </style>
                 <t t-set="columns" t-value="4"/>
                 <t t-set="rows" t-value="11"/>
@@ -16,24 +26,27 @@
                 <t t-set="product_ids" t-value="docs.ids if docs else (data.get('product_ids', []) if data else [])"/>
                 <t t-set="all_products" t-value="env['product.product'].browse(product_ids)"/>
                 
-                <t t-foreach="range(0, page_numbers)" t-as="page">
-                    <table style="width: 100%; table-layout: fixed; border-collapse: collapse;">
-                        <t t-foreach="range(0, rows)" t-as="row">
+                <t t-foreach="range(0, page_numbers)" t-as="page_num">
+                    <table style="width: 100%;">
+                        <t t-foreach="range(0, rows)" t-as="row_num">
                             <tr>
-                                <t t-foreach="range(0, columns)" t-as="col">
-                                    <t t-set="index" t-value="page * (rows * columns) + row * columns + col"/>
-                                    <t t-if="index &lt; len(all_products)">
-                                        <t t-set="product" t-value="all_products[index]"/>
+                                <t t-foreach="range(0, columns)" t-as="col_num">
+                                    <t t-set="idx" t-value="page_num * (rows * columns) + row_num * columns + col_num"/>
+                                    <t t-if="idx &lt; len(all_products)">
+                                        <t t-set="product" t-value="all_products[idx]"/>
                                         <td class="product_label">
-                                            <strong t-field="product.display_name"/>
+                                            <div class="name">
+                                                <span t-esc="product.display_name"/>
+                                            </div>
                                             <t t-if="price_included and product.list_price">
                                                 <div class="price">
-                                                    <t t-out="product.list_price" t-options="{'widget': 'monetary', 'display_currency': product.currency_id}"/>
+                                                    <span t-esc="'%.2f €' % product.list_price"/>
                                                 </div>
                                             </t>
                                             <t t-if="product.barcode">
                                                 <div class="barcode">
-                                                    <t t-out="product.barcode" t-options="{'widget': 'barcode', 'symbology': 'auto', 'width': 400, 'height': 80, 'humanreadable': 1}"/>
+                                                    <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s&amp;humanreadable=%s' % ('Code128', product.barcode, 400, 80, 1)" 
+                                                         style="max-width: 100%; height: auto;"/>
                                                 </div>
                                             </t>
                                         </td>
@@ -45,7 +58,7 @@
                             </tr>
                         </t>
                     </table>
-                    <p t-if="page &lt; page_numbers - 1" style="page-break-after: always;"/>
+                    <p t-if="page_num &lt; page_numbers - 1" style="page-break-after: always;"/>
                 </t>
             </div>
         </t>
