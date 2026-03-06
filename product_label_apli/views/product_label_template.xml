@@ -9,56 +9,79 @@
                         height: 2.7cm; 
                         width: 4.85cm; 
                         page-break-inside: avoid; 
-                        padding: 0.1cm; 
+                        padding: 0.2cm; 
                         vertical-align: middle; 
                         text-align: center;
                         border: 1px solid #ddd;
                     }
-                    .product_label .name { font-size: 0.85em; font-weight: bold; margin-bottom: 0.1cm; }
-                    .product_label .price { font-size: 1.1em; font-weight: bold; margin: 0.1cm 0; }
-                    .product_label .barcode { margin-top: 0.1cm; }
-                    table { border-collapse: collapse; }
+                    .product_label .name { 
+                        font-size: 10pt; 
+                        font-weight: bold; 
+                        margin-bottom: 0.1cm;
+                        display: block;
+                    }
+                    .product_label .price { 
+                        font-size: 12pt; 
+                        font-weight: bold; 
+                        margin: 0.1cm 0;
+                        display: block;
+                    }
+                    .product_label .barcode { 
+                        margin-top: 0.1cm; 
+                    }
+                    table { 
+                        border-collapse: collapse; 
+                        width: 100%; 
+                    }
                 </style>
+                
                 <t t-set="columns" t-value="4"/>
                 <t t-set="rows" t-value="11"/>
-                <t t-set="price_included" t-value="True"/>
-                <t t-set="page_numbers" t-value="data.get('page_numbers', 1) if data else 1"/>
-                <t t-set="product_ids" t-value="docs.ids if docs else (data.get('product_ids', []) if data else [])"/>
-                <t t-set="all_products" t-value="env['product.product'].browse(product_ids)"/>
+                <t t-set="labels_per_page" t-value="columns * rows"/>
                 
-                <t t-foreach="range(0, page_numbers)" t-as="page_num">
-                    <table style="width: 100%;">
-                        <t t-foreach="range(0, rows)" t-as="row_num">
+                <!-- Get product list - try docs first, then data -->
+                <t t-set="products" t-value="docs or env['product.product'].browse(data.get('product_ids', []))"/>
+                <t t-set="quantity" t-value="data.get('quantity', 1)"/>
+                
+                <!-- Generate all labels (repeat each product by quantity) -->
+                <t t-set="all_labels" t-value="[]"/>
+                <t t-foreach="products" t-as="product">
+                    <t t-foreach="range(quantity)" t-as="q">
+                        <t t-set="all_labels" t-value="all_labels + [product]"/>
+                    </t>
+                </t>
+                
+                <!-- Calculate pages -->
+                <t t-set="total_labels" t-value="len(all_labels)"/>
+                <t t-set="num_pages" t-value="int((total_labels + labels_per_page - 1) / labels_per_page) if total_labels else 1"/>
+                
+                <!-- Render pages -->
+                <t t-foreach="range(num_pages)" t-as="page_idx">
+                    <table>
+                        <t t-foreach="range(rows)" t-as="row_idx">
                             <tr>
-                                <t t-foreach="range(0, columns)" t-as="col_num">
-                                    <t t-set="idx" t-value="page_num * (rows * columns) + row_num * columns + col_num"/>
-                                    <t t-if="idx &lt; len(all_products)">
-                                        <t t-set="product" t-value="all_products[idx]"/>
-                                        <td class="product_label">
-                                            <div class="name">
-                                                <span t-esc="product.display_name"/>
-                                            </div>
-                                            <t t-if="price_included and product.list_price">
-                                                <div class="price">
-                                                    <span t-esc="'%.2f €' % product.list_price"/>
-                                                </div>
+                                <t t-foreach="range(columns)" t-as="col_idx">
+                                    <t t-set="label_idx" t-value="page_idx * labels_per_page + row_idx * columns + col_idx"/>
+                                    <td class="product_label">
+                                        <t t-if="label_idx &lt; total_labels">
+                                            <t t-set="current_product" t-value="all_labels[label_idx]"/>
+                                            <span class="name" t-esc="current_product.display_name"/>
+                                            <t t-if="current_product.list_price &gt; 0">
+                                                <span class="price" t-esc="'%.2f €' % current_product.list_price"/>
                                             </t>
-                                            <t t-if="product.barcode">
+                                            <t t-if="current_product.barcode">
                                                 <div class="barcode">
-                                                    <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s&amp;humanreadable=%s' % ('Code128', product.barcode, 400, 80, 1)" 
-                                                         style="max-width: 100%; height: auto;"/>
+                                                    <img t-att-src="'/report/barcode/?type=Code128&amp;value=%s&amp;width=400&amp;height=80&amp;humanreadable=1' % current_product.barcode" 
+                                                         style="max-width: 4cm; height: auto;"/>
                                                 </div>
                                             </t>
-                                        </td>
-                                    </t>
-                                    <t t-else="">
-                                        <td class="product_label"/>
-                                    </t>
+                                        </t>
+                                    </td>
                                 </t>
                             </tr>
                         </t>
                     </table>
-                    <p t-if="page_num &lt; page_numbers - 1" style="page-break-after: always;"/>
+                    <p t-if="page_idx &lt; num_pages - 1" style="page-break-after: always;"/>
                 </t>
             </div>
         </t>
