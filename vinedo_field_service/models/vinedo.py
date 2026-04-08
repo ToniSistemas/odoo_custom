@@ -113,6 +113,16 @@ class Plantacion(models.Model):
                 ], limit=1)
                 if existing:
                     raise ValidationError(_('Ya existe esta variedad en esta finca. Use el registro existente para actualizar datos.'))
+
+
+class Anada(models.Model):
+    _name = 'vinedo.anada'
+    _description = 'Añada / Cosecha por variedad'
+    _order = 'anio desc, finca_id, variedad_id'
+
+    name = fields.Char(string='Nombre', compute='_compute_name', store=True, index=True)
+    finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True, index=True)
+    variedad_id = fields.Many2one('vinedo.variedad', string='Variedad', required=True, index=True)
     anio = fields.Integer(string='Año', required=True, default=lambda self: fields.Date.today().year)
     graduacion = fields.Float(string='Graduación alcohólica (%vol)', digits=(5, 2))
     acidez = fields.Float(string='Acidez (g/L)', digits=(5, 2))
