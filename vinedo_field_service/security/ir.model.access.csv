@@ -1,0 +1,10 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_vinedo_finca,vinedo.finca,model_vinedo_finca,base.group_user,1,1,1,1
+access_vinedo_variedad,vinedo.variedad,model_vinedo_variedad,base.group_user,1,1,1,1
+access_vinedo_plantacion,vinedo.plantacion,model_vinedo_plantacion,base.group_user,1,1,1,1
+access_vinedo_anada,vinedo.anada,model_vinedo_anada,base.group_user,1,1,1,1
+access_vinedo_aportacion,vinedo.aportacion,model_vinedo_aportacion,base.group_user,1,1,1,1
+access_vinedo_tratamiento,vinedo.tratamiento,model_vinedo_tratamiento,base.group_user,1,1,1,1
+access_vinedo_poda,vinedo.poda,model_vinedo_poda,base.group_user,1,1,1,1
+access_vinedo_trabajo,vinedo.trabajo,model_vinedo_trabajo,base.group_user,1,1,1,1
+access_vinedo_territorio,vinedo.territorio,model_vinedo_territorio,base.group_user,1,1,1,1
