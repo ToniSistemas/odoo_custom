@@ -101,20 +101,18 @@ class Plantacion(models.Model):
     fecha_plantacion = fields.Date(string='Fecha de plantación')
     superficie = fields.Float(string='Superficie (ha)', digits=(10, 2))
 
-    _sql_constraints = [
-        ('unique_finca_variedad', 'UNIQUE(finca_id, variedad_id)',
-         'Ya existe esta variedad en esta finca. Use el registro existente para actualizar datos.')
-    ]
-
-
-class Anada(models.Model):
-    _name = 'vinedo.anada'
-    _description = 'Añada / Cosecha por variedad'
-    _order = 'anio desc, finca_id, variedad_id'
-
-    name = fields.Char(string='Nombre', compute='_compute_name', store=True, index=True)
-    finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True, index=True)
-    variedad_id = fields.Many2one('vinedo.variedad', string='Variedad', required=True, index=True)
+    @api.constrains('finca_id', 'variedad_id')
+    def _check_unique_finca_variedad(self):
+        """Ensure unique combination of finca and variedad"""
+        for rec in self:
+            if rec.finca_id and rec.variedad_id:
+                existing = self.search([
+                    ('finca_id', '=', rec.finca_id.id),
+                    ('variedad_id', '=', rec.variedad_id.id),
+                    ('id', '!=', rec.id)
+                ], limit=1)
+                if existing:
+                    raise ValidationError(_('Ya existe esta variedad en esta finca. Use el registro existente para actualizar datos.'))
     anio = fields.Integer(string='Año', required=True, default=lambda self: fields.Date.today().year)
     graduacion = fields.Float(string='Graduación alcohólica (%vol)', digits=(5, 2))
     acidez = fields.Float(string='Acidez (g/L)', digits=(5, 2))
@@ -133,10 +131,19 @@ class Anada(models.Model):
                 parts.append(rec.variedad_id.name)
             rec.name = ' - '.join(parts) if parts else _('Nueva Añada')
 
-    _sql_constraints = [
-        ('unique_finca_variedad_anio', 'UNIQUE(finca_id, variedad_id, anio)',
-         'Ya existe una añada para esta combinación de finca, variedad y año.')
-    ]
+    @api.constrains('finca_id', 'variedad_id', 'anio')
+    def _check_unique_finca_variedad_anio(self):
+        """Ensure unique combination of finca, variedad and year"""
+        for rec in self:
+            if rec.finca_id and rec.variedad_id and rec.anio:
+                existing = self.search([
+                    ('finca_id', '=', rec.finca_id.id),
+                    ('variedad_id', '=', rec.variedad_id.id),
+                    ('anio', '=', rec.anio),
+                    ('id', '!=', rec.id)
+                ], limit=1)
+                if existing:
+                    raise ValidationError(_('Ya existe una añada para esta combinación de finca, variedad y año.'))
 
 
 class Aportacion(models.Model):
