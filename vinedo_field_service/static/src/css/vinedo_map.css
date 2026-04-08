@@ -1,6 +1,13 @@
-.o_map_widget .leaflet-container {
+.o_field_vinedo_map .leaflet-container {
   width: 100%;
-  height: 360px;
+  height: 380px;
+}
+
+.vinedo-map-container {
+  width: 100%;
+  height: 380px;
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
 }
 
 .vinedo-map-fullscreen {
@@ -15,9 +22,14 @@
   background: white;
 }
 
+.vinedo-map-fullscreen .leaflet-container {
+  height: 100% !important;
+}
+
 .vmap-fullscreen {
   position: absolute;
   right: 10px;
   top: 10px;
   z-index: 1000;
 }
+
