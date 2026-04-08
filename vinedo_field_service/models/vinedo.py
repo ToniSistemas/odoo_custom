@@ -1,173 +1,191 @@
-from odoo import models, fields, api
+from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError
 import json
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class Territorio(models.Model):
     _name = 'vinedo.territorio'
     _description = 'Territorio/Región'
+    _order = 'name'
 
-    name = fields.Char(string='Nombre', required=True)
+    name = fields.Char(string='Nombre', required=True, index=True)
 
 
 class Variedad(models.Model):
     _name = 'vinedo.variedad'
     _description = 'Variedad de uva'
+    _order = 'name'
 
-    name = fields.Char(string='Variedad', required=True)
+    name = fields.Char(string='Variedad', required=True, index=True)
     descripcion = fields.Text(string='Descripción')
 
 
 class Finca(models.Model):
     _name = 'vinedo.finca'
     _description = 'Finca / Parcela'
+    _order = 'name'
 
-    name = fields.Char(string='Nombre', required=True)
-    territory_id = fields.Many2one('vinedo.territorio', string='Territorio')
+    name = fields.Char(string='Nombre', required=True, index=True)
+    territory_id = fields.Many2one('vinedo.territorio', string='Territorio', index=True)
     area = fields.Float(string='Extensión (ha)')
-    latitude = fields.Float(string='Latitud')
-    longitude = fields.Float(string='Longitud')
-    polygon = fields.Text(string='Polígono (GeoJSON)')
+    latitude = fields.Float(string='Latitud', digits=(10, 7))
+    longitude = fields.Float(string='Longitud', digits=(10, 7))
+    polygon = fields.Text(string='Polígono (GeoJSON Feature)', help='Almacena GeoJSON Feature con coordenadas del polígono')
     variedad_ids = fields.One2many('vinedo.plantacion', 'finca_id', string='Variedades plantadas')
     aportacion_ids = fields.One2many('vinedo.aportacion', 'finca_id', string='Aportaciones de minerales')
     tratamiento_ids = fields.One2many('vinedo.tratamiento', 'finca_id', string='Tratamientos')
     poda_ids = fields.One2many('vinedo.poda', 'finca_id', string='Podas')
     trabajo_ids = fields.One2many('vinedo.trabajo', 'finca_id', string='Trabajos')
-    # polygon stores a GeoJSON Feature as text
-    polygon = fields.Text(string='Polígono (GeoJSON Feature)')
+    anada_ids = fields.One2many('vinedo.anada', 'finca_id', string='Añadas')
+
+    @api.constrains('latitude', 'longitude')
+    def _check_coordinates(self):
+        """Validate GPS coordinates range"""
+        for rec in self:
+            if rec.latitude and not (-90 <= rec.latitude <= 90):
+                raise ValidationError(_('Latitud debe estar entre -90 y 90 grados.'))
+            if rec.longitude and not (-180 <= rec.longitude <= 180):
+                raise ValidationError(_('Longitud debe estar entre -180 y 180 grados.'))
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Override create to normalize polygon after creation"""
+        records = super().create(vals_list)
+        records._normalize_polygon()
+        return records
+
+    def write(self, vals):
+        """Override write to normalize polygon only if polygon field changed"""
+        res = super().write(vals)
+        if 'polygon' in vals:
+            self._normalize_polygon()
+        return res
+
+    def _normalize_polygon(self):
+        """Normalize polygon field to GeoJSON Feature format (no recursive write)"""
+        for rec in self.filtered('polygon'):
+            try:
+                parsed = json.loads(rec.polygon) if isinstance(rec.polygon, str) else rec.polygon
+                if not isinstance(parsed, dict):
+                    continue
+                # Already a Feature? skip
+                if parsed.get('type') == 'Feature':
+                    continue
+                # Wrap geometry as Feature
+                feature = {
+                    'type': 'Feature',
+                    'geometry': parsed,
+                    'properties': {'name': rec.name, 'finca_id': rec.id}
+                }
+                feature_text = json.dumps(feature)
+                # Use SQL update to avoid recursion
+                self.env.cr.execute(
+                    "UPDATE vinedo_finca SET polygon = %s WHERE id = %s",
+                    (feature_text, rec.id)
+                )
+                self.env.cache.invalidate([(rec._fields['polygon'], rec.ids)])
+            except (json.JSONDecodeError, TypeError, KeyError) as e:
+                _logger.warning('Failed to normalize polygon for finca %s: %s', rec.id, e)
 
 
 class Plantacion(models.Model):
     _name = 'vinedo.plantacion'
     _description = 'Plantación por variedad en finca'
+    _order = 'finca_id, variedad_id'
 
-    finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True, ondelete='cascade')
-    variedad_id = fields.Many2one('vinedo.variedad', string='Variedad', required=True)
+    finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True, ondelete='cascade', index=True)
+    variedad_id = fields.Many2one('vinedo.variedad', string='Variedad', required=True, index=True)
     fecha_plantacion = fields.Date(string='Fecha de plantación')
-    superficie = fields.Float(string='Superficie (ha)')
+    superficie = fields.Float(string='Superficie (ha)', digits=(10, 2))
+
+    _sql_constraints = [
+        ('unique_finca_variedad', 'UNIQUE(finca_id, variedad_id)',
+         'Ya existe esta variedad en esta finca. Use el registro existente para actualizar datos.')
+    ]
 
 
 class Anada(models.Model):
     _name = 'vinedo.anada'
     _description = 'Añada / Cosecha por variedad'
+    _order = 'anio desc, finca_id, variedad_id'
 
-    name = fields.Char(string='Nombre')
-    finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True)
-    variedad_id = fields.Many2one('vinedo.variedad', string='Variedad', required=True)
-    anio = fields.Integer(string='Año')
-    graduacion = fields.Float(string='Graduación alcohólica (%vol)')
-    acidez = fields.Float(string='Acidez (g/L)')
-    cantidad = fields.Float(string='Cantidad recolectada (kg)')
+    name = fields.Char(string='Nombre', compute='_compute_name', store=True, index=True)
+    finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True, index=True)
+    variedad_id = fields.Many2one('vinedo.variedad', string='Variedad', required=True, index=True)
+    anio = fields.Integer(string='Año', required=True, default=lambda self: fields.Date.today().year)
+    graduacion = fields.Float(string='Graduación alcohólica (%vol)', digits=(5, 2))
+    acidez = fields.Float(string='Acidez (g/L)', digits=(5, 2))
+    cantidad = fields.Float(string='Cantidad recolectada (kg)', digits=(12, 2))
+
+    @api.depends('finca_id', 'variedad_id', 'anio')
+    def _compute_name(self):
+        """Auto-generate name from components"""
+        for rec in self:
+            parts = []
+            if rec.anio:
+                parts.append(str(rec.anio))
+            if rec.finca_id:
+                parts.append(rec.finca_id.name)
+            if rec.variedad_id:
+                parts.append(rec.variedad_id.name)
+            rec.name = ' - '.join(parts) if parts else _('Nueva Añada')
+
+    _sql_constraints = [
+        ('unique_finca_variedad_anio', 'UNIQUE(finca_id, variedad_id, anio)',
+         'Ya existe una añada para esta combinación de finca, variedad y año.')
+    ]
 
 
 class Aportacion(models.Model):
     _name = 'vinedo.aportacion'
     _description = 'Aportación de minerales'
+    _order = 'fecha desc, finca_id'
 
-    finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True, ondelete='cascade')
-    fecha = fields.Date(string='Fecha')
+    finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True, ondelete='cascade', index=True)
+    fecha = fields.Date(string='Fecha', default=fields.Date.today, required=True)
     descripcion = fields.Text(string='Descripción')
-    cantidad = fields.Float(string='Cantidad (kg)')
+    producto = fields.Char(string='Producto/Mineral', required=True)
+    cantidad = fields.Float(string='Cantidad (kg)', digits=(10, 2))
 
 
 class Tratamiento(models.Model):
     _name = 'vinedo.tratamiento'
     _description = 'Tratamiento (fitosanitario u otros)'
+    _order = 'fecha desc, finca_id'
 
-    finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True, ondelete='cascade')
-    tipo = fields.Selection([('fitosanitario', 'Fitosanitario'), ('otro', 'Otro')], string='Tipo', default='fitosanitario')
-    fecha = fields.Date(string='Fecha')
-    producto = fields.Char(string='Producto')
+    finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True, ondelete='cascade', index=True)
+    tipo = fields.Selection([('fitosanitario', 'Fitosanitario'), ('otro', 'Otro')], 
+                           string='Tipo', default='fitosanitario', required=True)
+    fecha = fields.Date(string='Fecha', default=fields.Date.today, required=True, index=True)
+    producto = fields.Char(string='Producto', required=True)
     dosis = fields.Char(string='Dosis / Observaciones')
-    empleado_id = fields.Many2one('hr.employee', string='Empleado')
+    empleado_id = fields.Many2one('hr.employee', string='Empleado', index=True)
 
 
 class Poda(models.Model):
     _name = 'vinedo.poda'
     _description = 'Registro de podas'
+    _order = 'fecha desc, finca_id'
 
-    finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True, ondelete='cascade')
-    fecha = fields.Date(string='Fecha')
+    finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True, ondelete='cascade', index=True)
+    fecha = fields.Date(string='Fecha', default=fields.Date.today, required=True, index=True)
+    tipo_poda = fields.Selection([('invierno', 'Poda de invierno'), ('verde', 'Poda en verde')],
+                                 string='Tipo de poda')
     descripcion = fields.Text(string='Descripción')
-    empleado_id = fields.Many2one('hr.employee', string='Empleado')
+    empleado_id = fields.Many2one('hr.employee', string='Empleado', index=True)
 
 
 class Trabajo(models.Model):
     _name = 'vinedo.trabajo'
     _description = 'Trabajo realizado en finca'
+    _order = 'fecha desc, finca_id'
 
-    finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True, ondelete='cascade')
-    fecha = fields.Date(string='Fecha')
-    empleado_id = fields.Many2one('hr.employee', string='Empleado')
-    tipo_trabajo = fields.Char(string='Trabajo realizado')
-    horas = fields.Float(string='Horas')
-
-    @api.model
-    def create(self, vals):
-        record = super(Trabajo, self).create(vals)
-        return record
-
-
-class Finca(models.Model):
-    _inherit = 'vinedo.finca'
-
-    @api.model
-    def create(self, vals):
-        rec = super(Finca, self).create(vals)
-        rec._ensure_polygon_feature()
-        return rec
-
-    def write(self, vals):
-        res = super(Finca, self).write(vals)
-        for rec in self:
-            rec._ensure_polygon_feature()
-        return res
-
-    def _ensure_polygon_feature(self):
-        """Ensure the `polygon` field is a GeoJSON Feature (wrap geometry if needed)
-        and attempt to synchronize with geoengine if available."""
-        for rec in self:
-            if not rec.polygon:
-                continue
-            try:
-                parsed = json.loads(rec.polygon) if isinstance(rec.polygon, str) else rec.polygon
-            except Exception:
-                continue
-            # Normalize to Feature
-            if isinstance(parsed, dict) and parsed.get('type') == 'Feature':
-                feature = parsed
-            else:
-                # assume geometry object
-                feature = {'type': 'Feature', 'geometry': parsed, 'properties': {'name': rec.name}}
-            # store normalized feature as text if changed
-            try:
-                feature_text = json.dumps(feature)
-                if rec.polygon != feature_text:
-                    rec.sudo().write({'polygon': feature_text})
-            except Exception:
-                pass
-            # Try syncing with geoengine (optional)
-            try:
-                layer_model = self.env['geoengine.layer']
-                feature_model = self.env['geoengine.feature']
-            except Exception:
-                layer_model = False
-                feature_model = False
-            if layer_model and feature_model:
-                try:
-                    layer = layer_model.search([('name', '=', 'vinedo_fincas')], limit=1)
-                    if not layer:
-                        layer = layer_model.create({'name': 'vinedo_fincas', 'srid': 4326})
-                    vals = {'layer_id': layer.id}
-                    # Attempt common field names
-                    if 'geom' in feature_model._fields:
-                        vals['geom'] = feature_text
-                    elif 'geometry' in feature_model._fields:
-                        vals['geometry'] = feature_text
-                    # attach reference if possible
-                    if 'vinedo_finca_id' in feature_model._fields:
-                        vals['vinedo_finca_id'] = rec.id
-                    # create a new feature record (best effort)
-                    feature_model.create(vals)
-                except Exception:
-                    # swallow errors to avoid breaking core create/write
-                    pass
+    finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True, ondelete='cascade', index=True)
+    fecha = fields.Date(string='Fecha', default=fields.Date.today, required=True, index=True)
+    empleado_id = fields.Many2one('hr.employee', string='Empleado', index=True)
+    tipo_trabajo = fields.Char(string='Trabajo realizado', required=True)
+    horas = fields.Float(string='Horas', digits=(5, 2))
+    observaciones = fields.Text(string='Observaciones')
