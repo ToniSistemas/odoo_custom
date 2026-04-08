@@ -47,7 +47,7 @@
                         <field name="area"/>
                         <field name="latitude"/>
                         <field name="longitude"/>
-                        <field name="polygon" widget="vinedo_map"/>
+                        <field name="polygon"/>
                     </group>
                     <notebook>
                         <page string="Variedades">
