@@ -1,6 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!-- Finca Views -->
+    <record id="view_finca_search" model="ir.ui.view">
+        <field name="name">vinedo.finca.search</field>
+        <field name="model">vinedo.finca</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="territory_id"/>
+                <filter string="Con Territorio" name="filter_with_territory" domain="[('territory_id', '!=', False)]"/>
+                <group expand="0" string="Agrupar por">
+                    <filter string="Territorio" name="group_territory" context="{'group_by': 'territory_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="view_finca_tree" model="ir.ui.view">
         <field name="name">vinedo.finca.tree</field>
         <field name="model">vinedo.finca</field>
@@ -8,7 +23,9 @@
             <list>
                 <field name="name"/>
                 <field name="territory_id"/>
-                <field name="area"/>
+                <field name="area" sum="Total Extensión (ha)"/>
+                <field name="latitude" optional="hide"/>
+                <field name="longitude" optional="hide"/>
             </list>
         </field>
     </record>
@@ -23,7 +40,70 @@
                         <field name="name"/>
                         <field name="territory_id"/>
                         <field name="area"/>
+                        <field name="latitude"/>
+                        <field name="longitude"/>
+                        <field name="polygon" widget="vinedo_map"/>
                     </group>
+                    <notebook>
+                        <page string="Variedades">
+                            <field name="variedad_ids">
+                                <list editable="bottom">
+                                    <field name="variedad_id"/>
+                                    <field name="fecha_plantacion"/>
+                                    <field name="superficie"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Tratamientos">
+                            <field name="tratamiento_ids">
+                                <list editable="bottom">
+                                    <field name="fecha"/>
+                                    <field name="tipo"/>
+                                    <field name="producto"/>
+                                    <field name="empleado_id"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Podas">
+                            <field name="poda_ids">
+                                <list editable="bottom">
+                                    <field name="fecha"/>
+                                    <field name="empleado_id"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Trabajos">
+                            <field name="trabajo_ids">
+                                <list editable="bottom">
+                                    <field name="fecha"/>
+                                    <field name="tipo_trabajo"/>
+                                    <field name="empleado_id"/>
+                                    <field name="horas" sum="Total Horas"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Añadas">
+                            <field name="anada_ids">
+                                <list editable="bottom">
+                                    <field name="anio"/>
+                                    <field name="variedad_id"/>
+                                    <field name="cantidad" sum="Total kg"/>
+                                    <field name="graduacion"/>
+                                    <field name="acidez"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Aportaciones">
+                            <field name="aportacion_ids">
+                                <list editable="bottom">
+                                    <field name="fecha"/>
+                                    <field name="producto"/>
+                                    <field name="cantidad" sum="Total kg"/>
+                                    <field name="descripcion"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
                 </sheet>
             </form>
         </field>
@@ -37,4 +117,131 @@
 
     <menuitem id="menu_vinedo_root" name="Viñedo" sequence="10"/>
     <menuitem id="menu_vinedo_fincas" name="Fincas" parent="menu_vinedo_root" action="action_finca" sequence="1"/>
+
+    <!-- Variedad Views -->
+    <record id="view_variedad_tree" model="ir.ui.view">
+        <field name="name">vinedo.variedad.tree</field>
+        <field name="model">vinedo.variedad</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="descripcion"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_variedad_form" model="ir.ui.view">
+        <field name="name">vinedo.variedad.form</field>
+        <field name="model">vinedo.variedad</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="descripcion"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_variedad" model="ir.actions.act_window">
+        <field name="name">Variedades</field>
+        <field name="res_model">vinedo.variedad</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_vinedo_variedades" name="Variedades" parent="menu_vinedo_root" action="action_variedad" sequence="2"/>
+
+    <!-- Añada Views -->
+    <record id="view_anada_search" model="ir.ui.view">
+        <field name="name">vinedo.anada.search</field>
+        <field name="model">vinedo.anada</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="finca_id"/>
+                <field name="variedad_id"/>
+                <field name="anio"/>
+                <filter string="Últimos 5 años" name="filter_recent" domain="[('anio', '&gt;=', context_today().year - 5)]"/>
+                <group expand="0" string="Agrupar por">
+                    <filter string="Año" name="group_anio" context="{'group_by': 'anio'}"/>
+                    <filter string="Finca" name="group_finca" context="{'group_by': 'finca_id'}"/>
+                    <filter string="Variedad" name="group_variedad" context="{'group_by': 'variedad_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_anada_tree" model="ir.ui.view">
+        <field name="name">vinedo.anada.tree</field>
+        <field name="model">vinedo.anada</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="anio"/>
+                <field name="finca_id"/>
+                <field name="variedad_id"/>
+                <field name="cantidad" sum="Total kg"/>
+                <field name="graduacion" avg="Graduación Media"/>
+                <field name="acidez" avg="Acidez Media"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_anada_form" model="ir.ui.view">
+        <field name="name">vinedo.anada.form</field>
+        <field name="model">vinedo.anada</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="finca_id"/>
+                            <field name="variedad_id"/>
+                            <field name="anio"/>
+                        </group>
+                        <group>
+                            <field name="graduacion"/>
+                            <field name="acidez"/>
+                            <field name="cantidad"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_anada" model="ir.actions.act_window">
+        <field name="name">Añadas</field>
+        <field name="res_model">vinedo.anada</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_vinedo_anadas" name="Añadas" parent="menu_vinedo_root" action="action_anada" sequence="3"/>
+
+    <!-- Territorio Views -->
+    <record id="view_territorio_tree" model="ir.ui.view">
+        <field name="name">vinedo.territorio.tree</field>
+        <field name="model">vinedo.territorio</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="name"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_territorio" model="ir.actions.act_window">
+        <field name="name">Territorios</field>
+        <field name="res_model">vinedo.territorio</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <menuitem id="menu_vinedo_config" name="Configuración" parent="menu_vinedo_root" sequence="100"/>
+    <menuitem id="menu_vinedo_territorios" name="Territorios" parent="menu_vinedo_config" action="action_territorio" sequence="1"/>
 </odoo>
