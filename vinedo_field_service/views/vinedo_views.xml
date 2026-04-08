@@ -1,25 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="menu_vinedo_root" model="ir.ui.menu">
-        <field name="name">Viñedo</field>
-        <field name="sequence">10</field>
-    </record>
-
     <!-- Finca Views -->
-    <record id="view_finca_search" model="ir.ui.view">
-        <field name="name">vinedo.finca.search</field>
+    <record id="view_finca_tree" model="ir.ui.view">
+        <field name="name">vinedo.finca.tree</field>
         <field name="model">vinedo.finca</field>
         <field name="arch" type="xml">
-            <search>
+            <list>
                 <field name="name"/>
                 <field name="territory_id"/>
-                <filter string="Con Territorio" name="filter_with_territory" domain="[('territory_id', '!=', False)]"/>
-                <group expand="0" string="Agrupar por">
-                    <filter string="Territorio" name="group_territory" context="{'group_by': 'territory_id'}"/>
-                </group>
-            </search>
+                <field name="area"/>
+            </list>
         </field>
     </record>
+
+    <record id="view_finca_form" model="ir.ui.view">
+        <field name="name">vinedo.finca.form</field>
+        <field name="model">vinedo.finca</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="territory_id"/>
+                        <field name="area"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_finca" model="ir.actions.act_window">
+        <field name="name">Fincas</field>
+        <field name="res_model">vinedo.finca</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_vinedo_root" name="Viñedo" sequence="10"/>
+    <menuitem id="menu_vinedo_fincas" name="Fincas" parent="menu_vinedo_root" action="action_finca" sequence="1"/>
+</odoo>
 
     <record id="view_finca_tree" model="ir.ui.view">
         <field name="name">vinedo.finca.tree</field>
