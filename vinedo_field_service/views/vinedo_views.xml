@@ -41,7 +41,7 @@
         <field name="arch" type="xml">
             <form>
                 <sheet>
-                        <group>
+                    <group>
                         <field name="name"/>
                         <field name="territory_id"/>
                         <field name="area"/>
