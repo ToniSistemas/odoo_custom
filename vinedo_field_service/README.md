@@ -1,4 +1,4 @@
-# Viñedo Field Service v1.2.0
+# Viñedo Field Service v1.3.0
 
 Módulo de Odoo 19 para gestión completa de viñedos.
 
@@ -6,12 +6,26 @@ Módulo de Odoo 19 para gestión completa de viñedos.
 
 ### 🗺️ Gestión de Fincas
 - Geolocalización con latitud/longitud
-- Dibujo de polígonos en mapa interactivo (Leaflet)
-- Widget personalizado con pantalla completa
+- **Widget de mapa interactivo** con Leaflet.js (compatible Odoo 19 OWL)
+- Dibujo de polígonos para delimitar fincas
+- Widget personalizado con botón pantalla completa
 - Almacenamiento GeoJSON Feature
 - Validación de coordenadas GPS
 - Vinculación con territorios
 - Búsquedas y filtros por territorio
+
+### 📍 Posicionamiento GPS
+Ver guía completa en [`doc/POSICIONAMIENTO_GPS.md`](doc/POSICIONAMIENTO_GPS.md)
+
+**Cómo obtener coordenadas:**
+1. Abre Google Maps
+2. Haz clic derecho en tu finca → Copiar coordenadas
+3. Primer número = Latitud (40.4 para centro España)
+4. Segundo número = Longitud (-3.7 para centro España)
+
+**Ejemplo España:**
+- Latitud: 42.5 (positivo = Norte)
+- Longitud: -3.0 (negativo = Oeste de Greenwich)
 
 ### 🍇 Variedades y Plantaciones
 - Catálogo de variedades de uva
