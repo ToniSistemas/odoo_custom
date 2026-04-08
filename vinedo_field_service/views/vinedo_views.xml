@@ -5,12 +5,7 @@
         <field name="sequence">10</field>
     </record>
 
-    <record id="action_finca" model="ir.actions.act_window">
-        <field name="name">Fincas</field>
-        <field name="res_model">vinedo.finca</field>
-        <field name="view_mode">tree,form</field>
-    </record>
-
+    <!-- Finca Views -->
     <record id="view_finca_search" model="ir.ui.view">
         <field name="name">vinedo.finca.search</field>
         <field name="model">vinedo.finca</field>
@@ -119,15 +114,17 @@
         </field>
     </record>
 
-    <menuitem id="menu_vinedo_fincas" name="Fincas" parent="menu_vinedo_root" 
-              action="action_finca" sequence="1"/>
-
-    <record id="action_variedad" model="ir.actions.act_window">
-        <field name="name">Variedades</field>
-        <field name="res_model">vinedo.variedad</field>
+    <!-- Finca Action and Menu -->
+    <record id="action_finca" model="ir.actions.act_window">
+        <field name="name">Fincas</field>
+        <field name="res_model">vinedo.finca</field>
         <field name="view_mode">tree,form</field>
     </record>
 
+    <menuitem id="menu_vinedo_fincas" name="Fincas" parent="menu_vinedo_root" 
+              action="action_finca" sequence="1"/>
+
+    <!-- Variedad Views -->
     <record id="view_variedad_search" model="ir.ui.view">
         <field name="name">vinedo.variedad.search</field>
         <field name="model">vinedo.variedad</field>
@@ -164,15 +161,17 @@
         </field>
     </record>
 
-    <menuitem id="menu_vinedo_variedades" name="Variedades" parent="menu_vinedo_root" 
-              action="action_variedad" sequence="2"/>
-
-    <record id="action_anada" model="ir.actions.act_window">
-        <field name="name">Añadas</field>
-        <field name="res_model">vinedo.anada</field>
+    <!-- Variedad Action and Menu -->
+    <record id="action_variedad" model="ir.actions.act_window">
+        <field name="name">Variedades</field>
+        <field name="res_model">vinedo.variedad</field>
         <field name="view_mode">tree,form</field>
     </record>
 
+    <menuitem id="menu_vinedo_variedades" name="Variedades" parent="menu_vinedo_root" 
+              action="action_variedad" sequence="2"/>
+
+    <!-- Añada Views -->
     <record id="view_anada_search" model="ir.ui.view">
         <field name="name">vinedo.anada.search</field>
         <field name="model">vinedo.anada</field>
@@ -235,6 +234,13 @@
                 </sheet>
             </form>
         </field>
+    </record>
+
+    <!-- Añada Action and Menu -->
+    <record id="action_anada" model="ir.actions.act_window">
+        <field name="name">Añadas</field>
+        <field name="res_model">vinedo.anada</field>
+        <field name="view_mode">tree,form</field>
     </record>
 
     <menuitem id="menu_vinedo_anadas" name="Añadas" parent="menu_vinedo_root" 
