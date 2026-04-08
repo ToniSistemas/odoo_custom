@@ -1,4 +1,4 @@
-# Viñedo Field Service
+# Viñedo Field Service v1.2.0
 
 Módulo de Odoo 19 para gestión completa de viñedos.
 
@@ -7,9 +7,11 @@ Módulo de Odoo 19 para gestión completa de viñedos.
 ### 🗺️ Gestión de Fincas
 - Geolocalización con latitud/longitud
 - Dibujo de polígonos en mapa interactivo (Leaflet)
+- Widget personalizado con pantalla completa
 - Almacenamiento GeoJSON Feature
 - Validación de coordenadas GPS
 - Vinculación con territorios
+- Búsquedas y filtros por territorio
 
 ### 🍇 Variedades y Plantaciones
 - Catálogo de variedades de uva
