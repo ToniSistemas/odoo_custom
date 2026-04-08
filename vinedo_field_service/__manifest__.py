@@ -21,6 +21,7 @@
     'data': [
         'security/ir.model.access.csv',
         'views/vinedo_views.xml',
+        'views/vinedo_search_views.xml',
     ],
     'assets': {
         'web.assets_backend': [
