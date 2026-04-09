@@ -33,13 +33,13 @@ class Finca(models.Model):
     area = fields.Float(string='Extensión (ha)')
     latitude = fields.Float(string='Latitud', digits=(10, 7))
     longitude = fields.Float(string='Longitud', digits=(10, 7))
-    polygon = fields.Text(string='Polígono (GeoJSON Feature)', help='Almacena GeoJSON Feature con coordenadas del polígono')
     gmap_url = fields.Char(string='Google Maps', compute='_compute_map_urls')
     osm_url = fields.Char(string='OpenStreetMap', compute='_compute_map_urls')
     map_embed = fields.Html(string='Mapa OSM', compute='_compute_map_urls', sanitize=False)
-    ref_catastral = fields.Char(string='Referencia Catastral', index=True)
-    catastro_superficie = fields.Float(string='Superficie Catastral (m²)', digits=(10, 2))
-    catastro_embed = fields.Html(string='Mapa Catastro', compute='_compute_catastro_embed', sanitize=False)
+    ref_sigpac = fields.Char(string='Referencia SIGPAC', index=True, help='Prov-Municipio-Polígono-Parcela-Recinto')
+    ref_catastral = fields.Char(string='Referencia Catastral', index=True, help='Obtenida de SIGPAC')
+    sigpac_json = fields.Text(string='Datos SIGPAC', readonly=True)
+    sigpac_info = fields.Html(string='SIGPAC', compute='_compute_sigpac_info', sanitize=False)
     variedad_ids = fields.One2many('vinedo.plantacion', 'finca_id', string='Variedades plantadas')
     aportacion_ids = fields.One2many('vinedo.aportacion', 'finca_id', string='Aportaciones de minerales')
     tratamiento_ids = fields.One2many('vinedo.tratamiento', 'finca_id', string='Tratamientos')
@@ -84,182 +84,234 @@ class Finca(models.Model):
                     '</div>'
                 )
 
-    @api.depends('latitude', 'longitude', 'ref_catastral')
-    def _compute_catastro_embed(self):
-        base = 'https://www1.sedecatastro.gob.es'
-        card_style = (
-            'display:inline-block;padding:12px 18px;margin:4px 6px 4px 0;'
-            'background:#fff;border:1px solid #dee2e6;border-radius:6px;'
-            'text-decoration:none;color:#495057;font-size:13px;'
-        )
+    @api.depends('sigpac_json', 'latitude', 'longitude')
+    def _compute_sigpac_info(self):
+        USO_LABELS = {
+            'VI': 'Viñedo', 'TA': 'Tierra Arable', 'OV': 'Olivar', 'FO': 'Forestal',
+            'PA': 'Pasto Arbolado', 'PR': 'Prado o Pradera', 'IM': 'Improductivo',
+            'AG': 'Agua', 'CA': 'Vial', 'ZU': 'Zona Urbana', 'FF': 'Frutos Secos',
+            'CF': 'Cítricos', 'EP': 'Elemento Paisaje', 'PS': 'Pastos',
+            'FV': 'Frutales Varios', 'FL': 'Flores/Ornamentales', 'ZC': 'Zona Concentrada',
+        }
         for rec in self:
-            if rec.ref_catastral:
-                ref = rec.ref_catastral.strip()
-                url_mapa = f'{base}/Cartografia/mapa.aspx?pest=rc&final=&rc={ref}&del=&mun='
-                url_ficha = f'{base}/OVCFrames.aspx?TIPO=CONSULTA&rc={ref}'
-                # Mini OSM map centered on coordinates (if available)
-                osm_html = ''
-                if rec.latitude and rec.longitude:
-                    lat, lon = rec.latitude, rec.longitude
-                    osm_html = (
-                        f'<iframe src="https://www.openstreetmap.org/export/embed.html'
-                        f'?bbox={lon-0.005},{lat-0.005},{lon+0.005},{lat+0.005}'
-                        f'&amp;layer=mapnik&amp;marker={lat},{lon}"'
-                        f' style="width:100%;height:220px;border:1px solid #ccc;border-radius:4px;"'
-                        f' frameborder="0" scrolling="no"></iframe>'
-                    )
-                rec.catastro_embed = (
-                    '<div style="padding:10px;background:#f8f9fa;border:1px solid #dee2e6;border-radius:6px;">'
-                    '<p style="margin:0 0 8px 0;font-size:13px;">'
-                    f'<strong>Referencia catastral:</strong> <code style="font-size:13px;">{ref}</code>'
-                    '</p>'
-                    f'<a href="{url_mapa}" target="_blank" style="{card_style}">&#128506; Ver en Catastro</a>'
-                    f'<a href="{url_ficha}" target="_blank" style="{card_style}">&#128196; Ficha completa</a>'
-                    '</div>'
-                    + osm_html
-                )
-            elif rec.latitude and rec.longitude:
+            osm_html = ''
+            if rec.latitude and rec.longitude:
                 lat, lon = rec.latitude, rec.longitude
-                url_cat = (
-                    f'{base}/Cartografia/mapa.aspx?pest=coordenadas&from=OVCBusqueda'
-                    f'&final=&ZV=NO&ZR=NO&anyoZV=&tematicos=&anyotem=&historica='
-                    f'&coordinadas={lat},{lon}'
-                )
                 osm_html = (
                     f'<iframe src="https://www.openstreetmap.org/export/embed.html'
                     f'?bbox={lon-0.005},{lat-0.005},{lon+0.005},{lat+0.005}'
                     f'&amp;layer=mapnik&amp;marker={lat},{lon}"'
-                    f' style="width:100%;height:220px;border:1px solid #ccc;border-radius:4px;"'
+                    f' style="width:100%;height:220px;border:1px solid #ccc;border-radius:4px;margin-top:8px;"'
                     f' frameborder="0" scrolling="no"></iframe>'
                 )
-                rec.catastro_embed = (
-                    '<div style="padding:10px;background:#e8f4fc;border:1px solid #bee5eb;border-radius:6px;margin-bottom:8px;">'
-                    f'<a href="{url_cat}" target="_blank" style="{card_style}">&#128506; Buscar parcela en Catastro</a>'
-                    '<span style="font-size:12px;color:#6c757d;margin-left:8px;">'
-                    'Abre el Catastro en nueva pestaña, localiza la parcela y luego pulsa '
-                    '<strong>«Consultar Catastro (API)»</strong> para guardar la referencia automáticamente.'
-                    '</span>'
-                    '</div>'
-                    + osm_html
-                )
-            else:
-                rec.catastro_embed = (
-                    '<div style="padding:12px;background:#fff3cd;border:1px solid #ffc107;border-radius:4px;">'
-                    '<strong>Sin coordenadas.</strong> Introduce Latitud y Longitud para empezar.'
-                    '</div>'
-                )
 
-    def action_consultar_catastro(self):
-        """Consulta la API del Catastro por coordenadas GPS para obtener referencia y superficie."""
+            if not rec.sigpac_json:
+                if rec.latitude and rec.longitude:
+                    visor = (
+                        f'https://sigpac.mapa.es/fega/visor/'
+                        f'#lat={rec.latitude}&lng={rec.longitude}&zoom=17'
+                    )
+                    rec.sigpac_info = (
+                        '<div style="padding:10px;background:#e8f4fc;border:1px solid #bee5eb;border-radius:6px;margin-bottom:8px;">'
+                        f'<a href="{visor}" target="_blank">&#128506; Ver en visor SIGPAC</a>'
+                        '<span style="font-size:12px;color:#6c757d;margin-left:10px;">'
+                        'Pulsa <strong>«Consultar SIGPAC»</strong> para capturar datos automáticamente.'
+                        '</span></div>'
+                        + osm_html
+                    )
+                else:
+                    rec.sigpac_info = (
+                        '<div style="padding:12px;background:#fff3cd;border:1px solid #ffc107;border-radius:4px;">'
+                        '<strong>Sin coordenadas.</strong> Introduce Latitud y Longitud para consultar SIGPAC.'
+                        '</div>'
+                    )
+                continue
+
+            try:
+                data = json.loads(rec.sigpac_json)
+            except Exception:
+                rec.sigpac_info = '<div>Error leyendo datos SIGPAC.</div>'
+                continue
+
+            ref = data.get('ref_sigpac', '')
+            ref_cat = data.get('ref_catastral', '')
+            prov = data.get('provincia', '')
+            mun = data.get('municipio', '')
+            pol = data.get('poligono', '')
+            par = data.get('parcela', '')
+            recintos = data.get('recintos', [])
+
+            # Agrupar superficie por uso
+            from collections import defaultdict
+            uso_totals = defaultdict(float)
+            for r in recintos:
+                uso_totals[r.get('uso', '?')] += r.get('superficie', 0)
+            if not uso_totals:
+                uso_totals[data.get('uso_principal', '?')] = data.get('superficie_principal_m2', 0)
+            total_m2 = sum(uso_totals.values())
+
+            rows = ''
+            for uso_code, m2 in sorted(uso_totals.items()):
+                label = USO_LABELS.get(uso_code, uso_code)
+                ha = m2 / 10000
+                pct = (m2 / total_m2 * 100) if total_m2 else 0
+                color = '#28a745' if uso_code == 'VI' else '#6c757d'
+                rows += (
+                    f'<tr>'
+                    f'<td style="padding:5px 8px;">'
+                    f'<span style="background:{color};color:#fff;padding:2px 6px;border-radius:3px;font-size:11px;">{uso_code}</span>'
+                    f' {label}</td>'
+                    f'<td style="text-align:right;padding:5px 8px;">{m2:,.0f}</td>'
+                    f'<td style="text-align:right;padding:5px 8px;">{ha:.4f}</td>'
+                    f'<td style="text-align:right;padding:5px 8px;">{pct:.1f}%</td>'
+                    f'</tr>'
+                )
+            rows += (
+                f'<tr style="font-weight:bold;border-top:2px solid #dee2e6;">'
+                f'<td style="padding:5px 8px;">TOTAL</td>'
+                f'<td style="text-align:right;padding:5px 8px;">{total_m2:,.0f}</td>'
+                f'<td style="text-align:right;padding:5px 8px;">{total_m2/10000:.4f}</td>'
+                f'<td style="text-align:right;padding:5px 8px;">100%</td>'
+                f'</tr>'
+            )
+
+            visor = (
+                f'https://sigpac.mapa.es/fega/visor/#lat={rec.latitude}&lng={rec.longitude}&zoom=17'
+                if rec.latitude else '#'
+            )
+            cat_html = f'&nbsp;&nbsp;<strong>Cat:</strong> <code>{ref_cat}</code>' if ref_cat else ''
+
+            rec.sigpac_info = (
+                '<div style="padding:10px;background:#f8f9fa;border:1px solid #dee2e6;border-radius:6px;">'
+                f'<p style="margin:0 0 6px 0;font-size:13px;">'
+                f'<strong>SIGPAC:</strong> <code>{ref}</code>'
+                f'&nbsp;&nbsp;Prov.{prov} Mun.{mun} Pol.{pol} Par.{par}'
+                f'{cat_html}</p>'
+                f'<a href="{visor}" target="_blank" style="display:inline-block;padding:5px 10px;'
+                f'background:#fff;border:1px solid #dee2e6;border-radius:4px;'
+                f'text-decoration:none;color:#495057;font-size:12px;">&#128506; Ver en visor SIGPAC</a>'
+                '</div>'
+                '<table style="width:100%;border-collapse:collapse;margin-top:8px;font-size:13px;">'
+                '<thead><tr style="background:#e9ecef;">'
+                '<th style="text-align:left;padding:6px 8px;">Uso</th>'
+                '<th style="text-align:right;padding:6px 8px;">m²</th>'
+                '<th style="text-align:right;padding:6px 8px;">ha</th>'
+                '<th style="text-align:right;padding:6px 8px;">%</th>'
+                '</tr></thead>'
+                f'<tbody>{rows}</tbody>'
+                '</table>'
+                + osm_html
+            )
+
+    def action_consultar_sigpac(self):
+        """Consulta la API de SIGPAC para obtener referencia y superficies por uso."""
         self.ensure_one()
         if not self.latitude or not self.longitude:
-            raise UserError(_('Introduce la Latitud y Longitud antes de consultar el Catastro.'))
-        try:
-            import requests
-            import xml.etree.ElementTree as ET
-            url = 'https://ovc.catastro.meh.es/ovcservweb/OVCSWDataAccessDistrib/OVCCOORDENADAS.asmx/Consulta_RCCOOR'
-            resp = requests.get(url, params={
-                'SRS': 'EPSG:4326',
-                'Coordenada_X': self.longitude,
-                'Coordenada_Y': self.latitude,
-            }, timeout=15)
-            resp.raise_for_status()
-            root = ET.fromstring(resp.content)
-            ns = root.tag.split('}')[0].lstrip('{') if '}' in root.tag else ''
-            tag = lambda t: f'{{{ns}}}{t}' if ns else t
-            pc1_el = root.find(f'.//{tag("pc1")}')
-            pc2_el = root.find(f'.//{tag("pc2")}')
-            if pc1_el is None or pc2_el is None:
-                raise UserError(_('No se encontró ninguna parcela catastral en esas coordenadas.\nPrueba a ajustar la posición GPS.'))
-            ref = (pc1_el.text or '').strip() + (pc2_el.text or '').strip()
-        except UserError:
-            raise
-        except Exception as e:
-            raise UserError(_('Error al conectar con el Catastro: %s') % str(e))
+            raise UserError(_('Introduce la Latitud y Longitud antes de consultar SIGPAC.'))
+        import requests
+        lat, lon = self.latitude, self.longitude
 
-        # Obtener superficie de la parcela
-        sfc = 0.0
+        # Paso 1: recinto en las coordenadas
+        url1 = f'https://sigpac.mapa.es/fega/serviciosvisorsigpac/query/recintos/{lon}/{lat}'
         try:
-            url2 = 'https://ovc.catastro.meh.es/ovcservweb/OVCSWDataAccessDistrib/OVCCOORDENADAS.asmx/Consulta_DNPRC'
-            resp2 = requests.get(url2, params={'Provincia': '', 'Municipio': '', 'RC': ref}, timeout=15)
+            resp1 = requests.get(url1, timeout=15)
+            resp1.raise_for_status()
+            geo1 = resp1.json()
+        except Exception as e:
+            raise UserError(_('Error al conectar con SIGPAC: %s') % str(e))
+
+        features = geo1.get('features', [])
+        if not features:
+            raise UserError(_(
+                'No se encontró ningún recinto SIGPAC en esas coordenadas.\n'
+                'Prueba a ajustar ligeramente la posición GPS.'
+            ))
+
+        props = features[0].get('properties', {})
+        prov = str(props.get('provincia', ''))
+        mun = str(props.get('municipio', ''))
+        pol = str(props.get('poligono', ''))
+        par = str(props.get('parcela', ''))
+        rec_num = str(props.get('recinto', ''))
+        uso_principal = props.get('dn_uso', props.get('uso', ''))
+        sfc_principal = float(props.get('dn_surface', props.get('superficie', 0)) or 0)
+        ref_catastral = str(props.get('referencia_catastral', props.get('ref_catastral', '')) or '')
+        ref_sigpac = f'{prov}-{mun}-{pol}-{par}-{rec_num}'
+
+        # Paso 2: todos los recintos de la parcela
+        all_recintos = []
+        try:
+            url2 = (
+                f'https://sigpac.mapa.es/fega/serviciosvisorsigpac/query/recintos/'
+                f'{prov}/{mun}/{pol}/{par}'
+            )
+            resp2 = requests.get(url2, timeout=15)
             if resp2.status_code == 200:
-                root2 = ET.fromstring(resp2.content)
-                ns2 = root2.tag.split('}')[0].lstrip('{') if '}' in root2.tag else ''
-                tag2 = lambda t: f'{{{ns2}}}{t}' if ns2 else t
-                sfc_el = root2.find(f'.//{tag2("sfc")}')
-                if sfc_el is not None and sfc_el.text:
-                    sfc = float(sfc_el.text.replace(',', '.'))
+                for f2 in resp2.json().get('features', []):
+                    p = f2.get('properties', {})
+                    all_recintos.append({
+                        'recinto': str(p.get('recinto', '')),
+                        'uso': p.get('dn_uso', p.get('uso', '?')),
+                        'superficie': float(p.get('dn_surface', p.get('superficie', 0)) or 0),
+                    })
         except Exception as e:
-            _logger.warning('No se pudo obtener superficie catastral para %s: %s', ref, e)
+            _logger.warning('SIGPAC: no se pudieron cargar todos los recintos de la parcela: %s', e)
 
-        self.write({'ref_catastral': ref, 'catastro_superficie': sfc})
+        summary = {
+            'ref_sigpac': ref_sigpac,
+            'ref_catastral': ref_catastral,
+            'provincia': prov,
+            'municipio': mun,
+            'poligono': pol,
+            'parcela': par,
+            'recinto_principal': rec_num,
+            'uso_principal': uso_principal,
+            'superficie_principal_m2': sfc_principal,
+            'recintos': all_recintos,
+        }
+        vals = {
+            'ref_sigpac': ref_sigpac,
+            'sigpac_json': json.dumps(summary, ensure_ascii=False, indent=2),
+        }
+        if ref_catastral:
+            vals['ref_catastral'] = ref_catastral
+        self.write(vals)
+
+        total_m2 = sum(r['superficie'] for r in all_recintos) or sfc_principal
+        n_rec = len(all_recintos)
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
-                'title': _('Catastro actualizado'),
-                'message': _('Referencia: %s | Superficie: %s m²') % (ref, int(sfc) if sfc else '?'),
+                'title': _('SIGPAC actualizado'),
+                'message': _('Ref: %s | %d recinto(s) | %.0f m²') % (ref_sigpac, n_rec, total_m2),
                 'type': 'success',
                 'sticky': False,
             },
         }
 
-    def action_importar_superficie_catastro(self):
-        """Copia la superficie catastral (m²) al campo de extensión (ha)."""
+    def action_importar_superficie_sigpac(self):
+        """Copia la superficie total SIGPAC al campo Extensión (ha)."""
         self.ensure_one()
-        if not self.catastro_superficie:
-            raise UserError(_('Primero consulta el Catastro para obtener la superficie.'))
-        self.area = round(self.catastro_superficie / 10000.0, 4)
+        if not self.sigpac_json:
+            raise UserError(_('Primero consulta SIGPAC para obtener la superficie.'))
+        data = json.loads(self.sigpac_json)
+        recintos = data.get('recintos', [])
+        total_m2 = sum(r.get('superficie', 0) for r in recintos) or data.get('superficie_principal_m2', 0)
+        if not total_m2:
+            raise UserError(_('No se encontró superficie en los datos SIGPAC guardados.'))
+        ha = round(total_m2 / 10000.0, 4)
+        self.area = ha
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
                 'title': _('Superficie importada'),
-                'message': _('%s m² → %.4f ha') % (int(self.catastro_superficie), self.area),
+                'message': _('%.0f m² → %.4f ha') % (total_m2, ha),
                 'type': 'success',
                 'sticky': False,
             },
         }
-
-    @api.model_create_multi
-    def create(self, vals_list):
-        """Override create to normalize polygon after creation"""
-        records = super().create(vals_list)
-        records._normalize_polygon()
-        return records
-
-    def write(self, vals):
-        """Override write to normalize polygon only if polygon field changed"""
-        res = super().write(vals)
-        if 'polygon' in vals:
-            self._normalize_polygon()
-        return res
-
-    def _normalize_polygon(self):
-        """Normalize polygon field to GeoJSON Feature format (no recursive write)"""
-        for rec in self.filtered('polygon'):
-            try:
-                parsed = json.loads(rec.polygon) if isinstance(rec.polygon, str) else rec.polygon
-                if not isinstance(parsed, dict):
-                    continue
-                # Already a Feature? skip
-                if parsed.get('type') == 'Feature':
-                    continue
-                # Wrap geometry as Feature
-                feature = {
-                    'type': 'Feature',
-                    'geometry': parsed,
-                    'properties': {'name': rec.name, 'finca_id': rec.id}
-                }
-                feature_text = json.dumps(feature)
-                # Use SQL update to avoid recursion
-                self.env.cr.execute(
-                    "UPDATE vinedo_finca SET polygon = %s WHERE id = %s",
-                    (feature_text, rec.id)
-                )
-                self.env.cache.invalidate([(rec._fields['polygon'], rec.ids)])
-            except (json.JSONDecodeError, TypeError, KeyError) as e:
-                _logger.warning('Failed to normalize polygon for finca %s: %s', rec.id, e)
 
 
 class Plantacion(models.Model):

@@ -30,7 +30,6 @@
                         <group>
                             <field name="latitude"/>
                             <field name="longitude"/>
-                            <field name="polygon"/>
                         </group>
                     </group>
                     <group invisible="not latitude or not longitude">
@@ -99,26 +98,26 @@
                                 </list>
                             </field>
                         </page>
-                        <page string="Catastro">
+                        <page string="SIGPAC">
                             <group>
-                                <group string="Referencia Catastral">
+                                <group string="Referencias">
+                                    <field name="ref_sigpac"/>
                                     <field name="ref_catastral"/>
-                                    <field name="catastro_superficie" readonly="1"/>
                                 </group>
                                 <group string="Acciones">
                                     <div colspan="2" style="padding:4px 0;">
-                                        <button name="action_consultar_catastro" type="object"
-                                            string="Consultar Catastro (API)" icon="fa-search"
+                                        <button name="action_consultar_sigpac" type="object"
+                                            string="Consultar SIGPAC" icon="fa-search"
                                             class="btn btn-primary"
-                                            help="Obtiene la referencia catastral y la superficie a partir de las coordenadas GPS"/>
-                                        <button name="action_importar_superficie_catastro" type="object"
+                                            help="Obtiene referencia SIGPAC y superficies por uso a partir de las coordenadas GPS"/>
+                                        <button name="action_importar_superficie_sigpac" type="object"
                                             string="Importar superficie → (ha)" icon="fa-download"
                                             class="btn btn-secondary" style="margin-left:8px;"
-                                            help="Copia la superficie catastral (m²) al campo Extensión (ha)"/>
+                                            help="Copia la superficie total SIGPAC al campo Extensión (ha)"/>
                                     </div>
                                 </group>
                             </group>
-                            <field name="catastro_embed" widget="html" nolabel="1" readonly="1"/>
+                            <field name="sigpac_info" widget="html" nolabel="1" readonly="1"/>
                         </page>
                     </notebook>
                 </sheet>
