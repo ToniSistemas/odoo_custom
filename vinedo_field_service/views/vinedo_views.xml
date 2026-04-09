@@ -25,12 +25,14 @@
                         <field name="name"/>
                         <field name="territory_id"/>
                         <field name="area"/>
-                        <field name="latitude"/>
-                        <field name="longitude"/>
-                        <field name="polygon"/>
                     </group>
                     <group>
-                        <field name="map_view" widget="simple_map" invisible="not latitude or not longitude" colspan="2"/>
+                        <field name="latitude"/>
+                        <field name="longitude"/>
+                        <field name="polygon" widget="text"/>
+                    </group>
+                    <group colspan="2">
+                        <field name="map_view" widget="simple_map" colspan="2" nolabel="1"/>
                     </group>
                     <notebook>
                         <page string="Variedades">

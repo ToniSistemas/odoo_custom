@@ -14,7 +14,6 @@ export class SimpleMapField extends Component {
         const record = this.props.record.data;
         const lat = record.latitude || 42.5;
         const lon = record.longitude || -3.0;
-        const zoom = 15;
         
         // OpenStreetMap embed URL
         return `https://www.openstreetmap.org/export/embed.html?bbox=${lon-0.01},${lat-0.01},${lon+0.01},${lat+0.01}&layer=mapnik&marker=${lat},${lon}`;
@@ -26,6 +25,15 @@ export class SimpleMapField extends Component {
         const lon = record.longitude || -3.0;
         
         return `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=15/${lat}/${lon}`;
+    }
+
+    get googleMapsSearchUrl() {
+        const record = this.props.record.data;
+        const fincaName = record.name || '';
+        const territorio = record.territory_id && record.territory_id[1] ? record.territory_id[1] : '';
+        const searchQuery = `${fincaName} ${territorio} viñedo España`.trim();
+        
+        return `https://www.google.com/maps/search/${encodeURIComponent(searchQuery)}`;
     }
 }
 
