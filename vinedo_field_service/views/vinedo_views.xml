@@ -37,6 +37,9 @@
                         <field name="gmap_url" widget="url" string="Ver en Google Maps"/>
                         <field name="osm_url" widget="url" string="Ver en OpenStreetMap"/>
                     </group>
+                    <div>
+                        <field name="map_embed" widget="html" nolabel="1" readonly="1"/>
+                    </div>
                     <notebook>
                         <page string="Variedades">
                             <field name="variedad_ids">

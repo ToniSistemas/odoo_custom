@@ -36,6 +36,7 @@ class Finca(models.Model):
     polygon = fields.Text(string='Polígono (GeoJSON Feature)', help='Almacena GeoJSON Feature con coordenadas del polígono')
     gmap_url = fields.Char(string='Google Maps', compute='_compute_map_urls')
     osm_url = fields.Char(string='OpenStreetMap', compute='_compute_map_urls')
+    map_embed = fields.Html(string='Mapa', compute='_compute_map_urls', sanitize=False)
     variedad_ids = fields.One2many('vinedo.plantacion', 'finca_id', string='Variedades plantadas')
     aportacion_ids = fields.One2many('vinedo.aportacion', 'finca_id', string='Aportaciones de minerales')
     tratamiento_ids = fields.One2many('vinedo.tratamiento', 'finca_id', string='Tratamientos')
@@ -59,9 +60,26 @@ class Finca(models.Model):
                 lat, lon = rec.latitude, rec.longitude
                 rec.gmap_url = f'https://www.google.com/maps?q={lat},{lon}'
                 rec.osm_url = f'https://www.openstreetmap.org/?mlat={lat}&mlon={lon}#map=15/{lat}/{lon}'
+                rec.map_embed = (
+                    f'<iframe src="https://www.openstreetmap.org/export/embed.html'
+                    f'?bbox={lon-0.01},{lat-0.01},{lon+0.01},{lat+0.01}'
+                    f'&amp;layer=mapnik&amp;marker={lat},{lon}"'
+                    f' style="width:100%;height:380px;border:1px solid #ccc;border-radius:4px;"'
+                    f' frameborder="0" scrolling="no"></iframe>'
+                    f'<p style="margin-top:6px;">'
+                    f'<a href="https://www.openstreetmap.org/?mlat={lat}&amp;mlon={lon}#map=15/{lat}/{lon}" target="_blank">Ver mapa completo</a>'
+                    f' &nbsp;|&nbsp; '
+                    f'<a href="https://www.google.com/maps?q={lat},{lon}" target="_blank">Abrir en Google Maps</a>'
+                    f'</p>'
+                )
             else:
                 rec.gmap_url = False
                 rec.osm_url = False
+                rec.map_embed = (
+                    '<div style="padding:12px;background:#e8f4fc;border:1px solid #bee5eb;border-radius:4px;">'
+                    '<strong>Sin coordenadas.</strong> Rellena los campos Latitud y Longitud para ver el mapa.'
+                    '</div>'
+                )
 
     @api.model_create_multi
     def create(self, vals_list):
