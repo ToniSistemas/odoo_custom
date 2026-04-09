@@ -87,37 +87,65 @@ class Finca(models.Model):
     @api.depends('latitude', 'longitude', 'ref_catastral')
     def _compute_catastro_embed(self):
         base = 'https://www1.sedecatastro.gob.es'
+        card_style = (
+            'display:inline-block;padding:12px 18px;margin:4px 6px 4px 0;'
+            'background:#fff;border:1px solid #dee2e6;border-radius:6px;'
+            'text-decoration:none;color:#495057;font-size:13px;'
+        )
         for rec in self:
             if rec.ref_catastral:
                 ref = rec.ref_catastral.strip()
-                src = f'{base}/Cartografia/mapa.aspx?pest=rc&final=&rc={ref}&del=&mun='
-                ficha = f'{base}/OVCFrames.aspx?TIPO=CONSULTA&rc={ref}'
+                url_mapa = f'{base}/Cartografia/mapa.aspx?pest=rc&final=&rc={ref}&del=&mun='
+                url_ficha = f'{base}/OVCFrames.aspx?TIPO=CONSULTA&rc={ref}'
+                # Mini OSM map centered on coordinates (if available)
+                osm_html = ''
+                if rec.latitude and rec.longitude:
+                    lat, lon = rec.latitude, rec.longitude
+                    osm_html = (
+                        f'<iframe src="https://www.openstreetmap.org/export/embed.html'
+                        f'?bbox={lon-0.005},{lat-0.005},{lon+0.005},{lat+0.005}'
+                        f'&amp;layer=mapnik&amp;marker={lat},{lon}"'
+                        f' style="width:100%;height:220px;border:1px solid #ccc;border-radius:4px;"'
+                        f' frameborder="0" scrolling="no"></iframe>'
+                    )
                 rec.catastro_embed = (
-                    '<iframe src="' + src + '" style="width:100%;height:440px;border:1px solid #ccc;border-radius:4px;"'
-                    ' frameborder="0"></iframe>'
-                    '<p style="margin-top:6px;">'
-                    f'<strong>Ref:</strong> {ref} &nbsp;|&nbsp; '
-                    f'<a href="{ficha}" target="_blank">Ver ficha completa</a>'
+                    '<div style="padding:10px;background:#f8f9fa;border:1px solid #dee2e6;border-radius:6px;">'
+                    '<p style="margin:0 0 8px 0;font-size:13px;">'
+                    f'<strong>Referencia catastral:</strong> <code style="font-size:13px;">{ref}</code>'
                     '</p>'
+                    f'<a href="{url_mapa}" target="_blank" style="{card_style}">&#128506; Ver en Catastro</a>'
+                    f'<a href="{url_ficha}" target="_blank" style="{card_style}">&#128196; Ficha completa</a>'
+                    '</div>'
+                    + osm_html
                 )
             elif rec.latitude and rec.longitude:
-                src = (
+                lat, lon = rec.latitude, rec.longitude
+                url_cat = (
                     f'{base}/Cartografia/mapa.aspx?pest=coordenadas&from=OVCBusqueda'
                     f'&final=&ZV=NO&ZR=NO&anyoZV=&tematicos=&anyotem=&historica='
-                    f'&coordinadas={rec.latitude},{rec.longitude}'
+                    f'&coordinadas={lat},{lon}'
+                )
+                osm_html = (
+                    f'<iframe src="https://www.openstreetmap.org/export/embed.html'
+                    f'?bbox={lon-0.005},{lat-0.005},{lon+0.005},{lat+0.005}'
+                    f'&amp;layer=mapnik&amp;marker={lat},{lon}"'
+                    f' style="width:100%;height:220px;border:1px solid #ccc;border-radius:4px;"'
+                    f' frameborder="0" scrolling="no"></iframe>'
                 )
                 rec.catastro_embed = (
-                    '<iframe src="' + src + '" style="width:100%;height:440px;border:1px solid #ccc;border-radius:4px;"'
-                    ' frameborder="0"></iframe>'
-                    '<p style="margin-top:6px;">'
-                    '<a href="' + src + '" target="_blank">Abrir Catastro en nueva pestaña</a> &mdash; '
-                    'Haz clic en la parcela del mapa y pulsa <strong>«Consultar Catastro»</strong> para guardar la referencia.'
-                    '</p>'
+                    '<div style="padding:10px;background:#e8f4fc;border:1px solid #bee5eb;border-radius:6px;margin-bottom:8px;">'
+                    f'<a href="{url_cat}" target="_blank" style="{card_style}">&#128506; Buscar parcela en Catastro</a>'
+                    '<span style="font-size:12px;color:#6c757d;margin-left:8px;">'
+                    'Abre el Catastro en nueva pestaña, localiza la parcela y luego pulsa '
+                    '<strong>«Consultar Catastro (API)»</strong> para guardar la referencia automáticamente.'
+                    '</span>'
+                    '</div>'
+                    + osm_html
                 )
             else:
                 rec.catastro_embed = (
                     '<div style="padding:12px;background:#fff3cd;border:1px solid #ffc107;border-radius:4px;">'
-                    '<strong>Sin coordenadas.</strong> Introduce Latitud y Longitud para ver el Catastro.'
+                    '<strong>Sin coordenadas.</strong> Introduce Latitud y Longitud para empezar.'
                     '</div>'
                 )
 
