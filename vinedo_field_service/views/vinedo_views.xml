@@ -28,6 +28,7 @@
                         <field name="latitude"/>
                         <field name="longitude"/>
                         <field name="polygon"/>
+                        <field name="show_map" widget="simple_map" invisible="not show_map"/>
                     </group>
                     <notebook>
                         <page string="Variedades">

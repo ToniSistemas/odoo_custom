@@ -34,6 +34,7 @@ class Finca(models.Model):
     latitude = fields.Float(string='Latitud', digits=(10, 7))
     longitude = fields.Float(string='Longitud', digits=(10, 7))
     polygon = fields.Text(string='Polígono (GeoJSON Feature)', help='Almacena GeoJSON Feature con coordenadas del polígono')
+    show_map = fields.Boolean(string='Mostrar mapa', compute='_compute_show_map', store=False)
     variedad_ids = fields.One2many('vinedo.plantacion', 'finca_id', string='Variedades plantadas')
     aportacion_ids = fields.One2many('vinedo.aportacion', 'finca_id', string='Aportaciones de minerales')
     tratamiento_ids = fields.One2many('vinedo.tratamiento', 'finca_id', string='Tratamientos')
@@ -49,6 +50,12 @@ class Finca(models.Model):
                 raise ValidationError(_('Latitud debe estar entre -90 y 90 grados.'))
             if rec.longitude and not (-180 <= rec.longitude <= 180):
                 raise ValidationError(_('Longitud debe estar entre -180 y 180 grados.'))
+
+    @api.depends('latitude', 'longitude')
+    def _compute_show_map(self):
+        """Compute whether to show the map based on coordinates availability"""
+        for rec in self:
+            rec.show_map = bool(rec.latitude and rec.longitude)
 
     @api.model_create_multi
     def create(self, vals_list):
