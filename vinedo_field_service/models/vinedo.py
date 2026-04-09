@@ -333,7 +333,7 @@ class Finca(models.Model):
         }
 
     def action_consultar_por_catastral(self):
-        """Consulta la API del Catastro por ref. catastral para obtener superficie por cultivo."""
+        """Usa la ref. catastral para obtener coordenadas del Catastro y luego consulta SIGPAC."""
         self.ensure_one()
         if not self.ref_catastral:
             raise UserError(_('Escribe la Referencia Catastral antes de consultar.'))
@@ -341,13 +341,17 @@ class Finca(models.Model):
         import xml.etree.ElementTree as ET
 
         ref = self.ref_catastral.strip().replace(' ', '').upper()
-        url = 'https://ovc.catastro.meh.es/ovcservweb/OVCSWDataAccessDistrib/OVCCOORDENADAS.asmx/Consulta_DNPRC'
+
+        # Paso 1: obtener coordenadas del centroide desde el Catastro (Consulta_CPMRC)
+        url_cpmrc = 'https://ovc.catastro.meh.es/ovcservweb/OVCSWDataAccessDistrib/OVCCOORDENADAS.asmx/Consulta_CPMRC'
         try:
-            resp = requests.get(url, params={'Provincia': '', 'Municipio': '', 'RC': ref}, timeout=15)
+            resp = requests.get(url_cpmrc, params={
+                'Provincia': '', 'Municipio': '', 'SRS': 'EPSG:4326', 'RC': ref,
+            }, timeout=15)
             resp.raise_for_status()
             root = ET.fromstring(resp.content)
         except Exception as e:
-            raise UserError(_('Error al conectar con el Catastro: %s') % str(e))
+            raise UserError(_('Error al obtener coordenadas del Catastro: %s') % str(e))
 
         ns = root.tag.split('}')[0].lstrip('{') if '}' in root.tag else ''
         def tag(t): return f'{{{ns}}}{t}' if ns else t
@@ -356,49 +360,91 @@ class Finca(models.Model):
         if lerr_el is not None:
             cod_el = root.find(f'.//{tag("cod")}')
             msg_el = root.find(f'.//{tag("msg")}')
-            raise UserError(_('Catastro error %s: %s') % (
+            raise UserError(_('Catastro: %s - %s') % (
                 cod_el.text if cod_el is not None else '',
                 msg_el.text if msg_el is not None else 'Referencia no encontrada',
             ))
 
-        sfc_el = root.find(f'.//{tag("sfc")}')
-        total_m2 = float(sfc_el.text.replace(',', '.')) if sfc_el is not None and sfc_el.text else 0.0
+        xcen_el = root.find(f'.//{tag("xcen")}')
+        ycen_el = root.find(f'.//{tag("ycen")}')
+        if xcen_el is None or ycen_el is None:
+            raise UserError(_('El Catastro no devolvió coordenadas para la referencia %s') % ref)
 
-        ldt_el = root.find(f'.//{tag("ldt")}')
-        descripcion = ldt_el.text.strip() if ldt_el is not None and ldt_el.text else ''
+        lon = float(xcen_el.text.replace(',', '.'))
+        lat = float(ycen_el.text.replace(',', '.'))
 
-        # Subparcelas / cultivos (inmuebles rústicos)
-        recintos = []
-        for spr in root.findall(f'.//{tag("spr")}'):
-            dspr = spr.find(tag('dspr'))
-            if dspr is not None:
-                dsp_el = dspr.find(tag('dsp'))
-                sup_el = dspr.find(tag('sup'))
-                uso = dsp_el.text.strip() if dsp_el is not None and dsp_el.text else '?'
-                sup = float(sup_el.text.replace(',', '.')) if sup_el is not None and sup_el.text else 0.0
-                recintos.append({'uso': uso, 'superficie': sup, 'recinto': ''})
+        # Paso 2: recinto SIGPAC en esas coordenadas
+        url1 = f'https://sigpac.mapa.es/fega/serviciosvisorsigpac/query/recintos/{lon}/{lat}'
+        try:
+            resp1 = requests.get(url1, timeout=15)
+            resp1.raise_for_status()
+            geo1 = resp1.json()
+        except Exception as e:
+            raise UserError(_('Error al conectar con SIGPAC: %s') % str(e))
+
+        features = geo1.get('features', [])
+        if not features:
+            raise UserError(_(
+                'No se encontró recinto SIGPAC para la parcela catastral %s.\n'
+                'Prueba introduciendo las coordenadas GPS manualmente.'
+            ) % ref)
+
+        props = features[0].get('properties', {})
+        prov = str(props.get('provincia', ''))
+        mun = str(props.get('municipio', ''))
+        pol = str(props.get('poligono', ''))
+        par = str(props.get('parcela', ''))
+        rec_num = str(props.get('recinto', ''))
+        uso_principal = props.get('dn_uso', props.get('uso', ''))
+        sfc_principal = float(props.get('dn_surface', props.get('superficie', 0)) or 0)
+        ref_sigpac = f'{prov}-{mun}-{pol}-{par}-{rec_num}'
+
+        # Paso 3: todos los recintos de la parcela
+        all_recintos = []
+        try:
+            url2 = f'https://sigpac.mapa.es/fega/serviciosvisorsigpac/query/recintos/{prov}/{mun}/{pol}/{par}'
+            resp2 = requests.get(url2, timeout=15)
+            if resp2.status_code == 200:
+                for f2 in resp2.json().get('features', []):
+                    p = f2.get('properties', {})
+                    all_recintos.append({
+                        'recinto': str(p.get('recinto', '')),
+                        'uso': p.get('dn_uso', p.get('uso', '?')),
+                        'superficie': float(p.get('dn_surface', p.get('superficie', 0)) or 0),
+                    })
+        except Exception as e:
+            _logger.warning('SIGPAC: no se pudieron cargar todos los recintos: %s', e)
 
         summary = {
-            'source': 'catastro',
-            'ref_sigpac': '',
+            'source': 'sigpac',
+            'ref_sigpac': ref_sigpac,
             'ref_catastral': ref,
-            'descripcion': descripcion,
-            'superficie_principal_m2': total_m2,
-            'uso_principal': '',
-            'recintos': recintos,
-            'provincia': '', 'municipio': '', 'poligono': '', 'parcela': '', 'recinto_principal': '',
+            'descripcion': '',
+            'provincia': prov, 'municipio': mun, 'poligono': pol,
+            'parcela': par, 'recinto_principal': rec_num,
+            'uso_principal': uso_principal,
+            'superficie_principal_m2': sfc_principal,
+            'recintos': all_recintos,
         }
-        self.write({
+        vals = {
             'ref_catastral': ref,
+            'ref_sigpac': ref_sigpac,
             'sigpac_json': json.dumps(summary, ensure_ascii=False, indent=2),
-        })
-        total = sum(r['superficie'] for r in recintos) or total_m2
+        }
+        # Rellenar coordenadas si la finca no las tiene aún
+        if not self.latitude and lat:
+            vals['latitude'] = lat
+        if not self.longitude and lon:
+            vals['longitude'] = lon
+        self.write(vals)
+
+        total_m2 = sum(r['superficie'] for r in all_recintos) or sfc_principal
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
-                'title': _('Catastro consultado'),
-                'message': _('Ref: %s | %.0f m² | %d cultivo(s)') % (ref, total, len(recintos)),
+                'title': _('SIGPAC consultado'),
+                'message': _('Ref: %s | %d recinto(s) | %.0f m²') % (ref_sigpac, len(all_recintos), total_m2),
                 'type': 'success',
                 'sticky': False,
             },
