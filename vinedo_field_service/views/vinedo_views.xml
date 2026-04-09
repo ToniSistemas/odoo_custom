@@ -213,4 +213,39 @@
 
     <menuitem id="menu_vinedo_config" name="Configuración" parent="menu_vinedo_root" sequence="100"/>
     <menuitem id="menu_vinedo_territorios" name="Territorios" parent="menu_vinedo_config" action="action_territorio" sequence="1"/>
+
+    <!-- Search Views -->
+    <record id="view_finca_search" model="ir.ui.view">
+        <field name="name">vinedo.finca.search</field>
+        <field name="model">vinedo.finca</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="territory_id"/>
+                <filter string="Con Territorio" name="filter_with_territory" domain="[('territory_id', '!=', False)]"/>
+                <group expand="0" string="Agrupar por">
+                    <filter string="Territorio" name="group_territory" context="{'group_by': 'territory_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_anada_search" model="ir.ui.view">
+        <field name="name">vinedo.anada.search</field>
+        <field name="model">vinedo.anada</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="finca_id"/>
+                <field name="variedad_id"/>
+                <field name="anio"/>
+                <filter string="Últimos 5 años" name="filter_recent" domain="[('anio', '&gt;=', 2021)]"/>
+                <group expand="0" string="Agrupar por">
+                    <filter string="Año" name="group_anio" context="{'group_by': 'anio'}"/>
+                    <filter string="Finca" name="group_finca" context="{'group_by': 'finca_id'}"/>
+                    <filter string="Variedad" name="group_variedad" context="{'group_by': 'variedad_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
 </odoo>
