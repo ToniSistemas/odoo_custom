@@ -27,12 +27,12 @@
                         <field name="area"/>
                     </group>
                     <group>
+                        <field name="latitude" widget="simple_map" nolabel="1" colspan="2"/>
+                    </group>
+                    <group>
                         <field name="latitude"/>
                         <field name="longitude"/>
-                        <field name="polygon" widget="text"/>
-                    </group>
-                    <group colspan="2">
-                        <field name="map_view" widget="simple_map" colspan="2" nolabel="1"/>
+                        <field name="polygon"/>
                     </group>
                     <notebook>
                         <page string="Variedades">

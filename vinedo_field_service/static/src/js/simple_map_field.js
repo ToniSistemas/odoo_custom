@@ -25,39 +25,34 @@ export class SimpleMapField extends Component {
         return !!this.props.record.data.name;
     }
 
+    get lat() {
+        return (this.props.record && this.props.record.data && this.props.record.data.latitude) || 0;
+    }
+
+    get lon() {
+        return (this.props.record && this.props.record.data && this.props.record.data.longitude) || 0;
+    }
+
     get mapUrl() {
-        if (!this.props.record || !this.props.record.data) {
-            return '';
-        }
-        const record = this.props.record.data;
-        const lat = record.latitude || 42.5;
-        const lon = record.longitude || -3.0;
-        
-        // OpenStreetMap embed URL
+        if (!this.hasCoordinates()) return '';
+        const lat = this.lat;
+        const lon = this.lon;
         return `https://www.openstreetmap.org/export/embed.html?bbox=${lon-0.01},${lat-0.01},${lon+0.01},${lat+0.01}&layer=mapnik&marker=${lat},${lon}`;
     }
 
     get externalMapUrl() {
-        if (!this.props.record || !this.props.record.data) {
-            return '';
-        }
-        const record = this.props.record.data;
-        const lat = record.latitude || 42.5;
-        const lon = record.longitude || -3.0;
-        
+        if (!this.hasCoordinates()) return 'https://www.openstreetmap.org';
+        const lat = this.lat;
+        const lon = this.lon;
         return `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=15/${lat}/${lon}`;
     }
 
     get googleMapsSearchUrl() {
-        if (!this.props.record || !this.props.record.data) {
-            return 'https://www.google.com/maps';
-        }
-        const record = this.props.record.data;
-        const fincaName = record.name || '';
-        const territorio = (record.territory_id && Array.isArray(record.territory_id) && record.territory_id.length > 1) ? record.territory_id[1] : '';
-        const searchQuery = `${fincaName} ${territorio} viñedo España`.trim();
-        
-        return `https://www.google.com/maps/search/${encodeURIComponent(searchQuery)}`;
+        if (!this.props.record || !this.props.record.data) return 'https://www.google.com/maps';
+        const name = this.props.record.data.name || '';
+        const territorio = (this.props.record.data.territory_id && Array.isArray(this.props.record.data.territory_id) && this.props.record.data.territory_id.length > 1) ? this.props.record.data.territory_id[1] : '';
+        const q = `${name} ${territorio} viñedo España`.trim();
+        return `https://www.google.com/maps/search/${encodeURIComponent(q)}`;
     }
 }
 
