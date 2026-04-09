@@ -92,6 +92,11 @@ class Finca(models.Model):
             'AG': 'Agua', 'CA': 'Vial', 'ZU': 'Zona Urbana', 'FF': 'Frutos Secos',
             'CF': 'Cítricos', 'EP': 'Elemento Paisaje', 'PS': 'Pastos',
             'FV': 'Frutales Varios', 'FL': 'Flores/Ornamentales', 'ZC': 'Zona Concentrada',
+            # Catastro cultivo codes
+            'OL': 'Olivar', 'FP': 'Frutales Pepita', 'FH': 'Frutales Hueso',
+            'FS': 'Frutos Secos', 'CT': 'Citrus', 'VN': 'Viñedo (VN)',
+            'HU': 'Huerta', 'FL2': 'Flores', 'ME': 'Matorral', 'PI': 'Pinar',
+            'MT': 'Monte alto', 'RO': 'Repoblación', 'ED': 'Edificio',
         }
         for rec in self:
             osm_html = ''
@@ -115,14 +120,16 @@ class Finca(models.Model):
                         '<div style="padding:10px;background:#e8f4fc;border:1px solid #bee5eb;border-radius:6px;margin-bottom:8px;">'
                         f'<a href="{visor}" target="_blank">&#128506; Ver en visor SIGPAC</a>'
                         '<span style="font-size:12px;color:#6c757d;margin-left:10px;">'
-                        'Pulsa <strong>«Consultar SIGPAC»</strong> para capturar datos automáticamente.'
+                        'Pulsa <strong>«Consultar SIGPAC»</strong> para capturar datos automáticamente, '
+                        'o introduce la Ref. Catastral y pulsa <strong>«Buscar por Ref. Catastral»</strong>.'
                         '</span></div>'
                         + osm_html
                     )
                 else:
                     rec.sigpac_info = (
                         '<div style="padding:12px;background:#fff3cd;border:1px solid #ffc107;border-radius:4px;">'
-                        '<strong>Sin coordenadas.</strong> Introduce Latitud y Longitud para consultar SIGPAC.'
+                        '<strong>Sin coordenadas.</strong> Introduce Latitud/Longitud para consultar SIGPAC, '
+                        'o escribe la Ref. Catastral y pulsa <strong>«Buscar por Ref. Catastral»</strong>.'
                         '</div>'
                     )
                 continue
@@ -140,6 +147,8 @@ class Finca(models.Model):
             pol = data.get('poligono', '')
             par = data.get('parcela', '')
             recintos = data.get('recintos', [])
+            source = data.get('source', 'sigpac')
+            descripcion = data.get('descripcion', '')
 
             # Agrupar superficie por uso
             from collections import defaultdict
@@ -179,19 +188,52 @@ class Finca(models.Model):
                 f'https://sigpac.mapa.es/fega/visor/#lat={rec.latitude}&lng={rec.longitude}&zoom=17'
                 if rec.latitude else '#'
             )
-            cat_html = f'&nbsp;&nbsp;<strong>Cat:</strong> <code>{ref_cat}</code>' if ref_cat else ''
+
+            if source == 'catastro':
+                # Header for catastro-sourced data
+                url_ficha = f'https://www1.sedecatastro.gob.es/OVCFrames.aspx?TIPO=CONSULTA&rc={ref_cat}'
+                header_html = (
+                    '<div style="padding:10px;background:#f8f9fa;border:1px solid #dee2e6;border-radius:6px;">'
+                    f'<p style="margin:0 0 6px 0;font-size:13px;">'
+                    f'<strong>Catastro:</strong> <code>{ref_cat}</code>'
+                    + (f'&nbsp;&nbsp;<em style="color:#6c757d;font-size:12px;">{descripcion}</em>' if descripcion else '')
+                    + '</p>'
+                    f'<a href="{url_ficha}" target="_blank" style="display:inline-block;padding:5px 10px;'
+                    f'background:#fff;border:1px solid #dee2e6;border-radius:4px;'
+                    f'text-decoration:none;color:#495057;font-size:12px;">&#128196; Ficha catastral</a>'
+                    + (f'&nbsp;&nbsp;<a href="{visor}" target="_blank" style="display:inline-block;padding:5px 10px;'
+                    f'background:#fff;border:1px solid #dee2e6;border-radius:4px;'
+                    f'text-decoration:none;color:#495057;font-size:12px;">&#128506; Visor SIGPAC</a>' if rec.latitude else '')
+                    + '</div>'
+                )
+            else:
+                cat_html = f'&nbsp;&nbsp;<strong>Cat:</strong> <code>{ref_cat}</code>' if ref_cat else ''
+                header_html = (
+                    '<div style="padding:10px;background:#f8f9fa;border:1px solid #dee2e6;border-radius:6px;">'
+                    f'<p style="margin:0 0 6px 0;font-size:13px;">'
+                    f'<strong>SIGPAC:</strong> <code>{ref}</code>'
+                    f'&nbsp;&nbsp;Prov.{prov} Mun.{mun} Pol.{pol} Par.{par}'
+                    f'{cat_html}</p>'
+                    f'<a href="{visor}" target="_blank" style="display:inline-block;padding:5px 10px;'
+                    f'background:#fff;border:1px solid #dee2e6;border-radius:4px;'
+                    f'text-decoration:none;color:#495057;font-size:12px;">&#128506; Ver en visor SIGPAC</a>'
+                    '</div>'
+                )
+                header_html = (
+                    '<div style="padding:10px;background:#f8f9fa;border:1px solid #dee2e6;border-radius:6px;">'
+                    f'<p style="margin:0 0 6px 0;font-size:13px;">'
+                    f'<strong>SIGPAC:</strong> <code>{ref}</code>'
+                    f'&nbsp;&nbsp;Prov.{prov} Mun.{mun} Pol.{pol} Par.{par}'
+                    f'{cat_html}</p>'
+                    f'<a href="{visor}" target="_blank" style="display:inline-block;padding:5px 10px;'
+                    f'background:#fff;border:1px solid #dee2e6;border-radius:4px;'
+                    f'text-decoration:none;color:#495057;font-size:12px;">&#128506; Ver en visor SIGPAC</a>'
+                    '</div>'
+                )
 
             rec.sigpac_info = (
-                '<div style="padding:10px;background:#f8f9fa;border:1px solid #dee2e6;border-radius:6px;">'
-                f'<p style="margin:0 0 6px 0;font-size:13px;">'
-                f'<strong>SIGPAC:</strong> <code>{ref}</code>'
-                f'&nbsp;&nbsp;Prov.{prov} Mun.{mun} Pol.{pol} Par.{par}'
-                f'{cat_html}</p>'
-                f'<a href="{visor}" target="_blank" style="display:inline-block;padding:5px 10px;'
-                f'background:#fff;border:1px solid #dee2e6;border-radius:4px;'
-                f'text-decoration:none;color:#495057;font-size:12px;">&#128506; Ver en visor SIGPAC</a>'
-                '</div>'
-                '<table style="width:100%;border-collapse:collapse;margin-top:8px;font-size:13px;">'
+                header_html
+                + '<table style="width:100%;border-collapse:collapse;margin-top:8px;font-size:13px;">'
                 '<thead><tr style="background:#e9ecef;">'
                 '<th style="text-align:left;padding:6px 8px;">Uso</th>'
                 '<th style="text-align:right;padding:6px 8px;">m²</th>'
@@ -285,6 +327,78 @@ class Finca(models.Model):
             'params': {
                 'title': _('SIGPAC actualizado'),
                 'message': _('Ref: %s | %d recinto(s) | %.0f m²') % (ref_sigpac, n_rec, total_m2),
+                'type': 'success',
+                'sticky': False,
+            },
+        }
+
+    def action_consultar_por_catastral(self):
+        """Consulta la API del Catastro por ref. catastral para obtener superficie por cultivo."""
+        self.ensure_one()
+        if not self.ref_catastral:
+            raise UserError(_('Escribe la Referencia Catastral antes de consultar.'))
+        import requests
+        import xml.etree.ElementTree as ET
+
+        ref = self.ref_catastral.strip().replace(' ', '').upper()
+        url = 'https://ovc.catastro.meh.es/ovcservweb/OVCSWDataAccessDistrib/OVCCOORDENADAS.asmx/Consulta_DNPRC'
+        try:
+            resp = requests.get(url, params={'Provincia': '', 'Municipio': '', 'RC': ref}, timeout=15)
+            resp.raise_for_status()
+            root = ET.fromstring(resp.content)
+        except Exception as e:
+            raise UserError(_('Error al conectar con el Catastro: %s') % str(e))
+
+        ns = root.tag.split('}')[0].lstrip('{') if '}' in root.tag else ''
+        def tag(t): return f'{{{ns}}}{t}' if ns else t
+
+        lerr_el = root.find(f'.//{tag("lerr")}')
+        if lerr_el is not None:
+            cod_el = root.find(f'.//{tag("cod")}')
+            msg_el = root.find(f'.//{tag("msg")}')
+            raise UserError(_('Catastro error %s: %s') % (
+                cod_el.text if cod_el is not None else '',
+                msg_el.text if msg_el is not None else 'Referencia no encontrada',
+            ))
+
+        sfc_el = root.find(f'.//{tag("sfc")}')
+        total_m2 = float(sfc_el.text.replace(',', '.')) if sfc_el is not None and sfc_el.text else 0.0
+
+        ldt_el = root.find(f'.//{tag("ldt")}')
+        descripcion = ldt_el.text.strip() if ldt_el is not None and ldt_el.text else ''
+
+        # Subparcelas / cultivos (inmuebles rústicos)
+        recintos = []
+        for spr in root.findall(f'.//{tag("spr")}'):
+            dspr = spr.find(tag('dspr'))
+            if dspr is not None:
+                dsp_el = dspr.find(tag('dsp'))
+                sup_el = dspr.find(tag('sup'))
+                uso = dsp_el.text.strip() if dsp_el is not None and dsp_el.text else '?'
+                sup = float(sup_el.text.replace(',', '.')) if sup_el is not None and sup_el.text else 0.0
+                recintos.append({'uso': uso, 'superficie': sup, 'recinto': ''})
+
+        summary = {
+            'source': 'catastro',
+            'ref_sigpac': '',
+            'ref_catastral': ref,
+            'descripcion': descripcion,
+            'superficie_principal_m2': total_m2,
+            'uso_principal': '',
+            'recintos': recintos,
+            'provincia': '', 'municipio': '', 'poligono': '', 'parcela': '', 'recinto_principal': '',
+        }
+        self.write({
+            'ref_catastral': ref,
+            'sigpac_json': json.dumps(summary, ensure_ascii=False, indent=2),
+        })
+        total = sum(r['superficie'] for r in recintos) or total_m2
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Catastro consultado'),
+                'message': _('Ref: %s | %.0f m² | %d cultivo(s)') % (ref, total, len(recintos)),
                 'type': 'success',
                 'sticky': False,
             },

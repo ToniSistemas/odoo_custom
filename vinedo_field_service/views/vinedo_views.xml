@@ -110,9 +110,14 @@
                                             string="Consultar SIGPAC" icon="fa-search"
                                             class="btn btn-primary"
                                             help="Obtiene referencia SIGPAC y superficies por uso a partir de las coordenadas GPS"/>
+                                        <button name="action_consultar_por_catastral" type="object"
+                                            string="Buscar por Ref. Catastral" icon="fa-database"
+                                            class="btn btn-secondary" style="margin-left:8px;"
+                                            help="Obtiene superficies por cultivo a partir de la Referencia Catastral escrita arriba"/>
                                         <button name="action_importar_superficie_sigpac" type="object"
                                             string="Importar superficie → (ha)" icon="fa-download"
-                                            class="btn btn-secondary" style="margin-left:8px;"
+                                            class="btn btn-link" style="margin-left:8px;"
+                                            help="Copia la superficie total al campo Extensión (ha)"/>
                                             help="Copia la superficie total SIGPAC al campo Extensión (ha)"/>
                                     </div>
                                 </group>
