@@ -2,8 +2,6 @@ from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError, UserError
 import json
 import logging
-import requests
-import xml.etree.ElementTree as ET
 
 _logger = logging.getLogger(__name__)
 
@@ -129,6 +127,8 @@ class Finca(models.Model):
         if not self.latitude or not self.longitude:
             raise UserError(_('Introduce la Latitud y Longitud antes de consultar el Catastro.'))
         try:
+            import requests
+            import xml.etree.ElementTree as ET
             url = 'https://ovc.catastro.meh.es/ovcservweb/OVCSWDataAccessDistrib/OVCCOORDENADAS.asmx/Consulta_RCCOOR'
             resp = requests.get(url, params={
                 'SRS': 'EPSG:4326',
