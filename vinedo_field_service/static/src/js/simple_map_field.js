@@ -10,6 +10,21 @@ export class SimpleMapField extends Component {
         ...standardFieldProps,
     };
 
+    hasCoordinates() {
+        if (!this.props.record || !this.props.record.data) {
+            return false;
+        }
+        const data = this.props.record.data;
+        return !!(data.latitude && data.longitude);
+    }
+
+    hasFincaName() {
+        if (!this.props.record || !this.props.record.data) {
+            return false;
+        }
+        return !!this.props.record.data.name;
+    }
+
     get mapUrl() {
         if (!this.props.record || !this.props.record.data) {
             return '';
