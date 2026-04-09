@@ -99,6 +99,27 @@
                                 </list>
                             </field>
                         </page>
+                        <page string="Catastro">
+                            <group>
+                                <group string="Referencia Catastral">
+                                    <field name="ref_catastral"/>
+                                    <field name="catastro_superficie" readonly="1"/>
+                                </group>
+                                <group string="Acciones">
+                                    <div colspan="2" style="padding:4px 0;">
+                                        <button name="action_consultar_catastro" type="object"
+                                            string="Consultar Catastro (API)" icon="fa-search"
+                                            class="btn btn-primary"
+                                            help="Obtiene la referencia catastral y la superficie a partir de las coordenadas GPS"/>
+                                        <button name="action_importar_superficie_catastro" type="object"
+                                            string="Importar superficie → (ha)" icon="fa-download"
+                                            class="btn btn-secondary" style="margin-left:8px;"
+                                            help="Copia la superficie catastral (m²) al campo Extensión (ha)"/>
+                                    </div>
+                                </group>
+                            </group>
+                            <field name="catastro_embed" widget="html" nolabel="1" readonly="1"/>
+                        </page>
                     </notebook>
                 </sheet>
             </form>

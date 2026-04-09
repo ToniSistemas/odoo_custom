@@ -1,7 +1,9 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, UserError
 import json
 import logging
+import requests
+import xml.etree.ElementTree as ET
 
 _logger = logging.getLogger(__name__)
 
@@ -36,7 +38,10 @@ class Finca(models.Model):
     polygon = fields.Text(string='Polígono (GeoJSON Feature)', help='Almacena GeoJSON Feature con coordenadas del polígono')
     gmap_url = fields.Char(string='Google Maps', compute='_compute_map_urls')
     osm_url = fields.Char(string='OpenStreetMap', compute='_compute_map_urls')
-    map_embed = fields.Html(string='Mapa', compute='_compute_map_urls', sanitize=False)
+    map_embed = fields.Html(string='Mapa OSM', compute='_compute_map_urls', sanitize=False)
+    ref_catastral = fields.Char(string='Referencia Catastral', index=True)
+    catastro_superficie = fields.Float(string='Superficie Catastral (m²)', digits=(10, 2))
+    catastro_embed = fields.Html(string='Mapa Catastro', compute='_compute_catastro_embed', sanitize=False)
     variedad_ids = fields.One2many('vinedo.plantacion', 'finca_id', string='Variedades plantadas')
     aportacion_ids = fields.One2many('vinedo.aportacion', 'finca_id', string='Aportaciones de minerales')
     tratamiento_ids = fields.One2many('vinedo.tratamiento', 'finca_id', string='Tratamientos')
@@ -80,6 +85,113 @@ class Finca(models.Model):
                     '<strong>Sin coordenadas.</strong> Rellena los campos Latitud y Longitud para ver el mapa.'
                     '</div>'
                 )
+
+    @api.depends('latitude', 'longitude', 'ref_catastral')
+    def _compute_catastro_embed(self):
+        base = 'https://www1.sedecatastro.gob.es'
+        for rec in self:
+            if rec.ref_catastral:
+                ref = rec.ref_catastral.strip()
+                src = f'{base}/Cartografia/mapa.aspx?pest=rc&final=&rc={ref}&del=&mun='
+                ficha = f'{base}/OVCFrames.aspx?TIPO=CONSULTA&rc={ref}'
+                rec.catastro_embed = (
+                    '<iframe src="' + src + '" style="width:100%;height:440px;border:1px solid #ccc;border-radius:4px;"'
+                    ' frameborder="0"></iframe>'
+                    '<p style="margin-top:6px;">'
+                    f'<strong>Ref:</strong> {ref} &nbsp;|&nbsp; '
+                    f'<a href="{ficha}" target="_blank">Ver ficha completa</a>'
+                    '</p>'
+                )
+            elif rec.latitude and rec.longitude:
+                src = (
+                    f'{base}/Cartografia/mapa.aspx?pest=coordenadas&from=OVCBusqueda'
+                    f'&final=&ZV=NO&ZR=NO&anyoZV=&tematicos=&anyotem=&historica='
+                    f'&coordinadas={rec.latitude},{rec.longitude}'
+                )
+                rec.catastro_embed = (
+                    '<iframe src="' + src + '" style="width:100%;height:440px;border:1px solid #ccc;border-radius:4px;"'
+                    ' frameborder="0"></iframe>'
+                    '<p style="margin-top:6px;">'
+                    '<a href="' + src + '" target="_blank">Abrir Catastro en nueva pestaña</a> &mdash; '
+                    'Haz clic en la parcela del mapa y pulsa <strong>«Consultar Catastro»</strong> para guardar la referencia.'
+                    '</p>'
+                )
+            else:
+                rec.catastro_embed = (
+                    '<div style="padding:12px;background:#fff3cd;border:1px solid #ffc107;border-radius:4px;">'
+                    '<strong>Sin coordenadas.</strong> Introduce Latitud y Longitud para ver el Catastro.'
+                    '</div>'
+                )
+
+    def action_consultar_catastro(self):
+        """Consulta la API del Catastro por coordenadas GPS para obtener referencia y superficie."""
+        self.ensure_one()
+        if not self.latitude or not self.longitude:
+            raise UserError(_('Introduce la Latitud y Longitud antes de consultar el Catastro.'))
+        try:
+            url = 'https://ovc.catastro.meh.es/ovcservweb/OVCSWDataAccessDistrib/OVCCOORDENADAS.asmx/Consulta_RCCOOR'
+            resp = requests.get(url, params={
+                'SRS': 'EPSG:4326',
+                'Coordenada_X': self.longitude,
+                'Coordenada_Y': self.latitude,
+            }, timeout=15)
+            resp.raise_for_status()
+            root = ET.fromstring(resp.content)
+            ns = root.tag.split('}')[0].lstrip('{') if '}' in root.tag else ''
+            tag = lambda t: f'{{{ns}}}{t}' if ns else t
+            pc1_el = root.find(f'.//{tag("pc1")}')
+            pc2_el = root.find(f'.//{tag("pc2")}')
+            if pc1_el is None or pc2_el is None:
+                raise UserError(_('No se encontró ninguna parcela catastral en esas coordenadas.\nPrueba a ajustar la posición GPS.'))
+            ref = (pc1_el.text or '').strip() + (pc2_el.text or '').strip()
+        except UserError:
+            raise
+        except Exception as e:
+            raise UserError(_('Error al conectar con el Catastro: %s') % str(e))
+
+        # Obtener superficie de la parcela
+        sfc = 0.0
+        try:
+            url2 = 'https://ovc.catastro.meh.es/ovcservweb/OVCSWDataAccessDistrib/OVCCOORDENADAS.asmx/Consulta_DNPRC'
+            resp2 = requests.get(url2, params={'Provincia': '', 'Municipio': '', 'RC': ref}, timeout=15)
+            if resp2.status_code == 200:
+                root2 = ET.fromstring(resp2.content)
+                ns2 = root2.tag.split('}')[0].lstrip('{') if '}' in root2.tag else ''
+                tag2 = lambda t: f'{{{ns2}}}{t}' if ns2 else t
+                sfc_el = root2.find(f'.//{tag2("sfc")}')
+                if sfc_el is not None and sfc_el.text:
+                    sfc = float(sfc_el.text.replace(',', '.'))
+        except Exception as e:
+            _logger.warning('No se pudo obtener superficie catastral para %s: %s', ref, e)
+
+        self.write({'ref_catastral': ref, 'catastro_superficie': sfc})
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Catastro actualizado'),
+                'message': _('Referencia: %s | Superficie: %s m²') % (ref, int(sfc) if sfc else '?'),
+                'type': 'success',
+                'sticky': False,
+            },
+        }
+
+    def action_importar_superficie_catastro(self):
+        """Copia la superficie catastral (m²) al campo de extensión (ha)."""
+        self.ensure_one()
+        if not self.catastro_superficie:
+            raise UserError(_('Primero consulta el Catastro para obtener la superficie.'))
+        self.area = round(self.catastro_superficie / 10000.0, 4)
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Superficie importada'),
+                'message': _('%s m² → %.4f ha') % (int(self.catastro_superficie), self.area),
+                'type': 'success',
+                'sticky': False,
+            },
+        }
 
     @api.model_create_multi
     def create(self, vals_list):
