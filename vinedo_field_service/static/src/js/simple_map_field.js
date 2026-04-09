@@ -11,6 +11,9 @@ export class SimpleMapField extends Component {
     };
 
     get mapUrl() {
+        if (!this.props.record || !this.props.record.data) {
+            return '';
+        }
         const record = this.props.record.data;
         const lat = record.latitude || 42.5;
         const lon = record.longitude || -3.0;
@@ -20,6 +23,9 @@ export class SimpleMapField extends Component {
     }
 
     get externalMapUrl() {
+        if (!this.props.record || !this.props.record.data) {
+            return '';
+        }
         const record = this.props.record.data;
         const lat = record.latitude || 42.5;
         const lon = record.longitude || -3.0;
@@ -28,9 +34,12 @@ export class SimpleMapField extends Component {
     }
 
     get googleMapsSearchUrl() {
+        if (!this.props.record || !this.props.record.data) {
+            return 'https://www.google.com/maps';
+        }
         const record = this.props.record.data;
         const fincaName = record.name || '';
-        const territorio = record.territory_id && record.territory_id[1] ? record.territory_id[1] : '';
+        const territorio = (record.territory_id && Array.isArray(record.territory_id) && record.territory_id.length > 1) ? record.territory_id[1] : '';
         const searchQuery = `${fincaName} ${territorio} viñedo España`.trim();
         
         return `https://www.google.com/maps/search/${encodeURIComponent(searchQuery)}`;
