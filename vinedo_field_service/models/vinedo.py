@@ -34,6 +34,8 @@ class Finca(models.Model):
     latitude = fields.Float(string='Latitud', digits=(10, 7))
     longitude = fields.Float(string='Longitud', digits=(10, 7))
     polygon = fields.Text(string='Polígono (GeoJSON Feature)', help='Almacena GeoJSON Feature con coordenadas del polígono')
+    gmap_url = fields.Char(string='Google Maps', compute='_compute_map_urls')
+    osm_url = fields.Char(string='OpenStreetMap', compute='_compute_map_urls')
     variedad_ids = fields.One2many('vinedo.plantacion', 'finca_id', string='Variedades plantadas')
     aportacion_ids = fields.One2many('vinedo.aportacion', 'finca_id', string='Aportaciones de minerales')
     tratamiento_ids = fields.One2many('vinedo.tratamiento', 'finca_id', string='Tratamientos')
@@ -49,6 +51,17 @@ class Finca(models.Model):
                 raise ValidationError(_('Latitud debe estar entre -90 y 90 grados.'))
             if rec.longitude and not (-180 <= rec.longitude <= 180):
                 raise ValidationError(_('Longitud debe estar entre -180 y 180 grados.'))
+
+    @api.depends('latitude', 'longitude')
+    def _compute_map_urls(self):
+        for rec in self:
+            if rec.latitude and rec.longitude:
+                lat, lon = rec.latitude, rec.longitude
+                rec.gmap_url = f'https://www.google.com/maps?q={lat},{lon}'
+                rec.osm_url = f'https://www.openstreetmap.org/?mlat={lat}&mlon={lon}#map=15/{lat}/{lon}'
+            else:
+                rec.gmap_url = False
+                rec.osm_url = False
 
     @api.model_create_multi
     def create(self, vals_list):

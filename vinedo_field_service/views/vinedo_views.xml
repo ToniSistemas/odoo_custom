@@ -22,17 +22,20 @@
             <form>
                 <sheet>
                     <group>
-                        <field name="name"/>
-                        <field name="territory_id"/>
-                        <field name="area"/>
+                        <group>
+                            <field name="name"/>
+                            <field name="territory_id"/>
+                            <field name="area"/>
+                        </group>
+                        <group>
+                            <field name="latitude"/>
+                            <field name="longitude"/>
+                            <field name="polygon"/>
+                        </group>
                     </group>
-                    <group>
-                        <field name="latitude" widget="simple_map" nolabel="1" colspan="2"/>
-                    </group>
-                    <group>
-                        <field name="latitude"/>
-                        <field name="longitude"/>
-                        <field name="polygon"/>
+                    <group invisible="not latitude or not longitude">
+                        <field name="gmap_url" widget="url" string="Ver en Google Maps"/>
+                        <field name="osm_url" widget="url" string="Ver en OpenStreetMap"/>
                     </group>
                     <notebook>
                         <page string="Variedades">

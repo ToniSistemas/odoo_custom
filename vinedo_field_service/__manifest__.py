@@ -1,6 +1,6 @@
 {
     'name': 'Viñedo - Field Service',
-    'version': '1.3.12',
+    'version': '1.4.0',
     'summary': 'Gestión completa de viñedos: fincas, variedades, trabajos y añadas con mapas',
     'description': """
         Gestión de Viñedos
@@ -22,13 +22,7 @@
         'security/ir.model.access.csv',
         'views/vinedo_views.xml',
     ],
-    'assets': {
-        'web.assets_backend': [
-            'vinedo_field_service/static/src/js/simple_map_field.js',
-            'vinedo_field_service/static/src/xml/simple_map_field.xml',
-            'vinedo_field_service/static/src/css/vinedo_map.css',
-        ],
-    },
+    'assets': {},
     'images': ['static/description/icon.png'],
     'installable': True,
     'application': True,
