@@ -357,15 +357,18 @@ class Finca(models.Model):
                 'Solo se admiten referencias catastrales rústicas (20 caracteres, letra en posición 6).\n'
                 'Referencia recibida: "%s"'
             ) % ref)
-        try:
-            prov = str(int(ref[0:2]))
-            mun  = str(int(ref[2:5]))
-            pol  = str(int(ref[6:9]))    # 3 dígitos: pos 6-8
-            par  = str(int(ref[9:14]))   # 5 dígitos: pos 9-13
-        except ValueError as e:
-            raise UserError(_('No se pudo interpretar la referencia catastral "%s": %s') % (ref, e))
+        # Extraer con ceros (SIGPAC los necesita zero-padded)
+        prov     = ref[0:2]   # 2 dígitos: "27"
+        mun      = ref[2:5]   # 3 dígitos: "016"
+        pol      = ref[6:9]   # 3 dígitos: "079"
+        par      = ref[9:14]  # 5 dígitos: "01047"
+        # También como enteros para el resumen (sin ceros)
+        prov_int = str(int(prov))
+        mun_int  = str(int(mun))
+        pol_int  = str(int(pol))
+        par_int  = str(int(par))
 
-        # Consultar SIGPAC con todos los recintos de la parcela
+        # Consultar SIGPAC con todos los recintos de la parcela (zero-padded)
         url_par = (
             f'https://sigpac.mapa.es/fega/serviciosvisorsigpac/query/recintos'
             f'/{prov}/{mun}/{pol}/{par}'
@@ -382,7 +385,7 @@ class Finca(models.Model):
             raise UserError(_(
                 'No se encontraron recintos SIGPAC para Prov.%s Mun.%s Pol.%s Par.%s.\n'
                 'Comprueba que la referencia catastral corresponde a una parcela rústica.'
-            ) % (prov, mun, pol, par))
+            ) % (prov_int, mun_int, pol_int, par_int))
 
         # Recopilar recintos y calcular centroide a partir de las geometrías GeoJSON
         all_recintos = []
@@ -417,15 +420,15 @@ class Finca(models.Model):
 
         lat = round(lat_sum / coord_count, 7) if coord_count else 0.0
         lon = round(lon_sum / coord_count, 7) if coord_count else 0.0
-        ref_sigpac = f'{prov}-{mun}-{pol}-{par}-{rec_num_principal}'
+        ref_sigpac = f'{prov_int}-{mun_int}-{pol_int}-{par_int}-{rec_num_principal}'
 
         summary = {
             'source': 'sigpac',
             'ref_sigpac': ref_sigpac,
             'ref_catastral': ref,
             'descripcion': '',
-            'provincia': prov, 'municipio': mun, 'poligono': pol,
-            'parcela': par, 'recinto_principal': rec_num_principal,
+            'provincia': prov_int, 'municipio': mun_int, 'poligono': pol_int,
+            'parcela': par_int, 'recinto_principal': rec_num_principal,
             'uso_principal': uso_principal,
             'superficie_principal_m2': sfc_principal,
             'recintos': all_recintos,
