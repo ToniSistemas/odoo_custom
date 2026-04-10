@@ -333,48 +333,109 @@ class Finca(models.Model):
         }
 
     def action_consultar_por_catastral(self):
-        """Obtiene el centroide de la parcela vía Catastro INSPIRE y consulta SIGPAC por coordenadas."""
+        """Obtiene la geometría de la parcela desde SIGPAC usando los códigos
+        incrustados en la referencia catastral rústica, calcula el centroide
+        y luego llama a action_consultar_sigpac (que usa coordenadas)."""
         self.ensure_one()
         if not self.ref_catastral:
             raise UserError(_('Escribe la Referencia Catastral antes de consultar.'))
         import requests
-        import xml.etree.ElementTree as ET
 
         ref = self.ref_catastral.strip().replace(' ', '').upper()
         if len(ref) != 20:
             raise UserError(_('La referencia catastral debe tener 20 caracteres. Recibida: "%s"') % ref)
 
-        # Obtener geometría de la parcela desde Catastro INSPIRE WFS (funciona para rústicas y urbanas)
-        url_inspire = (
-            f'https://ovc.catastro.meh.es/OGCWEBSERVICES/getparcel.aspx'
-            f'?refcat={ref}&SRS=EPSG:4326&Format=GML3'
-        )
-        try:
-            resp = requests.get(url_inspire, timeout=15)
-            resp.raise_for_status()
-            root_gml = ET.fromstring(resp.content)
-        except Exception as e:
-            raise UserError(_('Error al consultar el Catastro: %s') % str(e))
+        # La ref catastral rústica (posición 4 = letra) ya lleva prov/mun/pol/par
+        # Formato: PP MMM A GGG PPPPP SSSS EE  (posiciones 0-1, 2-4, 5, 6-8, 9-13, ...)
+        es_rustica = not ref[5].isdigit()
+        prov = ref[0:2]
+        mun  = ref[2:5]
+        if es_rustica:
+            pol = ref[6:9].lstrip('0') or '0'
+            par = ref[9:14].lstrip('0') or '0'
+        else:
+            pol = None
+            par = None
 
-        # Extraer centroide del primer posList GML (Catastro devuelve lon lat lon lat ...)
         lon, lat = None, None
-        for el in root_gml.iter():
-            if el.tag.endswith('posList') and el.text:
-                nums = list(map(float, el.text.strip().split()))
-                if len(nums) >= 4:
-                    lons = nums[0::2]
-                    lats = nums[1::2]
-                    lon = round(sum(lons) / len(lons), 7)
-                    lat = round(sum(lats) / len(lats), 7)
-                    break
+
+        # --- Intento 1: SIGPAC query/parcela → devuelve GeoJSON con polígono ---
+        if pol and par:
+            try:
+                url_parcela = (
+                    f'https://sigpac.mapa.es/fega/serviciosvisorsigpac/query/parcela/'
+                    f'{prov}/{mun}/{pol}/{par}'
+                )
+                r = requests.get(url_parcela, timeout=15)
+                if r.status_code == 200:
+                    geo = r.json()
+                    features = geo.get('features', [])
+                    if features:
+                        # Extraer todos los vértices del polígono y calcular centroide
+                        coords_flat = []
+                        geom = features[0].get('geometry', {})
+                        def _collect(obj):
+                            t = obj.get('type', '')
+                            c = obj.get('coordinates', [])
+                            if t == 'Point':
+                                coords_flat.append(c)
+                            elif t in ('MultiPoint', 'LineString'):
+                                coords_flat.extend(c)
+                            elif t in ('MultiLineString', 'Polygon'):
+                                for ring in c:
+                                    coords_flat.extend(ring)
+                            elif t in ('MultiPolygon',):
+                                for poly in c:
+                                    for ring in poly:
+                                        coords_flat.extend(ring)
+                            elif t == 'GeometryCollection':
+                                for g in obj.get('geometries', []):
+                                    _collect(g)
+                        _collect(geom)
+                        if coords_flat:
+                            lon = round(sum(c[0] for c in coords_flat) / len(coords_flat), 7)
+                            lat = round(sum(c[1] for c in coords_flat) / len(coords_flat), 7)
+                            _logger.info('SIGPAC parcela centroid: lon=%s lat=%s', lon, lat)
+            except Exception as e:
+                _logger.debug('SIGPAC parcela endpoint failed: %s', e)
+
+        # --- Intento 2: SIGPAC query/recintos por código (solo funciona en agrícolas puras) ---
+        if lon is None and pol and par:
+            try:
+                url_rec = (
+                    f'https://sigpac.mapa.es/fega/serviciosvisorsigpac/query/recintos/'
+                    f'{prov}/{mun}/{pol}/{par}'
+                )
+                r = requests.get(url_rec, timeout=15)
+                if r.status_code == 200:
+                    geo = r.json()
+                    features = geo.get('features', [])
+                    if features:
+                        coords_flat = []
+                        for feat in features:
+                            geom = feat.get('geometry', {})
+                            for ring in geom.get('coordinates', [[]]):
+                                coords_flat.extend(ring if isinstance(ring[0], list) else [ring])
+                        if coords_flat:
+                            lon = round(sum(c[0] for c in coords_flat) / len(coords_flat), 7)
+                            lat = round(sum(c[1] for c in coords_flat) / len(coords_flat), 7)
+            except Exception as e:
+                _logger.debug('SIGPAC recintos by code failed: %s', e)
 
         if lon is None or lat is None:
+            visor_url = (
+                f'https://sigpac.mapa.es/fega/visor/'
+                + (f'#prov={prov}&mun={mun}&pol={pol}&par={par}' if pol else '')
+            )
             raise UserError(_(
-                'No se pudo obtener la geometría de la parcela %s del Catastro.\n'
-                'Introduce las coordenadas GPS manualmente y usa "Consultar SIGPAC".'
-            ) % ref)
+                'No se pudo localizar la parcela "%s" en SIGPAC.\n\n'
+                'Opciones:\n'
+                '  1. Abre el visor SIGPAC (%s), localiza la parcela\n'
+                '     y copia las coordenadas GPS del centro en los campos Latitud/Longitud,\n'
+                '     después pulsa «Consultar SIGPAC».\n'
+                '  2. Introduce las coordenadas GPS directamente.'
+            ) % (ref, visor_url))
 
-        # Guardar ref catastral y coordenadas calculadas
         vals = {'ref_catastral': ref}
         if not self.latitude:
             vals['latitude'] = lat
@@ -382,7 +443,6 @@ class Finca(models.Model):
             vals['longitude'] = lon
         self.write(vals)
 
-        # Delegar a action_consultar_sigpac que usa self.latitude/longitude
         return self.action_consultar_sigpac()
 
     def action_importar_superficie_sigpac(self):
