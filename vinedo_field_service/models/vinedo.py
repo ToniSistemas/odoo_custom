@@ -348,8 +348,8 @@ class Finca(models.Model):
         }
 
     def action_consultar_por_catastral(self):
-        """Obtiene datos SIGPAC usando los códigos de la referencia catastral.
-        Si SIGPAC está en mantenimiento, guarda la referencia y notifica al usuario."""
+        """Busca la parcela en SIGPAC usando query/parrefcat (el mismo endpoint que el visor oficial),
+        calcula el centroide del polígono y luego llama a action_consultar_sigpac."""
         self.ensure_one()
         if not self.ref_catastral:
             raise UserError(_('Escribe la Referencia Catastral antes de consultar.'))
@@ -359,111 +359,57 @@ class Finca(models.Model):
         if len(ref) != 20:
             raise UserError(_('La referencia catastral debe tener 20 caracteres. Recibida: "%s"') % ref)
 
-        # Formato rústica: PP MMM X GGG PPPPP SSSS EE (pos 5 = letra de sector)
-        es_rustica = not ref[5].isdigit()
-        prov = ref[0:2]
-        mun  = ref[2:5]
-        pol = ref[6:9].lstrip('0') or '0' if es_rustica else None
-        par = ref[9:14].lstrip('0') or '0' if es_rustica else None
+        prov = int(ref[0:2])
+        mun  = int(ref[2:5])
 
-        lon, lat = None, None
-        sigpac_down = False
+        # Endpoint usado internamente por el visor oficial de SIGPAC
+        url = (
+            f'https://sigpac.mapa.es/fega/serviciosvisorsigpac/query/parrefcat/'
+            f'{prov}/{mun}/{ref}'
+        )
+        try:
+            r = requests.get(url, timeout=15)
+            r.raise_for_status()
+            geo = r.json()
+        except Exception as e:
+            raise UserError(_('Error al conectar con SIGPAC: %s') % str(e))
 
-        if pol and par:
-            for url_try in [
-                f'https://sigpac.mapa.es/fega/serviciosvisorsigpac/query/recintos/{prov}/{mun}/{pol}/{par}',
-                f'https://sigpac.mapa.es/fega/serviciosvisorsigpac/query/parcela/{prov}/{mun}/{pol}/{par}',
-            ]:
-                try:
-                    r = requests.get(url_try, timeout=15)
-                    if r.status_code != 200:
-                        continue
-                    geo = r.json()
-                    # Detectar SIGPAC en mantenimiento por carga de campaña
-                    if geo.get('error') and 'recintos_temp' in str(geo.get('error', '')):
-                        sigpac_down = True
-                        break
-                    features = geo.get('features', [])
-                    if not features:
-                        continue
-                    coords_flat = []
-                    for feat in features:
-                        geom = feat.get('geometry', {}) or {}
-                        def _collect(obj):
-                            t = obj.get('type', '')
-                            c = obj.get('coordinates', [])
-                            if t == 'Point':
-                                coords_flat.append(c)
-                            elif t in ('MultiPoint', 'LineString'):
-                                coords_flat.extend(c)
-                            elif t in ('MultiLineString', 'Polygon'):
-                                for ring in c:
-                                    coords_flat.extend(ring)
-                            elif t == 'MultiPolygon':
-                                for poly in c:
-                                    for ring in poly:
-                                        coords_flat.extend(ring)
-                            elif t == 'GeometryCollection':
-                                for g in obj.get('geometries', []):
-                                    _collect(g)
-                        _collect(geom)
-                    if coords_flat:
-                        lon = round(sum(c[0] for c in coords_flat) / len(coords_flat), 7)
-                        lat = round(sum(c[1] for c in coords_flat) / len(coords_flat), 7)
-                        _logger.info('SIGPAC centroid from parcel code: lon=%s lat=%s', lon, lat)
-                        break
-                except Exception as e:
-                    _logger.debug('SIGPAC by code failed (%s): %s', url_try, e)
-
-        # SIGPAC en mantenimiento: guardar ref catastral + códigos parseados, notificar
-        if sigpac_down:
-            ref_sigpac_str = f'{prov}-{mun}-{pol}-{par}' if pol else ''
-            visor_url = f'https://sigpac.mapa.es/fega/visor/#prov={prov}&mun={mun}&pol={pol}&par={par}'
-            partial_json = {
-                'ref_sigpac': ref_sigpac_str,
-                'ref_catastral': ref,
-                'provincia': prov,
-                'municipio': mun,
-                'poligono': pol or '',
-                'parcela': par or '',
-                'recintos': [],
-                'sigpac_status': 'unavailable',
-            }
-            vals = {
-                'ref_catastral': ref,
-                'sigpac_json': json.dumps(partial_json, ensure_ascii=False, indent=2),
-            }
-            if ref_sigpac_str:
-                vals['ref_sigpac'] = ref_sigpac_str
-            self.write(vals)
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'title': _('Referencia guardada — SIGPAC en mantenimiento'),
-                    'message': _(
-                        'La referencia "%s" se ha guardado (Pol.%s Par.%s). '
-                        'SIGPAC está cargando la campaña 2026 y no puede servir datos ahora. '
-                        'Cuando vuelva el servicio, pulsa «Consultar SIGPAC» para obtener superficies.'
-                    ) % (ref, pol, par),
-                    'type': 'warning',
-                    'sticky': True,
-                },
-            }
-
-        if lon is None or lat is None:
-            visor_url = (
-                f'https://sigpac.mapa.es/fega/visor/'
-                + (f'#prov={prov}&mun={mun}&pol={pol}&par={par}' if pol else '')
-            )
+        features = geo.get('features', [])
+        if not features:
             raise UserError(_(
-                'No se pudo localizar la parcela "%s" en SIGPAC.\n\n'
-                'Opciones:\n'
-                '  1. Abre el visor SIGPAC (%s), localiza la parcela\n'
-                '     y copia las coordenadas GPS del centro en los campos Latitud/Longitud,\n'
-                '     después pulsa «Consultar SIGPAC».\n'
-                '  2. Introduce las coordenadas GPS directamente.'
-            ) % (ref, visor_url))
+                'No se encontró la referencia catastral "%s" en SIGPAC.\n'
+                'Comprueba que la referencia es correcta.'
+            ) % ref)
+
+        # Calcular centroide del polígono
+        coords_flat = []
+        def _collect(obj):
+            t = obj.get('type', '')
+            c = obj.get('coordinates', [])
+            if t == 'Point':
+                coords_flat.append(c)
+            elif t in ('MultiPoint', 'LineString'):
+                coords_flat.extend(c)
+            elif t in ('MultiLineString', 'Polygon'):
+                for ring in c:
+                    coords_flat.extend(ring)
+            elif t == 'MultiPolygon':
+                for poly in c:
+                    for ring in poly:
+                        coords_flat.extend(ring)
+            elif t == 'GeometryCollection':
+                for g in obj.get('geometries', []):
+                    _collect(g)
+
+        for feat in features:
+            _collect(feat.get('geometry', {}) or {})
+
+        if not coords_flat:
+            raise UserError(_('SIGPAC devolvió la parcela pero sin geometría. Introduce las coordenadas manualmente.'))
+
+        lon = round(sum(c[0] for c in coords_flat) / len(coords_flat), 7)
+        lat = round(sum(c[1] for c in coords_flat) / len(coords_flat), 7)
+        _logger.info('SIGPAC parrefcat centroid for %s: lon=%s lat=%s', ref, lon, lat)
 
         vals = {'ref_catastral': ref}
         if not self.latitude:
