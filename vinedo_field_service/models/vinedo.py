@@ -360,8 +360,8 @@ class Finca(models.Model):
         try:
             prov = str(int(ref[0:2]))
             mun  = str(int(ref[2:5]))
-            pol  = str(int(ref[6:8]))
-            par  = str(int(ref[8:14]))
+            pol  = str(int(ref[6:9]))    # 3 dígitos: pos 6-8
+            par  = str(int(ref[9:14]))   # 5 dígitos: pos 9-13
         except ValueError as e:
             raise UserError(_('No se pudo interpretar la referencia catastral "%s": %s') % (ref, e))
 
