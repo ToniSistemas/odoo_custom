@@ -333,128 +333,57 @@ class Finca(models.Model):
         }
 
     def action_consultar_por_catastral(self):
-        """Parsea la referencia catastral rústica y consulta SIGPAC directamente.
-
-        Referencia rústica 20 chars: PPMMMAGGPPPPPPSSEE
-          PP     = provincia  (pos 0-1)
-          MMM    = municipio  (pos 2-4)
-          A      = letra      (pos 5)  → indica parcela rústica
-          GG     = polígono   (pos 6-7)
-          PPPPPP = parcela    (pos 8-13)
-          SSSS   = subparcela (pos 14-17)
-          EE     = control    (pos 18-19)
-        """
+        """Obtiene el centroide de la parcela vía Catastro INSPIRE y consulta SIGPAC por coordenadas."""
         self.ensure_one()
         if not self.ref_catastral:
             raise UserError(_('Escribe la Referencia Catastral antes de consultar.'))
         import requests
+        import xml.etree.ElementTree as ET
 
         ref = self.ref_catastral.strip().replace(' ', '').upper()
+        if len(ref) != 20:
+            raise UserError(_('La referencia catastral debe tener 20 caracteres. Recibida: "%s"') % ref)
 
-        # Parsear referencia rústica: pos 5 debe ser letra
-        if len(ref) != 20 or not ref[5].isalpha():
-            raise UserError(_(
-                'Solo se admiten referencias catastrales rústicas (20 caracteres, letra en posición 6).\n'
-                'Referencia recibida: "%s"'
-            ) % ref)
-        # Extraer con ceros (SIGPAC los necesita zero-padded)
-        prov     = ref[0:2]   # 2 dígitos: "27"
-        mun      = ref[2:5]   # 3 dígitos: "016"
-        pol      = ref[6:9]   # 3 dígitos: "079"
-        par      = ref[9:14]  # 5 dígitos: "01047"
-        # También como enteros para el resumen (sin ceros)
-        prov_int = str(int(prov))
-        mun_int  = str(int(mun))
-        pol_int  = str(int(pol))
-        par_int  = str(int(par))
-
-        # Consultar SIGPAC con todos los recintos de la parcela (zero-padded)
-        url_par = (
-            f'https://sigpac.mapa.es/fega/serviciosvisorsigpac/query/recintos'
-            f'/{prov}/{mun}/{pol}/{par}'
+        # Obtener geometría de la parcela desde Catastro INSPIRE WFS (funciona para rústicas y urbanas)
+        url_inspire = (
+            f'https://ovc.catastro.meh.es/OGCWEBSERVICES/getparcel.aspx'
+            f'?refcat={ref}&SRS=EPSG:4326&Format=GML3'
         )
         try:
-            resp = requests.get(url_par, timeout=15)
+            resp = requests.get(url_inspire, timeout=15)
             resp.raise_for_status()
-            geo = resp.json()
+            root_gml = ET.fromstring(resp.content)
         except Exception as e:
-            raise UserError(_('Error al conectar con SIGPAC: %s') % str(e))
+            raise UserError(_('Error al consultar el Catastro: %s') % str(e))
 
-        features = geo.get('features', [])
-        if not features:
+        # Extraer centroide del primer posList GML (Catastro devuelve lon lat lon lat ...)
+        lon, lat = None, None
+        for el in root_gml.iter():
+            if el.tag.endswith('posList') and el.text:
+                nums = list(map(float, el.text.strip().split()))
+                if len(nums) >= 4:
+                    lons = nums[0::2]
+                    lats = nums[1::2]
+                    lon = round(sum(lons) / len(lons), 7)
+                    lat = round(sum(lats) / len(lats), 7)
+                    break
+
+        if lon is None or lat is None:
             raise UserError(_(
-                'No se encontraron recintos SIGPAC para Prov.%s Mun.%s Pol.%s Par.%s.\n'
-                'Comprueba que la referencia catastral corresponde a una parcela rústica.'
-            ) % (prov_int, mun_int, pol_int, par_int))
+                'No se pudo obtener la geometría de la parcela %s del Catastro.\n'
+                'Introduce las coordenadas GPS manualmente y usa "Consultar SIGPAC".'
+            ) % ref)
 
-        # Recopilar recintos y calcular centroide a partir de las geometrías GeoJSON
-        all_recintos = []
-        lon_sum = lat_sum = coord_count = 0
-        rec_num_principal = uso_principal = ''
-        sfc_principal = 0.0
-
-        for feat in features:
-            p = feat.get('properties', {})
-            r_num = str(p.get('recinto', ''))
-            uso = p.get('dn_uso', p.get('uso', '?'))
-            sfc = float(p.get('dn_surface', p.get('superficie', 0)) or 0)
-            all_recintos.append({'recinto': r_num, 'uso': uso, 'superficie': sfc})
-            if not rec_num_principal:
-                rec_num_principal = r_num
-                uso_principal = uso
-                sfc_principal = sfc
-            # Centroide aproximado
-            geom = feat.get('geometry', {})
-            raw_coords = geom.get('coordinates', [])
-            ring = []
-            if geom.get('type') == 'Polygon' and raw_coords:
-                ring = raw_coords[0]
-            elif geom.get('type') == 'MultiPolygon' and raw_coords:
-                for poly in raw_coords:
-                    ring.extend(poly[0] if poly else [])
-            for c in ring:
-                if len(c) >= 2:
-                    lon_sum += c[0]
-                    lat_sum += c[1]
-                    coord_count += 1
-
-        lat = round(lat_sum / coord_count, 7) if coord_count else 0.0
-        lon = round(lon_sum / coord_count, 7) if coord_count else 0.0
-        ref_sigpac = f'{prov_int}-{mun_int}-{pol_int}-{par_int}-{rec_num_principal}'
-
-        summary = {
-            'source': 'sigpac',
-            'ref_sigpac': ref_sigpac,
-            'ref_catastral': ref,
-            'descripcion': '',
-            'provincia': prov_int, 'municipio': mun_int, 'poligono': pol_int,
-            'parcela': par_int, 'recinto_principal': rec_num_principal,
-            'uso_principal': uso_principal,
-            'superficie_principal_m2': sfc_principal,
-            'recintos': all_recintos,
-        }
-        vals = {
-            'ref_catastral': ref,
-            'ref_sigpac': ref_sigpac,
-            'sigpac_json': json.dumps(summary, ensure_ascii=False, indent=2),
-        }
-        if not self.latitude and lat:
+        # Guardar ref catastral y coordenadas calculadas
+        vals = {'ref_catastral': ref}
+        if not self.latitude:
             vals['latitude'] = lat
-        if not self.longitude and lon:
+        if not self.longitude:
             vals['longitude'] = lon
         self.write(vals)
 
-        total_m2 = sum(r['superficie'] for r in all_recintos)
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _('SIGPAC consultado'),
-                'message': _('Ref: %s | %d recinto(s) | %.0f m²') % (ref_sigpac, len(all_recintos), total_m2),
-                'type': 'success',
-                'sticky': False,
-            },
-        }
+        # Delegar a action_consultar_sigpac que usa self.latitude/longitude
+        return self.action_consultar_sigpac()
 
     def action_importar_superficie_sigpac(self):
         """Copia la superficie total SIGPAC al campo Extensión (ha)."""
