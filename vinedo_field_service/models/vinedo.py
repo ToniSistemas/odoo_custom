@@ -333,87 +333,91 @@ class Finca(models.Model):
         }
 
     def action_consultar_por_catastral(self):
-        """Usa la ref. catastral para obtener coordenadas del Catastro y luego consulta SIGPAC."""
+        """Parsea la referencia catastral rústica y consulta SIGPAC directamente.
+
+        Referencia rústica 20 chars: PPMMMAGGPPPPPPSSEE
+          PP     = provincia  (pos 0-1)
+          MMM    = municipio  (pos 2-4)
+          A      = letra      (pos 5)  → indica parcela rústica
+          GG     = polígono   (pos 6-7)
+          PPPPPP = parcela    (pos 8-13)
+          SSSS   = subparcela (pos 14-17)
+          EE     = control    (pos 18-19)
+        """
         self.ensure_one()
         if not self.ref_catastral:
             raise UserError(_('Escribe la Referencia Catastral antes de consultar.'))
         import requests
-        import xml.etree.ElementTree as ET
 
         ref = self.ref_catastral.strip().replace(' ', '').upper()
 
-        # Paso 1: obtener coordenadas del centroide desde el Catastro (Consulta_CPMRC)
-        url_cpmrc = 'https://ovc.catastro.meh.es/ovcservweb/OVCSWDataAccessDistrib/OVCCOORDENADAS.asmx/Consulta_CPMRC'
+        # Parsear referencia rústica: pos 5 debe ser letra
+        if len(ref) != 20 or not ref[5].isalpha():
+            raise UserError(_(
+                'Solo se admiten referencias catastrales rústicas (20 caracteres, letra en posición 6).\n'
+                'Referencia recibida: "%s"'
+            ) % ref)
         try:
-            resp = requests.get(url_cpmrc, params={
-                'Provincia': '', 'Municipio': '', 'SRS': 'EPSG:4326', 'RC': ref,
-            }, timeout=15)
+            prov = str(int(ref[0:2]))
+            mun  = str(int(ref[2:5]))
+            pol  = str(int(ref[6:8]))
+            par  = str(int(ref[8:14]))
+        except ValueError as e:
+            raise UserError(_('No se pudo interpretar la referencia catastral "%s": %s') % (ref, e))
+
+        # Consultar SIGPAC con todos los recintos de la parcela
+        url_par = (
+            f'https://sigpac.mapa.es/fega/serviciosvisorsigpac/query/recintos'
+            f'/{prov}/{mun}/{pol}/{par}'
+        )
+        try:
+            resp = requests.get(url_par, timeout=15)
             resp.raise_for_status()
-            root = ET.fromstring(resp.content)
-        except Exception as e:
-            raise UserError(_('Error al obtener coordenadas del Catastro: %s') % str(e))
-
-        ns = root.tag.split('}')[0].lstrip('{') if '}' in root.tag else ''
-        def tag(t): return f'{{{ns}}}{t}' if ns else t
-
-        lerr_el = root.find(f'.//{tag("lerr")}')
-        if lerr_el is not None:
-            cod_el = root.find(f'.//{tag("cod")}')
-            msg_el = root.find(f'.//{tag("msg")}')
-            raise UserError(_('Catastro: %s - %s') % (
-                cod_el.text if cod_el is not None else '',
-                msg_el.text if msg_el is not None else 'Referencia no encontrada',
-            ))
-
-        xcen_el = root.find(f'.//{tag("xcen")}')
-        ycen_el = root.find(f'.//{tag("ycen")}')
-        if xcen_el is None or ycen_el is None:
-            raise UserError(_('El Catastro no devolvió coordenadas para la referencia %s') % ref)
-
-        lon = float(xcen_el.text.replace(',', '.'))
-        lat = float(ycen_el.text.replace(',', '.'))
-
-        # Paso 2: recinto SIGPAC en esas coordenadas
-        url1 = f'https://sigpac.mapa.es/fega/serviciosvisorsigpac/query/recintos/{lon}/{lat}'
-        try:
-            resp1 = requests.get(url1, timeout=15)
-            resp1.raise_for_status()
-            geo1 = resp1.json()
+            geo = resp.json()
         except Exception as e:
             raise UserError(_('Error al conectar con SIGPAC: %s') % str(e))
 
-        features = geo1.get('features', [])
+        features = geo.get('features', [])
         if not features:
             raise UserError(_(
-                'No se encontró recinto SIGPAC para la parcela catastral %s.\n'
-                'Prueba introduciendo las coordenadas GPS manualmente.'
-            ) % ref)
+                'No se encontraron recintos SIGPAC para Prov.%s Mun.%s Pol.%s Par.%s.\n'
+                'Comprueba que la referencia catastral corresponde a una parcela rústica.'
+            ) % (prov, mun, pol, par))
 
-        props = features[0].get('properties', {})
-        prov = str(props.get('provincia', ''))
-        mun = str(props.get('municipio', ''))
-        pol = str(props.get('poligono', ''))
-        par = str(props.get('parcela', ''))
-        rec_num = str(props.get('recinto', ''))
-        uso_principal = props.get('dn_uso', props.get('uso', ''))
-        sfc_principal = float(props.get('dn_surface', props.get('superficie', 0)) or 0)
-        ref_sigpac = f'{prov}-{mun}-{pol}-{par}-{rec_num}'
-
-        # Paso 3: todos los recintos de la parcela
+        # Recopilar recintos y calcular centroide a partir de las geometrías GeoJSON
         all_recintos = []
-        try:
-            url2 = f'https://sigpac.mapa.es/fega/serviciosvisorsigpac/query/recintos/{prov}/{mun}/{pol}/{par}'
-            resp2 = requests.get(url2, timeout=15)
-            if resp2.status_code == 200:
-                for f2 in resp2.json().get('features', []):
-                    p = f2.get('properties', {})
-                    all_recintos.append({
-                        'recinto': str(p.get('recinto', '')),
-                        'uso': p.get('dn_uso', p.get('uso', '?')),
-                        'superficie': float(p.get('dn_surface', p.get('superficie', 0)) or 0),
-                    })
-        except Exception as e:
-            _logger.warning('SIGPAC: no se pudieron cargar todos los recintos: %s', e)
+        lon_sum = lat_sum = coord_count = 0
+        rec_num_principal = uso_principal = ''
+        sfc_principal = 0.0
+
+        for feat in features:
+            p = feat.get('properties', {})
+            r_num = str(p.get('recinto', ''))
+            uso = p.get('dn_uso', p.get('uso', '?'))
+            sfc = float(p.get('dn_surface', p.get('superficie', 0)) or 0)
+            all_recintos.append({'recinto': r_num, 'uso': uso, 'superficie': sfc})
+            if not rec_num_principal:
+                rec_num_principal = r_num
+                uso_principal = uso
+                sfc_principal = sfc
+            # Centroide aproximado
+            geom = feat.get('geometry', {})
+            raw_coords = geom.get('coordinates', [])
+            ring = []
+            if geom.get('type') == 'Polygon' and raw_coords:
+                ring = raw_coords[0]
+            elif geom.get('type') == 'MultiPolygon' and raw_coords:
+                for poly in raw_coords:
+                    ring.extend(poly[0] if poly else [])
+            for c in ring:
+                if len(c) >= 2:
+                    lon_sum += c[0]
+                    lat_sum += c[1]
+                    coord_count += 1
+
+        lat = round(lat_sum / coord_count, 7) if coord_count else 0.0
+        lon = round(lon_sum / coord_count, 7) if coord_count else 0.0
+        ref_sigpac = f'{prov}-{mun}-{pol}-{par}-{rec_num_principal}'
 
         summary = {
             'source': 'sigpac',
@@ -421,7 +425,7 @@ class Finca(models.Model):
             'ref_catastral': ref,
             'descripcion': '',
             'provincia': prov, 'municipio': mun, 'poligono': pol,
-            'parcela': par, 'recinto_principal': rec_num,
+            'parcela': par, 'recinto_principal': rec_num_principal,
             'uso_principal': uso_principal,
             'superficie_principal_m2': sfc_principal,
             'recintos': all_recintos,
@@ -431,14 +435,13 @@ class Finca(models.Model):
             'ref_sigpac': ref_sigpac,
             'sigpac_json': json.dumps(summary, ensure_ascii=False, indent=2),
         }
-        # Rellenar coordenadas si la finca no las tiene aún
         if not self.latitude and lat:
             vals['latitude'] = lat
         if not self.longitude and lon:
             vals['longitude'] = lon
         self.write(vals)
 
-        total_m2 = sum(r['superficie'] for r in all_recintos) or sfc_principal
+        total_m2 = sum(r['superficie'] for r in all_recintos)
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
