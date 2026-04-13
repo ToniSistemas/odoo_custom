@@ -66,62 +66,97 @@ def _mapa_buscar_productos(nombre):
     return _parse_productos_tbody(tbody_m.group(1))
 
 
-def _mapa_importar_todos():
-    """Fetches the complete MAPA fitosanitario catalog (basic info only).
+def _extraer_materia_activa(formulado):
+    """Extracts substance name(s) from a Formulado string like 'SUSTANCIA X% [TYPE] P/V'.
 
-    Strategy: search with each letter a-z plus empty prefix, using ``page`` and
-    ``pageSize`` query params to paginate.  Deduplicates by ``id_mapa``.
-
-    Only basic fields are fetched (no per-product detail calls), so materia_activa,
-    funcion, and observaciones are left empty — they can be filled later via
-    ``action_actualizar_mapa()`` on individual records.
+    Examples:
+      'METALDEHIDO 3% [GB] P/P'          → 'METALDEHIDO'
+      'AZOXISTROBIN 25% [SC] P/V'        → 'AZOXISTROBIN'
+      'FLORASULAM 0,5% + HALAUXIFEN-METIL 0,6% [OD] P/V' → 'FLORASULAM, HALAUXIFEN-METIL'
     """
-    seen_ids = set()
-    all_results = []
-    prefixes = [''] + list('abcdefghijklmnopqrstuvwxyz0123456789')
+    if not formulado:
+        return ''
+    sustancias = []
+    for part in re.split(r'\s*\+\s*', formulado):
+        # Remove concentration (digits followed by %, g/, kg/) and everything after
+        nombre = re.sub(
+            r'\s+\d[\d,.]*\s*(?:g/difusor|g/[a-z]|kg/[a-z]|%).*$',
+            '', part.strip(), flags=re.IGNORECASE).strip()
+        # Remove formulation type in brackets [EC], [SC], [GB], etc.
+        nombre = re.sub(r'\s*\[.*$', '', nombre).strip()
+        if nombre and len(nombre) > 1:
+            sustancias.append(nombre)
+    return ', '.join(sustancias)
 
-    for prefix in prefixes:
-        pagina = 1
-        prev_ids = None
 
-        while pagina <= 50:
-            url = (
-                f'{_MAPA_BASE}/Productos/ProductosGrid'
-                f'?NombreComercial={urllib.parse.quote(prefix, safe="")}'
-                f'&page={pagina}&pageSize=100'
-            )
+def _mapa_importar_todos():
+    """Fetchs the complete MAPA fitosanitario catalog via the official JSON export.
+
+    Uses a single HTTP POST to /Exportaciones/ExportJsonProductos (no filters = all
+    ~3026 products).  Returns richer data than the HTML grid: observaciones
+    (Condicionamiento), fecha_caducidad, and materia_activa derived from Formulado.
+    funcion is not available in the bulk export and remains empty until the user
+    calls ``action_actualizar_mapa()`` on individual records.
+    """
+    import json as _json
+    from datetime import date as _date
+
+    url = f'{_MAPA_BASE}/Exportaciones/ExportJsonProductos'
+    try:
+        req = urllib.request.Request(
+            url, data=b'',
+            headers={**_MAPA_HEADERS, 'Content-Type': 'application/x-www-form-urlencoded'},
+            method='POST',
+        )
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            raw = resp.read().decode('utf-8', errors='ignore')
+    except Exception as exc:
+        _logger.warning('MAPA ExportJsonProductos request failed: %s', exc)
+        return []
+
+    try:
+        # Response is triple-encoded:
+        #   HTTP body  → JSON string  (outer quotes + escaped inner)
+        #   json.loads → inner JSON string  {"Contenido": "[...]", "Fecha": "..."}
+        #   json.loads → dict with Contenido key whose value is a JSON array string
+        #   json.loads → list of product dicts
+        data = _json.loads(raw)
+        if isinstance(data, str):
+            data = _json.loads(data)
+        productos_raw = _json.loads(data['Contenido'])
+    except Exception as exc:
+        _logger.warning('MAPA ExportJsonProductos parse error: %s', exc)
+        return []
+
+    results = []
+    for p in productos_raw:
+        id_mapa = p.get('IdProducto') or 0
+        if not id_mapa:
+            continue
+
+        # Parse fecha_caducidad from ISO datetime "2026-03-31T00:00:00"
+        fecha_cad = False
+        str_cad = p.get('FechaCaducidad') or ''
+        if len(str_cad) >= 10:
             try:
-                req = urllib.request.Request(url, headers=_MAPA_HEADERS)
-                with urllib.request.urlopen(req, timeout=30) as resp:
-                    html_content = resp.read().decode('utf-8', errors='ignore')
-            except Exception as exc:
-                _logger.warning(
-                    'MAPA bulk prefix=%r page=%d failed: %s', prefix, pagina, exc)
-                break
+                fecha_cad = _date(int(str_cad[:4]), int(str_cad[5:7]), int(str_cad[8:10]))
+            except Exception:
+                pass
 
-            tbody_m = re.search(r'<tbody>(.*?)</tbody>', html_content, re.DOTALL)
-            if not tbody_m:
-                break
+        formulado = p.get('Formulado') or ''
+        results.append({
+            'id_mapa': id_mapa,
+            'num_registro': p.get('NumRegistro') or '',
+            'nombre': (p.get('Nombre') or '').strip(),
+            'titular': p.get('Titular') or '',
+            'formulado': formulado,
+            'materia_activa': _extraer_materia_activa(formulado),
+            'estado': p.get('Estado') or '',
+            'observaciones': p.get('Condicionamiento') or '',
+            'fecha_caducidad': fecha_cad,
+        })
 
-            page_results = _parse_productos_tbody(tbody_m.group(1))
-            if not page_results:
-                break
-
-            curr_ids = frozenset(r['id_mapa'] for r in page_results)
-            # If server doesn't support pagination, same rows come back every time
-            if curr_ids == prev_ids:
-                break
-            prev_ids = curr_ids
-
-            new = [r for r in page_results if r['id_mapa'] not in seen_ids]
-            seen_ids |= set(curr_ids)
-            all_results.extend(new)
-
-            if len(page_results) < 100:
-                break  # Last page for this prefix
-            pagina += 1
-
-    return all_results
+    return results
 
 
 def _mapa_obtener_detalle(id_mapa):
@@ -980,7 +1015,10 @@ class FitosanitarioImportWizard(models.TransientModel):
                             'nombre': p['nombre'],
                             'titular': p['titular'],
                             'formulado': p['formulado'],
+                            'materia_activa': p.get('materia_activa', ''),
                             'estado': p['estado'],
+                            'observaciones': p.get('observaciones', ''),
+                            'fecha_caducidad': p.get('fecha_caducidad', False),
                         })
                         actualizados += 1
                     else:
