@@ -394,9 +394,9 @@
                             <field name="fecha_caducidad_reg" readonly="1"/>
                         </group>
                     </group>
-                    <group string="Observaciones del registro MAPA"
-                           invisible="not fitosanitario_id or not fitosanitario_id.observaciones">
-                        <field name="fitosanitario_id.observaciones" readonly="1" nolabel="1"/>
+                    <group string="Condiciones de uso (MAPA)"
+                           invisible="not fitosanitario_id or not observaciones_fito">
+                        <field name="observaciones_fito" readonly="1" nolabel="1"/>
                     </group>
                 </sheet>
             </form>
