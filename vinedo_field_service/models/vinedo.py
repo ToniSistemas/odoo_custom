@@ -674,8 +674,6 @@ class Tratamiento(models.Model):
         related='fitosanitario_id.estado', string='Estado Reg.', readonly=True)
     fecha_caducidad_reg = fields.Date(
         related='fitosanitario_id.fecha_caducidad', string='Cad. Registro', readonly=True)
-    observaciones_fito = fields.Text(
-        related='fitosanitario_id.observaciones', string='Condiciones de uso', readonly=True)
 
     def action_buscar_fitosanitario(self):
         """Opens the MAPA search wizard for this tratamiento."""
