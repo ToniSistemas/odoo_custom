@@ -371,6 +371,15 @@
         </field>
     </record>
 
+    <record id="action_server_completar_funciones" model="ir.actions.server">
+        <field name="name">Completar funciones desde MAPA</field>
+        <field name="model_id" ref="model_vinedo_fitosanitario"/>
+        <field name="binding_model_id" ref="model_vinedo_fitosanitario"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_completar_funciones()</field>
+    </record>
+
     <record id="action_server_importar_catalogo_mapa" model="ir.actions.server">
         <field name="name">Descargar catálogo completo MAPA</field>
         <field name="model_id" ref="model_vinedo_fitosanitario"/>

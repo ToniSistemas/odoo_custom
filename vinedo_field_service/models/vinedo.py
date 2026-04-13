@@ -162,6 +162,31 @@ def _mapa_importar_todos():
     return results
 
 
+def _mapa_obtener_funcion(id_mapa):
+    """Fetches only the function type from MAPA FuncionesGrid.
+
+    Returns a string like 'Insecticida' or 'Fungicida, Insecticida', empty string
+    if MAPA has no function listed, or None on HTTP/parse failure.
+    """
+    try:
+        req = urllib.request.Request(
+            f'{_MAPA_BASE}/Productos/FuncionesGrid?IdProducto={id_mapa}',
+            headers=_MAPA_HEADERS)
+        with urllib.request.urlopen(req, timeout=10) as r:
+            html_f = r.read().decode('utf-8', errors='ignore')
+    except Exception as exc:
+        _logger.warning('MAPA FuncionesGrid id=%s failed: %s', id_mapa, exc)
+        return None
+    funciones = []
+    tbody_f = re.search(r'<tbody>(.*?)</tbody>', html_f, re.DOTALL)
+    if tbody_f:
+        funciones = [
+            f.strip() for f in re.findall(r'<td[^>]*>([^<]+)</td>', tbody_f.group(1))
+            if f.strip()
+        ]
+    return ', '.join(funciones)
+
+
 def _mapa_obtener_detalle(id_mapa):
     """Fetches full product details from MAPA for a given internal id_mapa.
 
@@ -875,6 +900,68 @@ class Fitosanitario(models.Model):
             'url': (f'https://servicio.mapa.gob.es/regfiweb/#'
                     f'?numreg={urllib.parse.quote(self.num_registro)}'),
             'target': 'new',
+        }
+
+    def action_completar_funciones(self):
+        """Fetches funcion from MAPA for up to 200 products at a time where it is still missing.
+
+        Products with no function in MAPA are stored as '-' to avoid re-querying them.
+        Run repeatedly until the notification says '¡Completado!'.
+        """
+        pendientes = self.env['vinedo.fitosanitario'].search(
+            [('id_mapa', '!=', 0), ('funcion', '=', False)],
+            limit=200,
+            order='id',
+        )
+        if not pendientes:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Completar funciones MAPA'),
+                    'message': _('Todos los productos ya tienen función asignada.'),
+                    'type': 'success',
+                    'sticky': False,
+                },
+            }
+
+        actualizados = errores = 0
+        for rec in pendientes:
+            funcion = _mapa_obtener_funcion(rec.id_mapa)
+            if funcion is None:
+                errores += 1
+                continue
+            try:
+                with self.env.cr.savepoint():
+                    # Store '-' when MAPA has no function listed, to avoid re-querying
+                    rec.write({'funcion': funcion if funcion else '-'})
+                    self.env.flush_all()
+                actualizados += 1
+            except Exception as exc:
+                self.env.invalidate_all()
+                _logger.warning('MAPA funcion: error writing rec %s: %s', rec.id, exc)
+                errores += 1
+
+        quedan = self.env['vinedo.fitosanitario'].search_count(
+            [('id_mapa', '!=', 0), ('funcion', '=', False)]
+        )
+        if quedan:
+            msg = _(
+                '%d funciones actualizadas, %d errores. '
+                'Quedan %d sin función — vuelve a ejecutar.'
+            ) % (actualizados, errores, quedan)
+        else:
+            msg = _('%d funciones actualizadas. ¡Completado!') % actualizados
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Completar funciones MAPA'),
+                'message': msg,
+                'type': 'warning' if quedan else 'success',
+                'sticky': True,
+            },
         }
 
     def action_importar_catalogo_mapa(self):
