@@ -454,6 +454,10 @@
                         class="btn-primary"
                         invisible="tipo != 'fitosanitario'"
                         help="Busca el producto en el Registro de Productos Fitosanitarios y rellena los datos automáticamente"/>
+                    <button name="action_ver_ficha_mapa" type="object"
+                        string="Ver ficha en MAPA" icon="fa-file-pdf-o"
+                        invisible="not fitosanitario_id"
+                        help="Abre la ficha oficial del producto en el portal del Ministerio (MAPA)"/>
                 </header>
                 <sheet>
                     <group>
@@ -474,6 +478,10 @@
                             <field name="estado_registro_info" readonly="1"/>
                             <field name="fecha_caducidad_reg" readonly="1"/>
                         </group>
+                    </group>
+                    <group string="Observaciones / Condiciones de Uso"
+                           invisible="not observaciones_registro">
+                        <field name="observaciones_registro" nolabel="1" colspan="2"/>
                     </group>
                 </sheet>
             </form>

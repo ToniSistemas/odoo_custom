@@ -800,6 +800,16 @@ class Tratamiento(models.Model):
         related='fitosanitario_id.estado', string='Estado Reg.', readonly=True)
     fecha_caducidad_reg = fields.Date(
         related='fitosanitario_id.fecha_caducidad', string='Cad. Registro', readonly=True)
+    observaciones_registro = fields.Text(
+        related='fitosanitario_id.observaciones',
+        string='Observaciones / Condiciones de Uso', readonly=True)
+
+    def action_ver_ficha_mapa(self):
+        """Opens the official MAPA product page for the linked fitosanitario."""
+        self.ensure_one()
+        if not self.fitosanitario_id:
+            raise UserError(_('Asocia primero este tratamiento a un producto del Registro MAPA.'))
+        return self.fitosanitario_id.action_abrir_ficha_mapa()
 
     def action_buscar_fitosanitario(self):
         """Opens the MAPA search wizard for this tratamiento."""
