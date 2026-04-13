@@ -314,7 +314,7 @@
                         </group>
                     </group>
                     <group string="Observaciones / Condiciones de Uso" invisible="not observaciones">
-                        <field name="observaciones" nolabel="1"/>
+                        <field name="observaciones" nolabel="1" colspan="2"/>
                     </group>
                 </sheet>
             </form>
