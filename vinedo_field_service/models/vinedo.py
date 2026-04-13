@@ -134,12 +134,15 @@ def _mapa_importar_todos():
         if not id_mapa:
             continue
 
-        # Parse fecha_caducidad from ISO datetime "2026-03-31T00:00:00"
+        # Parse fecha_caducidad from ISO datetime "2026-03-31T00:00:00" → "YYYY-MM-DD" string
+        # Keep as string so it is JSON-serializable; Odoo Date fields accept 'YYYY-MM-DD'.
         fecha_cad = False
         str_cad = p.get('FechaCaducidad') or ''
         if len(str_cad) >= 10:
             try:
-                fecha_cad = _date(int(str_cad[:4]), int(str_cad[5:7]), int(str_cad[8:10]))
+                # Validate it is a real date before storing
+                _date(int(str_cad[:4]), int(str_cad[5:7]), int(str_cad[8:10]))
+                fecha_cad = str_cad[:10]
             except Exception:
                 pass
 
