@@ -2,8 +2,138 @@ from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError, UserError
 import json
 import logging
+import re
+import html
+import urllib.request
+import urllib.parse
 
 _logger = logging.getLogger(__name__)
+
+_MAPA_BASE = 'https://servicio.mapa.gob.es/regfiweb'
+_MAPA_HEADERS = {'User-Agent': 'Mozilla/5.0 (compatible; OdooViñedo/1.6)'}
+
+
+def _mapa_buscar_productos(nombre):
+    """Searches MAPA fitosanitario registry by commercial name.
+
+    Returns a list of dicts with keys:
+    id_mapa, num_registro, nombre, titular, formulado, estado
+    """
+    url = (_MAPA_BASE + '/Productos/ProductosGrid?NombreComercial='
+           + urllib.parse.quote(nombre, safe=''))
+    try:
+        req = urllib.request.Request(url, headers=_MAPA_HEADERS)
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            html_content = resp.read().decode('utf-8', errors='ignore')
+    except Exception as exc:
+        _logger.warning('MAPA search "%s" failed: %s', nombre, exc)
+        return []
+
+    tbody_m = re.search(r'<tbody>(.*?)</tbody>', html_content, re.DOTALL)
+    if not tbody_m:
+        return []
+
+    results = []
+    for row in re.findall(r'<tr[^>]*>(.*?)</tr>', tbody_m.group(1), re.DOTALL):
+        btn = re.search(
+            r'btnBuscarProductoId[^>]+data-nombre="([^"]*)"[^>]+data-id="(\d+)"', row)
+        if not btn:
+            continue
+        nombre_prod = html.unescape(btn.group(1))
+        id_mapa = int(btn.group(2))
+
+        cells = re.findall(r'<td[^>]*>(.*?)</td>', row, re.DOTALL)
+        _strip = lambda s: re.sub(r'<[^>]+>', '', s).strip()
+        estado = _strip(cells[0]) if cells else ''
+        num_reg = _strip(cells[2]) if len(cells) > 2 else ''
+        titular = _strip(cells[4]) if len(cells) > 4 else ''
+        formulado_m = re.search(r'class="btnFormulado2"[^>]*>([^<]+)<', row)
+        formulado = formulado_m.group(1).strip() if formulado_m else ''
+
+        results.append({
+            'id_mapa': id_mapa,
+            'num_registro': num_reg,
+            'nombre': nombre_prod,
+            'titular': titular,
+            'formulado': formulado,
+            'estado': estado,
+        })
+    return results
+
+
+def _mapa_obtener_detalle(id_mapa):
+    """Fetches full product details from MAPA for a given internal id_mapa.
+
+    Makes 3 HTTP calls: GetProductoById, SustanciasGrid, FuncionesGrid.
+    Returns a dict suitable for write() on vinedo.fitosanitario, or None on error.
+    """
+    import json as _json
+    from datetime import date as _date
+
+    try:
+        req = urllib.request.Request(
+            f'{_MAPA_BASE}/Productos/GetProductoById?idProducto={id_mapa}',
+            headers=_MAPA_HEADERS)
+        with urllib.request.urlopen(req, timeout=15) as r:
+            prod = _json.loads(r.read().decode('utf-8'))
+
+        req2 = urllib.request.Request(
+            f'{_MAPA_BASE}/Productos/SustanciasGrid?IdProducto={id_mapa}',
+            headers=_MAPA_HEADERS)
+        with urllib.request.urlopen(req2, timeout=15) as r2:
+            html_s = r2.read().decode('utf-8', errors='ignore')
+
+        req3 = urllib.request.Request(
+            f'{_MAPA_BASE}/Productos/FuncionesGrid?IdProducto={id_mapa}',
+            headers=_MAPA_HEADERS)
+        with urllib.request.urlopen(req3, timeout=15) as r3:
+            html_f = r3.read().decode('utf-8', errors='ignore')
+    except Exception as exc:
+        _logger.warning('MAPA detalle id=%s failed: %s', id_mapa, exc)
+        return None
+
+    # Parse sustancias (column 1 of each tbody row)
+    sustancias = []
+    tbody_s = re.search(r'<tbody>(.*?)</tbody>', html_s, re.DOTALL)
+    if tbody_s:
+        for row in re.findall(r'<tr[^>]*>(.*?)</tr>', tbody_s.group(1), re.DOTALL):
+            cells = re.findall(r'<td[^>]*>(.*?)</td>', row, re.DOTALL)
+            if len(cells) >= 2:
+                name_s = re.sub(r'<[^>]+>', '', cells[1]).strip()
+                if name_s:
+                    sustancias.append(name_s)
+
+    # Parse funciones (single column)
+    funciones = []
+    tbody_f = re.search(r'<tbody>(.*?)</tbody>', html_f, re.DOTALL)
+    if tbody_f:
+        funciones = [
+            f.strip() for f in re.findall(r'<td[^>]*>([^<]+)</td>', tbody_f.group(1))
+            if f.strip()
+        ]
+
+    # Parse caducidad date format "DD-MM-YYYY"
+    fecha_caducidad = False
+    str_cad = prod.get('strFechaCaducidad', '') or ''
+    if len(str_cad) == 10 and str_cad[2] == '-':
+        try:
+            fecha_caducidad = _date(int(str_cad[6:]), int(str_cad[3:5]), int(str_cad[:2]))
+        except Exception:
+            pass
+
+    return {
+        'id_mapa': id_mapa,
+        'num_registro': prod.get('numRegistro') or '',
+        'nombre': (prod.get('nombre') or '').strip(),
+        'titular': prod.get('titular') or '',
+        'formulado': prod.get('formulado') or '',
+        'estado': prod.get('estado') or '',
+        'observaciones': prod.get('observaciones') or '',
+        'materia_activa': ', '.join(sustancias),
+        'funcion': ', '.join(funciones),
+        'fecha_caducidad': fecha_caducidad,
+        'fecha_consulta': fields.Datetime.now(),
+    }
 
 
 class Territorio(models.Model):
@@ -527,12 +657,38 @@ class Tratamiento(models.Model):
     _order = 'fecha desc, finca_id'
 
     finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True, ondelete='cascade', index=True)
-    tipo = fields.Selection([('fitosanitario', 'Fitosanitario'), ('otro', 'Otro')], 
+    tipo = fields.Selection([('fitosanitario', 'Fitosanitario'), ('otro', 'Otro')],
                            string='Tipo', default='fitosanitario', required=True)
     fecha = fields.Date(string='Fecha', default=fields.Date.today, required=True, index=True)
     producto = fields.Char(string='Producto', required=True)
     dosis = fields.Char(string='Dosis / Observaciones')
     empleado_id = fields.Many2one('hr.employee', string='Empleado', index=True)
+    fitosanitario_id = fields.Many2one(
+        'vinedo.fitosanitario', string='Ficha Reg. MAPA',
+        index=True, ondelete='set null')
+    materia_activa_info = fields.Char(
+        related='fitosanitario_id.materia_activa', string='Materia Activa', readonly=True)
+    funcion_info = fields.Char(
+        related='fitosanitario_id.funcion', string='Función', readonly=True)
+    estado_registro_info = fields.Char(
+        related='fitosanitario_id.estado', string='Estado Reg.', readonly=True)
+    fecha_caducidad_reg = fields.Date(
+        related='fitosanitario_id.fecha_caducidad', string='Cad. Registro', readonly=True)
+
+    def action_buscar_fitosanitario(self):
+        """Opens the MAPA search wizard for this tratamiento."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Buscar en Registro MAPA'),
+            'res_model': 'vinedo.fitosanitario.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_nombre_busqueda': self.producto or '',
+                'default_tratamiento_id': self.id,
+            },
+        }
 
 
 class Poda(models.Model):
@@ -559,3 +715,135 @@ class Trabajo(models.Model):
     tipo_trabajo = fields.Char(string='Trabajo realizado', required=True)
     horas = fields.Float(string='Horas', digits=(5, 2))
     observaciones = fields.Text(string='Observaciones')
+
+
+class Fitosanitario(models.Model):
+    """Catálogo de productos fitosanitarios del Registro MAPA.
+
+    Los datos se pueden poblar automáticamente mediante la consulta al
+    Registro de Productos Fitosanitarios del MAPA (servicio.mapa.gob.es/regfiweb).
+    """
+    _name = 'vinedo.fitosanitario'
+    _description = 'Producto Fitosanitario (Registro MAPA)'
+    _rec_name = 'nombre'
+    _order = 'nombre'
+
+    id_mapa = fields.Integer(string='ID interno MAPA', readonly=True, index=True)
+    num_registro = fields.Char(string='Nº Registro', index=True)
+    nombre = fields.Char(string='Nombre Comercial', required=True, index=True)
+    titular = fields.Char(string='Titular')
+    formulado = fields.Char(string='Formulado')
+    funcion = fields.Char(string='Función (tipo)')
+    materia_activa = fields.Char(string='Materia(s) Activa(s)')
+    estado = fields.Char(string='Estado')
+    fecha_caducidad = fields.Date(string='Caducidad Registro')
+    observaciones = fields.Text(string='Observaciones / Condiciones de Uso')
+    fecha_consulta = fields.Datetime(string='Última consulta MAPA', readonly=True)
+
+    def action_actualizar_mapa(self):
+        """Re-fetches data from MAPA using id_mapa already stored."""
+        for rec in self:
+            if not rec.id_mapa:
+                raise UserError(_(
+                    'Este registro no tiene un ID MAPA asignado. '
+                    'Usa la búsqueda para encontrarlo primero.'))
+            data = _mapa_obtener_detalle(rec.id_mapa)
+            if data is None:
+                raise UserError(_(
+                    'No se pudo obtener información de MAPA para el producto "%s". '
+                    'Comprueba la conexión a internet e inténtalo de nuevo.') % rec.nombre)
+            rec.write(data)
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('MAPA actualizado'),
+                'message': _('Datos actualizados desde el Registro de Productos Fitosanitarios.'),
+                'type': 'success',
+                'sticky': False,
+            },
+        }
+
+    def action_abrir_ficha_mapa(self):
+        """Opens the official MAPA product page in a new browser tab."""
+        self.ensure_one()
+        if not self.num_registro:
+            raise UserError(_('Sin número de registro no se puede abrir la ficha del MAPA.'))
+        return {
+            'type': 'ir.actions.act_url',
+            'url': (f'https://servicio.mapa.gob.es/regfiweb/#'
+                    f'?numreg={urllib.parse.quote(self.num_registro)}'),
+            'target': 'new',
+        }
+
+
+class FitosanitarioWizard(models.TransientModel):
+    """Wizard to search the MAPA phytosanitary registry and link a product to a Tratamiento."""
+    _name = 'vinedo.fitosanitario.wizard'
+    _description = 'Buscar Producto Fitosanitario (MAPA)'
+
+    nombre_busqueda = fields.Char(string='Nombre del producto', required=True)
+    linea_ids = fields.One2many(
+        'vinedo.fitosanitario.wizard.linea', 'wizard_id', string='Resultados')
+    tratamiento_id = fields.Many2one('vinedo.tratamiento', string='Tratamiento')
+
+    def action_buscar(self):
+        """Calls MAPA API and populates linea_ids with results."""
+        self.linea_ids.unlink()
+        resultados = _mapa_buscar_productos(self.nombre_busqueda)
+        if not resultados:
+            raise UserError(_(
+                'No se encontraron productos con el nombre "%s" en el Registro MAPA.\n'
+                'Prueba con otro nombre o parte del nombre.') % self.nombre_busqueda)
+        for r in resultados:
+            r['wizard_id'] = self.id
+            self.env['vinedo.fitosanitario.wizard.linea'].create(r)
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'new',
+        }
+
+
+class FitosanitarioWizardLinea(models.TransientModel):
+    """Result line for the MAPA search wizard."""
+    _name = 'vinedo.fitosanitario.wizard.linea'
+    _description = 'Resultado búsqueda MAPA'
+
+    wizard_id = fields.Many2one(
+        'vinedo.fitosanitario.wizard', string='Wizard', ondelete='cascade')
+    id_mapa = fields.Integer(string='ID MAPA')
+    num_registro = fields.Char(string='Nº Registro')
+    nombre = fields.Char(string='Nombre Comercial')
+    titular = fields.Char(string='Titular')
+    formulado = fields.Char(string='Formulado')
+    estado = fields.Char(string='Estado')
+
+    def action_seleccionar(self):
+        """Fetches full MAPA details, creates/updates the fitosanitario record,
+        and links it to the tratamiento if set."""
+        self.ensure_one()
+        data = _mapa_obtener_detalle(self.id_mapa)
+        if data is None:
+            raise UserError(_(
+                'No se pudieron obtener los datos del MAPA para "%s".\n'
+                'Comprueba la conexión a internet e inténtalo de nuevo.') % self.nombre)
+
+        Fitosanitario = self.env['vinedo.fitosanitario']
+        fitosanitario = Fitosanitario.search(
+            [('id_mapa', '=', self.id_mapa)], limit=1)
+        if fitosanitario:
+            fitosanitario.write(data)
+        else:
+            fitosanitario = Fitosanitario.create(data)
+
+        wizard = self.wizard_id
+        if wizard.tratamiento_id and wizard.tratamiento_id.id:
+            vals = {'fitosanitario_id': fitosanitario.id}
+            if not wizard.tratamiento_id.producto:
+                vals['producto'] = fitosanitario.nombre
+            wizard.tratamiento_id.write(vals)
+
+        return {'type': 'ir.actions.act_window_close'}

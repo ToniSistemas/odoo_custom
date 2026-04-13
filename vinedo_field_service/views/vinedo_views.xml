@@ -55,6 +55,11 @@
                                     <field name="fecha"/>
                                     <field name="tipo"/>
                                     <field name="producto"/>
+                                    <field name="fitosanitario_id" optional="show"/>
+                                    <field name="materia_activa_info" optional="show" readonly="1"/>
+                                    <field name="estado_registro_info" optional="hide" readonly="1"/>
+                                    <field name="fecha_caducidad_reg" optional="hide" readonly="1"/>
+                                    <field name="dosis" optional="hide"/>
                                     <field name="empleado_id"/>
                                 </list>
                             </field>
@@ -246,4 +251,202 @@
 
     <menuitem id="menu_vinedo_config" name="Configuración" parent="menu_vinedo_root" sequence="100"/>
     <menuitem id="menu_vinedo_territorios" name="Territorios" parent="menu_vinedo_config" action="action_territorio" sequence="1"/>
+
+    <!-- ============================================================ -->
+    <!-- Fitosanitario (Productos Reg. MAPA) Views                    -->
+    <!-- ============================================================ -->
+
+    <record id="view_fitosanitario_list" model="ir.ui.view">
+        <field name="name">vinedo.fitosanitario.list</field>
+        <field name="model">vinedo.fitosanitario</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="num_registro"/>
+                <field name="nombre"/>
+                <field name="funcion"/>
+                <field name="materia_activa"/>
+                <field name="titular" optional="hide"/>
+                <field name="formulado" optional="hide"/>
+                <field name="estado"
+                       decoration-success="estado == 'Vigente'"
+                       decoration-muted="estado != 'Vigente'"/>
+                <field name="fecha_caducidad"/>
+                <field name="fecha_consulta" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_fitosanitario_form" model="ir.ui.view">
+        <field name="name">vinedo.fitosanitario.form</field>
+        <field name="model">vinedo.fitosanitario</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_actualizar_mapa" type="object"
+                        string="Actualizar desde MAPA" icon="fa-refresh"
+                        class="btn-primary"
+                        invisible="not id_mapa"
+                        help="Recarga los datos desde el Registro de Productos Fitosanitarios del MAPA"/>
+                    <button name="action_abrir_ficha_mapa" type="object"
+                        string="Ver ficha en MAPA" icon="fa-external-link"
+                        invisible="not num_registro"
+                        help="Abre la ficha oficial en el portal del Ministerio"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="nombre" placeholder="Nombre Comercial"/></h1>
+                    </div>
+                    <group>
+                        <group string="Registro">
+                            <field name="num_registro"/>
+                            <field name="id_mapa" readonly="1"/>
+                            <field name="estado"
+                                   decoration-success="estado == 'Vigente'"
+                                   decoration-danger="estado != 'Vigente' and estado != False"/>
+                            <field name="fecha_caducidad"/>
+                            <field name="fecha_consulta" readonly="1"/>
+                        </group>
+                        <group string="Composición">
+                            <field name="funcion"/>
+                            <field name="materia_activa"/>
+                            <field name="formulado"/>
+                            <field name="titular"/>
+                        </group>
+                    </group>
+                    <group string="Observaciones / Condiciones de Uso" invisible="not observaciones">
+                        <field name="observaciones" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_fitosanitario" model="ir.actions.act_window">
+        <field name="name">Productos Fitosanitarios</field>
+        <field name="res_model">vinedo.fitosanitario</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Catálogo vacío de productos fitosanitarios
+            </p>
+            <p>
+                Busca productos en el Registro MAPA desde los tratamientos de cada finca
+                y se añadirán automáticamente a este catálogo.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_vinedo_fitosanitarios" name="Fitosanitarios (MAPA)"
+        parent="menu_vinedo_root" action="action_fitosanitario" sequence="5"/>
+
+    <!-- ============================================================ -->
+    <!-- Tratamiento standalone Views                                 -->
+    <!-- ============================================================ -->
+
+    <record id="view_tratamiento_list" model="ir.ui.view">
+        <field name="name">vinedo.tratamiento.list</field>
+        <field name="model">vinedo.tratamiento</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="fecha"/>
+                <field name="finca_id"/>
+                <field name="tipo"/>
+                <field name="producto"/>
+                <field name="materia_activa_info" optional="show" readonly="1"/>
+                <field name="funcion_info" optional="show" readonly="1"/>
+                <field name="estado_registro_info" optional="hide" readonly="1"/>
+                <field name="fecha_caducidad_reg" optional="hide" readonly="1"/>
+                <field name="dosis" optional="hide"/>
+                <field name="empleado_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_tratamiento_form" model="ir.ui.view">
+        <field name="name">vinedo.tratamiento.form</field>
+        <field name="model">vinedo.tratamiento</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_buscar_fitosanitario" type="object"
+                        string="Consultar Registro MAPA" icon="fa-search"
+                        class="btn-primary"
+                        invisible="tipo != 'fitosanitario'"
+                        help="Busca el producto en el Registro de Productos Fitosanitarios y rellena los datos automáticamente"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group string="Datos del tratamiento">
+                            <field name="finca_id"/>
+                            <field name="fecha"/>
+                            <field name="tipo"/>
+                            <field name="producto"/>
+                            <field name="dosis"/>
+                            <field name="empleado_id"/>
+                        </group>
+                        <group string="Ficha Registro MAPA"
+                               invisible="tipo != 'fitosanitario'">
+                            <field name="fitosanitario_id"
+                                   options="{'no_quick_create': True}"/>
+                            <field name="funcion_info" readonly="1"/>
+                            <field name="materia_activa_info" readonly="1"/>
+                            <field name="estado_registro_info" readonly="1"/>
+                            <field name="fecha_caducidad_reg" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Observaciones del registro MAPA"
+                           invisible="not fitosanitario_id or not fitosanitario_id.observaciones">
+                        <field name="fitosanitario_id.observaciones" readonly="1" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_tratamiento" model="ir.actions.act_window">
+        <field name="name">Tratamientos</field>
+        <field name="res_model">vinedo.tratamiento</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_vinedo_tratamientos" name="Tratamientos"
+        parent="menu_vinedo_root" action="action_tratamiento" sequence="4"/>
+
+    <!-- ============================================================ -->
+    <!-- Wizard: Buscar Fitosanitario en MAPA                        -->
+    <!-- ============================================================ -->
+
+    <record id="view_fitosanitario_wizard_form" model="ir.ui.view">
+        <field name="name">vinedo.fitosanitario.wizard.form</field>
+        <field name="model">vinedo.fitosanitario.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Buscar en Registro MAPA">
+                <group>
+                    <field name="nombre_busqueda"
+                           placeholder="Ej: ALIETTE, mancozeb, fosetil…"/>
+                </group>
+                <group invisible="not linea_ids" string="Resultados">
+                    <field name="linea_ids" nolabel="1">
+                        <list>
+                            <field name="num_registro"/>
+                            <field name="nombre"/>
+                            <field name="formulado"/>
+                            <field name="estado"
+                                   decoration-success="estado == 'Vigente'"
+                                   decoration-muted="estado != 'Vigente'"/>
+                            <button name="action_seleccionar" type="object"
+                                string="Seleccionar" icon="fa-check"
+                                class="btn-primary btn-sm"/>
+                        </list>
+                    </field>
+                </group>
+                <footer>
+                    <button name="action_buscar" type="object"
+                        string="Buscar" class="btn-primary" icon="fa-search"/>
+                    <button special="cancel" string="Cancelar"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
 </odoo>
