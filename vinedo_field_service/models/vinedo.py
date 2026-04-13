@@ -13,6 +13,37 @@ _MAPA_BASE = 'https://servicio.mapa.gob.es/regfiweb'
 _MAPA_HEADERS = {'User-Agent': 'Mozilla/5.0 (compatible; OdooViñedo/1.6)'}
 
 
+def _parse_productos_tbody(tbody_html):
+    """Parse product rows from a ProductosGrid <tbody> HTML fragment.
+
+    Returns list of dicts: id_mapa, num_registro, nombre, titular, formulado, estado.
+    """
+    results = []
+    _strip = lambda s: re.sub(r'<[^>]+>', '', s).strip()
+    for row in re.findall(r'<tr[^>]*>(.*?)</tr>', tbody_html, re.DOTALL):
+        btn = re.search(
+            r'btnBuscarProductoId[^>]+data-nombre="([^"]*)"[^>]+data-id="(\d+)"', row)
+        if not btn:
+            continue
+        nombre_prod = html.unescape(btn.group(1))
+        id_mapa_val = int(btn.group(2))
+        cells = re.findall(r'<td[^>]*>(.*?)</td>', row, re.DOTALL)
+        estado = _strip(cells[0]) if cells else ''
+        num_reg = _strip(cells[2]) if len(cells) > 2 else ''
+        titular = _strip(cells[4]) if len(cells) > 4 else ''
+        formulado_m = re.search(r'class="btnFormulado2"[^>]*>([^<]+)<', row)
+        formulado = formulado_m.group(1).strip() if formulado_m else ''
+        results.append({
+            'id_mapa': id_mapa_val,
+            'num_registro': num_reg,
+            'nombre': nombre_prod,
+            'titular': titular,
+            'formulado': formulado,
+            'estado': estado,
+        })
+    return results
+
+
 def _mapa_buscar_productos(nombre):
     """Searches MAPA fitosanitario registry by commercial name.
 
@@ -32,33 +63,65 @@ def _mapa_buscar_productos(nombre):
     tbody_m = re.search(r'<tbody>(.*?)</tbody>', html_content, re.DOTALL)
     if not tbody_m:
         return []
+    return _parse_productos_tbody(tbody_m.group(1))
 
-    results = []
-    for row in re.findall(r'<tr[^>]*>(.*?)</tr>', tbody_m.group(1), re.DOTALL):
-        btn = re.search(
-            r'btnBuscarProductoId[^>]+data-nombre="([^"]*)"[^>]+data-id="(\d+)"', row)
-        if not btn:
-            continue
-        nombre_prod = html.unescape(btn.group(1))
-        id_mapa = int(btn.group(2))
 
-        cells = re.findall(r'<td[^>]*>(.*?)</td>', row, re.DOTALL)
-        _strip = lambda s: re.sub(r'<[^>]+>', '', s).strip()
-        estado = _strip(cells[0]) if cells else ''
-        num_reg = _strip(cells[2]) if len(cells) > 2 else ''
-        titular = _strip(cells[4]) if len(cells) > 4 else ''
-        formulado_m = re.search(r'class="btnFormulado2"[^>]*>([^<]+)<', row)
-        formulado = formulado_m.group(1).strip() if formulado_m else ''
+def _mapa_importar_todos():
+    """Fetches the complete MAPA fitosanitario catalog (basic info only).
 
-        results.append({
-            'id_mapa': id_mapa,
-            'num_registro': num_reg,
-            'nombre': nombre_prod,
-            'titular': titular,
-            'formulado': formulado,
-            'estado': estado,
-        })
-    return results
+    Strategy: search with each letter a-z plus empty prefix, using ``page`` and
+    ``pageSize`` query params to paginate.  Deduplicates by ``id_mapa``.
+
+    Only basic fields are fetched (no per-product detail calls), so materia_activa,
+    funcion, and observaciones are left empty — they can be filled later via
+    ``action_actualizar_mapa()`` on individual records.
+    """
+    seen_ids = set()
+    all_results = []
+    prefixes = [''] + list('abcdefghijklmnopqrstuvwxyz0123456789')
+
+    for prefix in prefixes:
+        pagina = 1
+        prev_ids = None
+
+        while pagina <= 50:
+            url = (
+                f'{_MAPA_BASE}/Productos/ProductosGrid'
+                f'?NombreComercial={urllib.parse.quote(prefix, safe="")}'
+                f'&page={pagina}&pageSize=100'
+            )
+            try:
+                req = urllib.request.Request(url, headers=_MAPA_HEADERS)
+                with urllib.request.urlopen(req, timeout=30) as resp:
+                    html_content = resp.read().decode('utf-8', errors='ignore')
+            except Exception as exc:
+                _logger.warning(
+                    'MAPA bulk prefix=%r page=%d failed: %s', prefix, pagina, exc)
+                break
+
+            tbody_m = re.search(r'<tbody>(.*?)</tbody>', html_content, re.DOTALL)
+            if not tbody_m:
+                break
+
+            page_results = _parse_productos_tbody(tbody_m.group(1))
+            if not page_results:
+                break
+
+            curr_ids = frozenset(r['id_mapa'] for r in page_results)
+            # If server doesn't support pagination, same rows come back every time
+            if curr_ids == prev_ids:
+                break
+            prev_ids = curr_ids
+
+            new = [r for r in page_results if r['id_mapa'] not in seen_ids]
+            seen_ids |= set(curr_ids)
+            all_results.extend(new)
+
+            if len(page_results) < 100:
+                break  # Last page for this prefix
+            pagina += 1
+
+    return all_results
 
 
 def _mapa_obtener_detalle(id_mapa):
@@ -774,6 +837,52 @@ class Fitosanitario(models.Model):
             'url': (f'https://servicio.mapa.gob.es/regfiweb/#'
                     f'?numreg={urllib.parse.quote(self.num_registro)}'),
             'target': 'new',
+        }
+
+    def action_importar_catalogo_mapa(self):
+        """Downloads the complete MAPA fitosanitario catalog (basic info) into the local DB.
+
+        Only basic fields (nombre, num_registro, titular, formulado, estado) are stored.
+        Run ``action_actualizar_mapa`` on individual records to fill materia_activa,
+        funcion, and observaciones from full MAPA product details.
+        """
+        productos = _mapa_importar_todos()
+        if not productos:
+            raise UserError(_(
+                'No se pudo obtener el catálogo del Registro MAPA.\n'
+                'Comprueba la conexión a internet e inténtalo de nuevo.'))
+
+        Fito = self.env['vinedo.fitosanitario']
+        creados = 0
+        actualizados = 0
+        for p in productos:
+            existing = Fito.search([('id_mapa', '=', p['id_mapa'])], limit=1)
+            if existing:
+                existing.write({
+                    'num_registro': p['num_registro'],
+                    'nombre': p['nombre'],
+                    'titular': p['titular'],
+                    'formulado': p['formulado'],
+                    'estado': p['estado'],
+                })
+                actualizados += 1
+            else:
+                Fito.create(p)
+                creados += 1
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Catálogo MAPA importado'),
+                'message': _(
+                    '%d productos nuevos añadidos, %d actualizados.\n'
+                    'Ahora puedes buscarlos directamente desde el campo '
+                    '«Ficha Reg. MAPA» en cada tratamiento.'
+                ) % (creados, actualizados),
+                'type': 'success',
+                'sticky': True,
+            },
         }
 
 
