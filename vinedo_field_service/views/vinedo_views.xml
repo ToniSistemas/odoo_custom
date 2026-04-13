@@ -282,12 +282,9 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_importar_catalogo_mapa" type="object"
-                        string="Descargar catálogo completo MAPA" icon="fa-download"
-                        class="btn-primary"
-                        help="Descarga todos los productos del Registro MAPA a la base de datos local (puede tardar 1-3 minutos). Después podrás buscarlos desde cualquier tratamiento."/>
                     <button name="action_actualizar_mapa" type="object"
                         string="Actualizar desde MAPA" icon="fa-refresh"
+                        class="btn-primary"
                         invisible="not id_mapa"
                         help="Recarga los datos de este producto desde el Registro de Productos Fitosanitarios del MAPA"/>
                     <button name="action_abrir_ficha_mapa" type="object"
