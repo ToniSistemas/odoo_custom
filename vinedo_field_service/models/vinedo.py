@@ -840,50 +840,8 @@ class Fitosanitario(models.Model):
         }
 
     def action_importar_catalogo_mapa(self):
-        """Downloads the complete MAPA fitosanitario catalog (basic info) into the local DB.
-
-        Only basic fields (nombre, num_registro, titular, formulado, estado) are stored.
-        Run ``action_actualizar_mapa`` on individual records to fill materia_activa,
-        funcion, and observaciones from full MAPA product details.
-        """
-        productos = _mapa_importar_todos()
-        if not productos:
-            raise UserError(_(
-                'No se pudo obtener el catálogo del Registro MAPA.\n'
-                'Comprueba la conexión a internet e inténtalo de nuevo.'))
-
-        Fito = self.env['vinedo.fitosanitario']
-        creados = 0
-        actualizados = 0
-        for p in productos:
-            existing = Fito.search([('id_mapa', '=', p['id_mapa'])], limit=1)
-            if existing:
-                existing.write({
-                    'num_registro': p['num_registro'],
-                    'nombre': p['nombre'],
-                    'titular': p['titular'],
-                    'formulado': p['formulado'],
-                    'estado': p['estado'],
-                })
-                actualizados += 1
-            else:
-                Fito.create(p)
-                creados += 1
-
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _('Catálogo MAPA importado'),
-                'message': _(
-                    '%d productos nuevos añadidos, %d actualizados.\n'
-                    'Ahora puedes buscarlos directamente desde el campo '
-                    '«Ficha Reg. MAPA» en cada tratamiento.'
-                ) % (creados, actualizados),
-                'type': 'success',
-                'sticky': True,
-            },
-        }
+        """Opens the two-step import wizard."""
+        return self.env['vinedo.fitosanitario.import.wizard'].action_open()
 
 
 class FitosanitarioWizard(models.TransientModel):
@@ -956,3 +914,97 @@ class FitosanitarioWizardLinea(models.TransientModel):
             wizard.tratamiento_id.write(vals)
 
         return {'type': 'ir.actions.act_window_close'}
+
+
+class FitosanitarioImportWizard(models.TransientModel):
+    """Two-step wizard: fetch MAPA catalog → confirm count → import with savepoints."""
+    _name = 'vinedo.fitosanitario.import.wizard'
+    _description = 'Descargar catálogo MAPA'
+
+    fase = fields.Selection([
+        ('inicio', 'Listo para buscar'),
+        ('confirmar', 'Confirmar importación'),
+        ('listo', 'Completado'),
+    ], default='inicio', readonly=True)
+    total_mapa = fields.Integer(string='Productos encontrados en MAPA', readonly=True)
+    total_creados = fields.Integer(string='Nuevos creados', readonly=True)
+    total_actualizados = fields.Integer(string='Actualizados', readonly=True)
+    total_errores = fields.Integer(string='Con errores', readonly=True)
+    productos_json = fields.Text()  # internal, not shown
+
+    @api.model
+    def action_open(self):
+        """Creates a fresh wizard instance and opens it."""
+        wiz = self.create({})
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Descargar catálogo MAPA'),
+            'res_model': self._name,
+            'res_id': wiz.id,
+            'view_mode': 'form',
+            'target': 'new',
+        }
+
+    def action_buscar(self):
+        """Phase 1: Fetch product list from MAPA (HTTP only, no DB writes)."""
+        self.ensure_one()
+        productos = _mapa_importar_todos()
+        self.write({
+            'fase': 'confirmar',
+            'total_mapa': len(productos),
+            'productos_json': json.dumps(productos, ensure_ascii=False),
+        })
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'new',
+        }
+
+    def action_importar(self):
+        """Phase 2: Write fetched products to DB using per-record savepoints
+        so a concurrent-update error on one row never kills the whole import."""
+        self.ensure_one()
+        productos = json.loads(self.productos_json or '[]')
+        Fito = self.env['vinedo.fitosanitario']
+        creados = actualizados = errores = 0
+
+        for p in productos:
+            try:
+                with self.env.cr.savepoint():
+                    existing = Fito.search([('id_mapa', '=', p['id_mapa'])], limit=1)
+                    if existing:
+                        existing.write({
+                            'num_registro': p['num_registro'],
+                            'nombre': p['nombre'],
+                            'titular': p['titular'],
+                            'formulado': p['formulado'],
+                            'estado': p['estado'],
+                        })
+                        actualizados += 1
+                    else:
+                        Fito.create(p)
+                        creados += 1
+                    self.env.flush_all()
+            except Exception as exc:
+                self.env.invalidate_all()
+                _logger.warning(
+                    'MAPA import: skipping "%s" (id_mapa=%s): %s',
+                    p.get('nombre', '?'), p.get('id_mapa'), exc)
+                errores += 1
+
+        self.write({
+            'fase': 'listo',
+            'total_creados': creados,
+            'total_actualizados': actualizados,
+            'total_errores': errores,
+            'productos_json': False,
+        })
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'new',
+        }

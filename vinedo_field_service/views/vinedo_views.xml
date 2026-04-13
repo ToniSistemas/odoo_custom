@@ -321,13 +321,63 @@
         </field>
     </record>
 
+    <!-- Import wizard -->
+    <record id="view_fitosanitario_import_wizard_form" model="ir.ui.view">
+        <field name="name">vinedo.fitosanitario.import.wizard.form</field>
+        <field name="model">vinedo.fitosanitario.import.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Descargar catálogo MAPA">
+                <sheet>
+                    <field name="fase" invisible="1"/>
+                    <group invisible="fase != 'inicio'">
+                        <div colspan="2">
+                            <p>Pulsa <strong>«Buscar en MAPA»</strong> para conectar con el
+                               Registro Oficial de Productos Fitosanitarios y obtener el
+                               catálogo completo.</p>
+                            <p style="color:#6c757d;font-size:12px;">
+                                El proceso puede tardar 1–3 minutos según la velocidad
+                                del servidor del MAPA.
+                            </p>
+                        </div>
+                    </group>
+                    <group string="Confirmar importación" invisible="fase != 'confirmar'">
+                        <field name="total_mapa" readonly="1"/>
+                        <div colspan="2">
+                            <p>Pulsa <strong>«Importar»</strong> para guardar los productos
+                               en la base de datos local.</p>
+                        </div>
+                    </group>
+                    <group string="Importación completada" invisible="fase != 'listo'">
+                        <field name="total_creados" readonly="1"/>
+                        <field name="total_actualizados" readonly="1"/>
+                        <field name="total_errores" readonly="1"
+                               invisible="total_errores == 0"/>
+                        <div colspan="2">
+                            <p>Ya puedes buscar cualquier producto desde el campo
+                               <strong>«Ficha Reg. MAPA»</strong> en los tratamientos.</p>
+                        </div>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_buscar" type="object"
+                        string="Buscar en MAPA" class="btn-primary"
+                        invisible="fase != 'inicio'"/>
+                    <button name="action_importar" type="object"
+                        string="Importar a la base de datos" class="btn-primary"
+                        invisible="fase != 'confirmar'"/>
+                    <button string="Cerrar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
     <record id="action_server_importar_catalogo_mapa" model="ir.actions.server">
         <field name="name">Descargar catálogo completo MAPA</field>
         <field name="model_id" ref="model_vinedo_fitosanitario"/>
         <field name="binding_model_id" ref="model_vinedo_fitosanitario"/>
         <field name="binding_view_types">list</field>
         <field name="state">code</field>
-        <field name="code">action = env['vinedo.fitosanitario'].action_importar_catalogo_mapa()</field>
+        <field name="code">action = env['vinedo.fitosanitario.import.wizard'].action_open()</field>
     </record>
 
     <record id="action_fitosanitario" model="ir.actions.act_window">
@@ -356,6 +406,10 @@
 
     <menuitem id="menu_vinedo_descargar_catalogo" name="Descargar catálogo MAPA"
         parent="menu_vinedo_root" action="action_server_importar_catalogo_mapa" sequence="6"/>
+
+    <!-- ============================================================ -->
+    <!-- Wizard Búsqueda Fitosanitarios                               -->
+    <!-- ============================================================ -->
 
     <!-- ============================================================ -->
     <!-- Tratamiento standalone Views                                 -->
