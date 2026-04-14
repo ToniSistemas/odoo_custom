@@ -519,76 +519,65 @@ class Finca(models.Model):
         import requests
         lat, lon = self.latitude, self.longitude
 
-        # Paso 1: recinto en las coordenadas
-        url1 = f'https://sigpac.mapa.es/fega/serviciosvisorsigpac/query/recintos/{lon}/{lat}'
+        # Paso 1: recinto en las coordenadas (sigpac-hubcloud.es)
+        url1 = (
+            f'https://sigpac-hubcloud.es/servicioconsultassigpac'
+            f'/query/recinfobypoint/4326/{float(lon)}/{float(lat)}.json'
+        )
         try:
-            resp1 = requests.get(url1, timeout=15)
+            resp1 = requests.get(url1, timeout=15,
+                                 headers={'User-Agent': 'OdooSIGPAC/1.8',
+                                          'Accept-Encoding': 'gzip'})
             resp1.raise_for_status()
-            geo1 = resp1.json()
+            arr = resp1.json()
         except Exception as e:
             raise UserError(_('Error al conectar con SIGPAC: %s') % str(e))
 
-        if geo1.get('error') and 'recintos_temp' in str(geo1.get('error', '')):
-            raise UserError(_(
-                'SIGPAC está actualizando los datos de la campaña 2026 (mantenimiento temporal).\n'
-                'El servicio volverá a estar disponible en breve. Inténtalo de nuevo más tarde.'
-            ))
-
-        features = geo1.get('features', [])
-        if not features:
+        if not isinstance(arr, list) or not arr:
             raise UserError(_(
                 'No se encontró ningún recinto SIGPAC en esas coordenadas.\n'
                 'Prueba a ajustar ligeramente la posición GPS.'
             ))
 
-        props = features[0].get('properties', {})
-        prov = str(props.get('provincia', ''))
-        mun = str(props.get('municipio', ''))
-        pol = str(props.get('poligono', ''))
-        par = str(props.get('parcela', ''))
-        rec_num = str(props.get('recinto', ''))
-        uso_principal = props.get('dn_uso', props.get('uso', ''))
-        sfc_principal = float(props.get('dn_surface', props.get('superficie', 0)) or 0)
-        ref_catastral = str(props.get('referencia_catastral', props.get('ref_catastral', '')) or '')
-        ref_sigpac = f'{prov}-{mun}-{pol}-{par}-{rec_num}'
+        p = arr[0]
+        prov    = str(p.get('provincia', ''))
+        mun     = str(p.get('municipio', ''))
+        agr     = str(p.get('agregado', 0) or 0)
+        zona    = str(p.get('zona', 0) or 0)
+        pol     = str(p.get('poligono', ''))
+        par     = str(p.get('parcela', ''))
+        rec_num = str(p.get('recinto', ''))
+        uso_principal = p.get('uso_sigpac', '')
+        sfc_principal = float(p.get('superficie', 0) or 0) * 10000   # ha → m²
+        ref_sigpac = f'{prov}-{mun}-{agr}-{zona}-{pol}-{par}-{rec_num}'
 
-        # Paso 2: todos los recintos de la parcela
-        all_recintos = []
-        try:
-            url2 = (
-                f'https://sigpac.mapa.es/fega/serviciosvisorsigpac/query/recintos/'
-                f'{prov}/{mun}/{pol}/{par}'
-            )
-            resp2 = requests.get(url2, timeout=15)
-            if resp2.status_code == 200:
-                for f2 in resp2.json().get('features', []):
-                    p = f2.get('properties', {})
-                    all_recintos.append({
-                        'recinto': str(p.get('recinto', '')),
-                        'uso': p.get('dn_uso', p.get('uso', '?')),
-                        'superficie': float(p.get('dn_surface', p.get('superficie', 0)) or 0),
-                    })
-        except Exception as e:
-            _logger.warning('SIGPAC: no se pudieron cargar todos los recintos de la parcela: %s', e)
+        # Todos los recintos devueltos en este punto (normalmente 1)
+        all_recintos = [
+            {
+                'recinto': str(r.get('recinto', '')),
+                'uso': r.get('uso_sigpac', '?'),
+                'superficie': round(float(r.get('superficie', 0) or 0) * 10000, 2),
+            }
+            for r in arr
+        ]
 
         summary = {
             'ref_sigpac': ref_sigpac,
-            'ref_catastral': ref_catastral,
             'provincia': prov,
             'municipio': mun,
+            'agregado': agr,
+            'zona': zona,
             'poligono': pol,
             'parcela': par,
             'recinto_principal': rec_num,
             'uso_principal': uso_principal,
-            'superficie_principal_m2': sfc_principal,
+            'superficie_principal_m2': round(sfc_principal, 2),
             'recintos': all_recintos,
         }
         vals = {
             'ref_sigpac': ref_sigpac,
             'sigpac_json': json.dumps(summary, ensure_ascii=False, indent=2),
         }
-        if ref_catastral:
-            vals['ref_catastral'] = ref_catastral
         self.write(vals)
 
         total_m2 = sum(r['superficie'] for r in all_recintos) or sfc_principal
