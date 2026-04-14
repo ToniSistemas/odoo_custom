@@ -302,6 +302,7 @@ class Finca(models.Model):
     poda_ids = fields.One2many('vinedo.poda', 'finca_id', string='Podas')
     trabajo_ids = fields.One2many('vinedo.trabajo', 'finca_id', string='Trabajos')
     anada_ids = fields.One2many('vinedo.anada', 'finca_id', string='Añadas')
+    sigpac_visor_embed = fields.Html(compute='_compute_sigpac_visor_embed', sanitize=False)
 
     @api.constrains('latitude', 'longitude')
     def _check_coordinates(self):
@@ -698,6 +699,27 @@ class Finca(models.Model):
                 'sticky': False,
             },
         }
+
+    @api.depends('latitude', 'longitude')
+    def _compute_sigpac_visor_embed(self):
+        for rec in self:
+            if rec.latitude and rec.longitude:
+                url = f'https://sigpac.mapa.es/fega/visor/#lat={rec.latitude}&lng={rec.longitude}&zoom=17'
+            else:
+                url = 'https://sigpac.mapa.es/fega/visor/'
+            rec.sigpac_visor_embed = (
+                f'<iframe src="{url}" style="width:100%;height:650px;border:1px solid #ccc;border-radius:4px;" '
+                f'frameborder="0" allowfullscreen></iframe>'
+            )
+
+    def action_abrir_sigpac_visor(self):
+        """Abre el visor SIGPAC en una nueva pestaña."""
+        self.ensure_one()
+        if self.latitude and self.longitude:
+            url = f'https://sigpac.mapa.es/fega/visor/#lat={self.latitude}&lng={self.longitude}&zoom=17'
+        else:
+            url = 'https://sigpac.mapa.es/fega/visor/'
+        return {'type': 'ir.actions.act_url', 'url': url, 'target': 'new'}
 
 
 class Plantacion(models.Model):

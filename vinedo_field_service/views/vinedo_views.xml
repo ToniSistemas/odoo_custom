@@ -26,6 +26,11 @@
                             <field name="area"/>
                         </group>
                     </group>
+                    <div style="margin:4px 0 12px 0;">
+                        <button name="action_abrir_sigpac_visor" type="object"
+                            string="Abrir en SIGPAC (nueva pestaña)" icon="fa-external-link"
+                            class="btn btn-link" style="padding-left:0;"/>
+                    </div>
                     <notebook>
                         <page string="Variedades">
                             <field name="variedad_ids">
@@ -91,6 +96,12 @@
                             </field>
                         </page>
                     </notebook>
+                    <div style="margin-top:16px;">
+                        <h4 style="margin-bottom:6px;color:#5c5c5c;font-size:14px;font-weight:600;">
+                            <i class="fa fa-map"/> Visor SIGPAC
+                        </h4>
+                        <field name="sigpac_visor_embed" widget="html" nolabel="1" readonly="1"/>
+                    </div>
                 </sheet>
             </form>
         </field>
