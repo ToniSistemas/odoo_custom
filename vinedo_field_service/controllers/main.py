@@ -111,15 +111,24 @@ class SigpacController(http.Controller):
         Evita el bloqueo CORS que tendría la llamada directa del navegador."""
         import urllib.request as _req
         import json as _json
+        import gzip as _gzip
 
         url = (
             'https://sigpac.mapa.es/fega/serviciosvisorsigpac'
             '/query/recintos/' + str(float(lon)) + '/' + str(float(lat))
         )
         try:
-            req = _req.Request(url, headers={'User-Agent': 'Mozilla/5.0 (OdooSIGPAC/1.7)'})
+            req = _req.Request(url, headers={
+                'User-Agent': 'Mozilla/5.0 (OdooSIGPAC/1.8)',
+                'Accept-Encoding': 'gzip, deflate',
+                'Accept': 'application/json',
+            })
             with _req.urlopen(req, timeout=12) as resp:
-                return _json.loads(resp.read().decode('utf-8'))
+                raw = resp.read()
+                # SIGPAC devuelve la respuesta comprimida con gzip
+                if raw[:2] == b'\x1f\x8b':
+                    raw = _gzip.decompress(raw)
+                return _json.loads(raw.decode('utf-8'))
         except Exception as e:
             _logger.warning('sigpac_consultar error: %s', e)
             return {'error': str(e), 'features': []}

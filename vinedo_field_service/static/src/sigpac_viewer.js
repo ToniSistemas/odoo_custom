@@ -50,7 +50,7 @@
         maxZoom: 19
     });
 
-    osmLayer.addTo(map);
+    pnoaLayer.addTo(map);
     sigpacLayer.addTo(map);
 
     L.control.layers(
