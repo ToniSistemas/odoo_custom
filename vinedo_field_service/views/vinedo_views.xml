@@ -25,6 +25,11 @@
                             <field name="territory_id"/>
                             <field name="area"/>
                         </group>
+                        <group>
+                            <field name="latitude" string="Latitud"/>
+                            <field name="longitude" string="Longitud"/>
+                            <field name="ref_sigpac"/>
+                        </group>
                     </group>
                     <div style="margin:4px 0 12px 0;">
                         <button name="action_abrir_sigpac_visor" type="object"

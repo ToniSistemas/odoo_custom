@@ -549,7 +549,7 @@ class Finca(models.Model):
         rec_num = str(p.get('recinto', ''))
         uso_principal = p.get('uso_sigpac', '')
         sfc_principal = float(p.get('superficie', 0) or 0) * 10000   # ha → m²
-        ref_sigpac = f'{prov}-{mun}-{agr}-{zona}-{pol}-{par}-{rec_num}'
+        ref_sigpac = f'{prov}:{mun}:{agr}:{zona}:{pol}:{par}:{rec_num}'
 
         # Paso 2: todos los recintos de la parcela (sigpac-hubcloud.es)
         all_recintos = []
@@ -599,13 +599,14 @@ class Finca(models.Model):
             'superficie_principal_m2': round(sfc_principal, 2),
             'recintos': all_recintos,
         }
+        total_m2 = sum(r['superficie'] for r in all_recintos) or sfc_principal
         vals = {
             'ref_sigpac': ref_sigpac,
+            'area': round(total_m2 / 10000, 4),
             'sigpac_json': json.dumps(summary, ensure_ascii=False, indent=2),
         }
         self.write(vals)
 
-        total_m2 = sum(r['superficie'] for r in all_recintos) or sfc_principal
         n_rec = len(all_recintos)
         return {
             'type': 'ir.actions.client',

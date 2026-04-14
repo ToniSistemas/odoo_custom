@@ -131,7 +131,7 @@
         var agr = (p.agregado !== undefined && p.agregado !== null) ? p.agregado : 0;
         var zon = (p.zona !== undefined && p.zona !== null) ? p.zona : 0;
         var ref = [p.provincia, p.municipio, agr, zon, p.poligono, p.parcela, p.recinto]
-                    .map(function (v) { return v !== undefined ? String(v) : ''; }).join('-');
+                    .map(function (v) { return v !== undefined ? String(v) : ''; }).join(':');
         var uso = p.uso_sigpac || '?';
         var m2  = parseFloat(p.superficie || 0) * 10000; /* ha → m² */
         return { ref: ref, uso: uso, m2: m2 };
