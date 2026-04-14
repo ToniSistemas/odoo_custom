@@ -9,8 +9,6 @@
                 <field name="name"/>
                 <field name="territory_id"/>
                 <field name="area" sum="Total Extensión (ha)"/>
-                <field name="latitude" optional="hide"/>
-                <field name="longitude" optional="hide"/>
             </list>
         </field>
     </record>
@@ -27,18 +25,7 @@
                             <field name="territory_id"/>
                             <field name="area"/>
                         </group>
-                        <group>
-                            <field name="latitude"/>
-                            <field name="longitude"/>
-                        </group>
                     </group>
-                    <group invisible="not latitude or not longitude">
-                        <field name="gmap_url" widget="url" string="Ver en Google Maps"/>
-                        <field name="osm_url" widget="url" string="Ver en OpenStreetMap"/>
-                    </group>
-                    <div>
-                        <field name="map_embed" widget="html" nolabel="1" readonly="1"/>
-                    </div>
                     <notebook>
                         <page string="Variedades">
                             <field name="variedad_ids">
@@ -102,32 +89,6 @@
                                     <field name="descripcion"/>
                                 </list>
                             </field>
-                        </page>
-                        <page string="SIGPAC">
-                            <group>
-                                <group string="Referencias">
-                                    <field name="ref_sigpac"/>
-                                    <field name="ref_catastral"/>
-                                </group>
-                                <group string="Acciones">
-                                    <div colspan="2" style="padding:4px 0;">
-                                        <button name="action_consultar_sigpac" type="object"
-                                            string="Consultar SIGPAC" icon="fa-search"
-                                            class="btn btn-primary"
-                                            help="Obtiene referencia SIGPAC y superficies por uso a partir de las coordenadas GPS"/>
-                                        <button name="action_consultar_por_catastral" type="object"
-                                            string="Buscar por Ref. Catastral" icon="fa-database"
-                                            class="btn btn-secondary" style="margin-left:8px;"
-                                            help="Obtiene superficies por cultivo a partir de la Referencia Catastral escrita arriba"/>
-                                        <button name="action_importar_superficie_sigpac" type="object"
-                                            string="Importar superficie → (ha)" icon="fa-download"
-                                            class="btn btn-link" style="margin-left:8px;"
-                                            help="Copia la superficie total al campo Extensión (ha)"/>
-                                            help="Copia la superficie total SIGPAC al campo Extensión (ha)"/>
-                                    </div>
-                                </group>
-                            </group>
-                            <field name="sigpac_info" widget="html" nolabel="1" readonly="1"/>
                         </page>
                     </notebook>
                 </sheet>
