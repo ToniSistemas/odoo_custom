@@ -39,14 +39,13 @@
         maxZoom: 20
     });
 
-    var sigpacLayer = L.tileLayer.wms(
-        'https://sigpac.mapa.es/fega/serviciosvisorsigpac/wms/wms.aspx', {
-        layers: 'SIGPAC',
+    var sigpacLayer = L.tileLayer.wms('https://sigpac-hubcloud.es/wms?', {
+        layers: 'AU.Sigpac:recinto',
         format: 'image/png',
         transparent: true,
-        version: '1.1.1',
+        version: '1.3.0',
         opacity: 0.85,
-        attribution: '&copy; MAPA SIGPAC',
+        attribution: '&copy; FEGA SIGPAC',
         maxZoom: 19
     });
 
@@ -81,28 +80,13 @@
     var panel = document.getElementById('panel');
     var selection = null;
 
-    /* WMS GetFeatureInfo: construye la URL para el clic dado el estado actual del mapa */
-    function buildGfiUrl(latlng) {
-        var size = map.getSize();
-        var bounds = map.getBounds();
-        var sw = bounds.getSouthWest();
-        var ne = bounds.getNorthEast();
-        /* WMS 1.1.1: SRS=EPSG:4326, BBOX=minlon,minlat,maxlon,maxlat */
-        var bbox = sw.lng + ',' + sw.lat + ',' + ne.lng + ',' + ne.lat;
-        /* Posición del clic en píxeles desde la esquina NW del mapa */
-        var pt = map.latLngToContainerPoint(latlng);
+    /* REST endpoint sigpac-hubcloud.es: consulta el recinto por coordenadas WGS84 */
+    function buildHubcloudUrl(latlng) {
+        var lon = latlng.lng.toFixed(7);
+        var lat = latlng.lat.toFixed(7);
         return (
-            'https://sigpac.mapa.es/fega/serviciosvisorsigpac/wms/wms.aspx'
-            + '?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo'
-            + '&LAYERS=SIGPAC&QUERY_LAYERS=SIGPAC'
-            + '&SRS=EPSG:4326'
-            + '&BBOX=' + bbox
-            + '&WIDTH=' + size.x
-            + '&HEIGHT=' + size.y
-            + '&X=' + Math.round(pt.x)
-            + '&Y=' + Math.round(pt.y)
-            + '&INFO_FORMAT=application/json'
-            + '&FEATURE_COUNT=1'
+            'https://sigpac-hubcloud.es/servicioconsultassigpac'
+            + '/query/recinfobypoint/4326/' + lon + '/' + lat + '.json'
         );
     }
 
@@ -138,20 +122,15 @@
         }
     }
 
-    function parseGfiResult(json, lat, lon) {
-        var features = json.features || [];
-        if (!features.length) { return null; }
-        var p = features[0].properties || {};
-        /* SIGPAC GFI devuelve campos como DN_PK_PROVINCIA, DN_PK_MUNICIPIO, etc.
-           o bien provincia, municipio, poligono, parcela, recinto según versión */
-        var prov = p.DN_PK_PROVINCIA || p.provincia || p.PROVINCIA || '';
-        var mun  = p.DN_PK_MUNICIPIO || p.municipio || p.MUNICIPIO || '';
-        var pol  = p.DN_PK_POLIGONO  || p.poligono  || p.POLIGONO  || '';
-        var par  = p.DN_PK_PARCELA   || p.parcela   || p.PARCELA   || '';
-        var rec  = p.DN_PK_RECINTO   || p.recinto   || p.RECINTO   || '';
-        var ref  = [prov, mun, pol, par, rec].map(String).join('-');
-        var uso  = p.DN_USO || p.dn_uso || p.uso || p.USO || '?';
-        var m2   = parseFloat(p.DN_SUPERFICIE || p.dn_surface || p.superficie || p.SUPERFICIE || 0);
+    /* Analiza la respuesta JSON de sigpac-hubcloud.es/servicioconsultassigpac
+       Formato: [{provincia, municipio, poligono, parcela, recinto, superficie (ha), uso_sigpac, ...}] */
+    function parseHubcloudResult(arr) {
+        if (!Array.isArray(arr) || !arr.length) { return null; }
+        var p = arr[0];
+        var ref = [p.provincia, p.municipio, p.poligono, p.parcela, p.recinto]
+                    .map(function (v) { return v !== undefined ? String(v) : ''; }).join('-');
+        var uso = p.uso_sigpac || '?';
+        var m2  = parseFloat(p.superficie || 0) * 10000; /* ha → m² */
         return { ref: ref, uso: uso, m2: m2 };
     }
 
@@ -161,15 +140,15 @@
         panel.className = 'loading';
         panel.innerHTML = '&#8987; Consultando SIGPAC&hellip;';
 
-        /* Estrategia 1: WMS GetFeatureInfo directo desde el navegador */
-        var gfiUrl = buildGfiUrl(e.latlng);
-        fetch(gfiUrl)
+        /* Estrategia 1: REST sigpac-hubcloud.es directo desde el navegador */
+        var hubUrl = buildHubcloudUrl(e.latlng);
+        fetch(hubUrl)
             .then(function (r) {
                 if (!r.ok) { throw new Error('HTTP ' + r.status); }
                 return r.json();
             })
-            .then(function (json) {
-                var info = parseGfiResult(json, lat, lon);
+            .then(function (arr) {
+                var info = parseHubcloudResult(arr);
                 if (!info) {
                     /* sin parcela en este punto */
                     panel.className = '';
@@ -201,19 +180,15 @@
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
                     var result = data.result;
-                    if (result && !result.error && (result.features || []).length) {
-                        var p   = result.features[0].properties || {};
-                        var ref = [p.provincia, p.municipio, p.poligono, p.parcela, p.recinto]
-                                    .map(function (v) { return v || ''; }).join('-');
-                        var uso = p.dn_uso || p.uso || '?';
-                        var m2  = parseFloat(p.dn_surface || p.superficie || 0);
-                        selection = { lat: parseFloat(lat), lon: parseFloat(lon), ref: ref };
+                    var info = Array.isArray(result) ? parseHubcloudResult(result) : null;
+                    if (info) {
+                        selection = { lat: parseFloat(lat), lon: parseFloat(lon), ref: info.ref };
                         panel.className = 'ok';
                         panel.innerHTML =
                             '<strong>&#10003; Parcela:</strong>'
-                            + ' <code>' + ref + '</code>'
-                            + ' &nbsp;<span class="tag">' + uso + '</span>'
-                            + ' &nbsp;' + m2.toLocaleString('es-ES') + '&nbsp;m&sup2;'
+                            + ' <code>' + info.ref + '</code>'
+                            + ' &nbsp;<span class="tag">' + info.uso + '</span>'
+                            + ' &nbsp;' + info.m2.toLocaleString('es-ES') + '&nbsp;m&sup2;'
                             + ' &nbsp;|&nbsp;' + lat + ', ' + lon
                             + ' &nbsp;<button id="btn-import">&#8681; Importar a Odoo</button>';
                         var btn = document.getElementById('btn-import');

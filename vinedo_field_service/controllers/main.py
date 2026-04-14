@@ -114,8 +114,9 @@ class SigpacController(http.Controller):
         import gzip as _gzip
 
         url = (
-            'https://sigpac.mapa.es/fega/serviciosvisorsigpac'
-            '/query/recintos/' + str(float(lon)) + '/' + str(float(lat))
+            'https://sigpac-hubcloud.es/servicioconsultassigpac'
+            '/query/recinfobypoint/4326/'
+            + str(float(lon)) + '/' + str(float(lat)) + '.json'
         )
         try:
             req = _req.Request(url, headers={
