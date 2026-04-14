@@ -703,14 +703,21 @@ class Finca(models.Model):
     @api.depends('latitude', 'longitude')
     def _compute_sigpac_visor_embed(self):
         for rec in self:
-            if rec.latitude and rec.longitude:
-                url = f'https://sigpac.mapa.es/fega/visor/#lat={rec.latitude}&lng={rec.longitude}&zoom=17'
+            if rec.id and isinstance(rec.id, int):
+                # Visor embebido servido por Odoo (mismo origen → no bloqueado)
+                rec.sigpac_visor_embed = (
+                    f'<iframe src="/vinedo/sigpac_viewer/{rec.id}" '
+                    f'style="width:100%;height:620px;border:1px solid #ccc;border-radius:4px;" '
+                    f'frameborder="0"></iframe>'
+                )
             else:
-                url = 'https://sigpac.mapa.es/fega/visor/'
-            rec.sigpac_visor_embed = (
-                f'<iframe src="{url}" style="width:100%;height:650px;border:1px solid #ccc;border-radius:4px;" '
-                f'frameborder="0" allowfullscreen></iframe>'
-            )
+                rec.sigpac_visor_embed = (
+                    '<div style="padding:14px;background:#f8f9fa;border:1px solid #dee2e6;'
+                    'border-radius:6px;color:#6c757d;">'
+                    '<i class="fa fa-info-circle"></i> '
+                    'Guarda la finca primero para activar el visor SIGPAC interactivo.'
+                    '</div>'
+                )
 
     def action_abrir_sigpac_visor(self):
         """Abre el visor SIGPAC en una nueva pestaña."""
