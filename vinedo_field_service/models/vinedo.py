@@ -804,6 +804,31 @@ class Tratamiento(models.Model):
         related='fitosanitario_id.observaciones',
         string='Observaciones / Condiciones de Uso', readonly=True)
 
+    @api.onchange('fitosanitario_id')
+    def _onchange_fitosanitario_id(self):
+        """When a MAPA record is selected, fill producto with its name."""
+        if self.fitosanitario_id:
+            self.producto = self.fitosanitario_id.nombre
+
+    @api.onchange('producto')
+    def _onchange_producto(self):
+        """When producto is typed, try to auto-link fitosanitario_id.
+
+        Links automatically only when there is exactly one match (case-insensitive).
+        Does not overwrite an already-linked fitosanitario that still matches.
+        """
+        if self.tipo != 'fitosanitario' or not self.producto:
+            return
+        # Keep current link if it still matches what is typed
+        if self.fitosanitario_id and (
+            self.producto.strip().lower() == (self.fitosanitario_id.nombre or '').lower()
+        ):
+            return
+        matches = self.env['vinedo.fitosanitario'].search(
+            [('nombre', '=ilike', self.producto.strip())], limit=2)
+        if len(matches) == 1:
+            self.fitosanitario_id = matches[0]
+
     def action_ver_ficha_mapa(self):
         """Opens the official MAPA product page for the linked fitosanitario."""
         self.ensure_one()

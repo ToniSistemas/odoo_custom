@@ -472,7 +472,8 @@
                         <group string="Ficha Registro MAPA"
                                invisible="tipo != 'fitosanitario'">
                             <field name="fitosanitario_id"
-                                   options="{'no_quick_create': True}"/>
+                                   options="{'no_quick_create': True}"
+                                   domain="[('nombre', 'ilike', producto or '')]"/>
                             <field name="funcion_info" readonly="1"/>
                             <field name="materia_activa_info" readonly="1"/>
                             <field name="estado_registro_info" readonly="1"/>
