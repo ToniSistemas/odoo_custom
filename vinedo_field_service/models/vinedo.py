@@ -551,15 +551,40 @@ class Finca(models.Model):
         sfc_principal = float(p.get('superficie', 0) or 0) * 10000   # ha → m²
         ref_sigpac = f'{prov}-{mun}-{agr}-{zona}-{pol}-{par}-{rec_num}'
 
-        # Todos los recintos devueltos en este punto (normalmente 1)
-        all_recintos = [
-            {
-                'recinto': str(r.get('recinto', '')),
-                'uso': r.get('uso_sigpac', '?'),
-                'superficie': round(float(r.get('superficie', 0) or 0) * 10000, 2),
-            }
-            for r in arr
-        ]
+        # Paso 2: todos los recintos de la parcela (sigpac-hubcloud.es)
+        all_recintos = []
+        try:
+            url2 = (
+                f'https://sigpac-hubcloud.es/servicioconsultassigpac'
+                f'/query/recinfoparc/{prov}/{mun}/{agr}/{zona}/{pol}/{par}.json'
+            )
+            resp2 = requests.get(url2, timeout=15,
+                                  headers={'User-Agent': 'OdooSIGPAC/1.8',
+                                           'Accept-Encoding': 'gzip'})
+            if resp2.status_code == 200:
+                arr2 = resp2.json()
+                if isinstance(arr2, list):
+                    all_recintos = [
+                        {
+                            'recinto': str(r.get('recinto', '')),
+                            'uso': r.get('uso_sigpac', '?'),
+                            'superficie': round(float(r.get('superficie', 0) or 0) * 10000, 2),
+                        }
+                        for r in arr2
+                    ]
+        except Exception as e:
+            _logger.warning('SIGPAC recinfoparc error: %s', e)
+
+        if not all_recintos:
+            # Fallback: solo el recinto del punto consultado
+            all_recintos = [
+                {
+                    'recinto': str(r.get('recinto', '')),
+                    'uso': r.get('uso_sigpac', '?'),
+                    'superficie': round(float(r.get('superficie', 0) or 0) * 10000, 2),
+                }
+                for r in arr
+            ]
 
         summary = {
             'ref_sigpac': ref_sigpac,
@@ -594,68 +619,52 @@ class Finca(models.Model):
         }
 
     def action_consultar_por_catastral(self):
-        """Busca la parcela en SIGPAC usando query/parrefcat (el mismo endpoint que el visor oficial),
-        calcula el centroide del polígono y luego llama a action_consultar_sigpac."""
+        """Obtiene la posición representativa de la parcela desde el WFS INSPIRE de Catastro
+        y luego llama a action_consultar_sigpac() para consultar SIGPAC."""
         self.ensure_one()
         if not self.ref_catastral:
             raise UserError(_('Escribe la Referencia Catastral antes de consultar.'))
-        import requests
+        import requests, re as _re
 
         ref = self.ref_catastral.strip().replace(' ', '').upper()
         if len(ref) != 20:
             raise UserError(_('La referencia catastral debe tener 20 caracteres. Recibida: "%s"') % ref)
 
-        prov = int(ref[0:2])
-        mun  = int(ref[2:5])
-
-        # Endpoint usado internamente por el visor oficial de SIGPAC
-        url = (
-            f'https://sigpac.mapa.es/fega/serviciosvisorsigpac/query/parrefcat/'
-            f'{prov}/{mun}/{ref}'
+        # Catastro INSPIRE WFS (GML): devuelve <cp:referencePoint><gml:pos>lat lon</gml:pos>
+        # que es la posición representativa oficial de la parcela
+        wfs_url = (
+            'https://ovc.catastro.meh.es/INSPIRE/wfsCP.aspx'
+            '?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature'
+            '&TYPENAMES=CP:CadastralParcel&MAXFEATURES=1'
+            f'&CQL_FILTER=nationalCadastralReference=%27{ref}%27'
+            '&SRSNAME=EPSG:4326'
         )
         try:
-            r = requests.get(url, timeout=15)
+            r = requests.get(wfs_url, timeout=15,
+                             headers={'User-Agent': 'OdooSIGPAC/1.8'})
             r.raise_for_status()
-            geo = r.json()
+            gml = r.text
         except Exception as e:
-            raise UserError(_('Error al conectar con SIGPAC: %s') % str(e))
-
-        features = geo.get('features', [])
-        if not features:
             raise UserError(_(
-                'No se encontró la referencia catastral "%s" en SIGPAC.\n'
+                'Error al consultar la referencia catastral en Catastro: %s\n'
+                'Usa el Visor SIGPAC del formulario para localizar la parcela.'
+            ) % str(e))
+
+        # Extraer posición representativa del GML: <cp:referencePoint><gml:pos>lat lon</gml:pos>
+        match = _re.search(
+            r'<cp:referencePoint[^>]*>.*?<gml:pos[^>]*>([\d.\s-]+)</gml:pos>',
+            gml, _re.DOTALL
+        )
+        if not match:
+            raise UserError(_(
+                'No se encontró la referencia catastral "%s" en Catastro.\n'
                 'Comprueba que la referencia es correcta.'
             ) % ref)
 
-        # Calcular centroide del polígono
-        coords_flat = []
-        def _collect(obj):
-            t = obj.get('type', '')
-            c = obj.get('coordinates', [])
-            if t == 'Point':
-                coords_flat.append(c)
-            elif t in ('MultiPoint', 'LineString'):
-                coords_flat.extend(c)
-            elif t in ('MultiLineString', 'Polygon'):
-                for ring in c:
-                    coords_flat.extend(ring)
-            elif t == 'MultiPolygon':
-                for poly in c:
-                    for ring in poly:
-                        coords_flat.extend(ring)
-            elif t == 'GeometryCollection':
-                for g in obj.get('geometries', []):
-                    _collect(g)
-
-        for feat in features:
-            _collect(feat.get('geometry', {}) or {})
-
-        if not coords_flat:
-            raise UserError(_('SIGPAC devolvió la parcela pero sin geometría. Introduce las coordenadas manualmente.'))
-
-        lon = round(sum(c[0] for c in coords_flat) / len(coords_flat), 7)
-        lat = round(sum(c[1] for c in coords_flat) / len(coords_flat), 7)
-        _logger.info('SIGPAC parrefcat centroid for %s: lon=%s lat=%s', ref, lon, lat)
+        coords = match.group(1).split()
+        lat = round(float(coords[0]), 7)
+        lon = round(float(coords[1]), 7)
+        _logger.info('Catastro referencePoint for %s: lat=%s lon=%s', ref, lat, lon)
 
         vals = {'ref_catastral': ref}
         if not self.latitude:
