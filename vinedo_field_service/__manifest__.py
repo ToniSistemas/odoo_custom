@@ -1,6 +1,6 @@
 {
     'name': 'Viñedo - Field Service',
-    'version': '1.7.9',
+    'version': '1.8.1',
     'summary': 'Gestión completa de viñedos: fincas, variedades, trabajos y añadas con mapas',
     'description': """
         Gestión de Viñedos
@@ -22,7 +22,11 @@
         'security/ir.model.access.csv',
         'views/vinedo_views.xml',
     ],
-    'assets': {},
+    'assets': {
+        'web.assets_backend': [
+            'vinedo_field_service/static/src/js/sigpac_iframe_widget.js',
+        ],
+    },
     'images': ['static/description/icon.png'],
     'installable': True,
     'application': True,

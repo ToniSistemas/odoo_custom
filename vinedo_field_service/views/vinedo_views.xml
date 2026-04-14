@@ -100,7 +100,7 @@
                         <h4 style="margin-bottom:6px;color:#5c5c5c;font-size:14px;font-weight:600;">
                             <i class="fa fa-map"/> Visor SIGPAC
                         </h4>
-                        <field name="sigpac_visor_embed" widget="html" nolabel="1" readonly="1" options="{'sanitize': false}"/>
+                        <field name="sigpac_visor_embed" widget="sigpac_iframe" nolabel="1" readonly="1"/>
                     </div>
                 </sheet>
             </form>
