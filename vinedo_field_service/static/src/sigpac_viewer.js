@@ -44,7 +44,7 @@
         layers: 'SIGPAC',
         format: 'image/png',
         transparent: true,
-        version: '1.3.0',
+        version: '1.1.1',
         opacity: 0.85,
         attribution: '&copy; MAPA SIGPAC',
         maxZoom: 19
@@ -81,59 +81,150 @@
     var panel = document.getElementById('panel');
     var selection = null;
 
+    /* WMS GetFeatureInfo: construye la URL para el clic dado el estado actual del mapa */
+    function buildGfiUrl(latlng) {
+        var size = map.getSize();
+        var bounds = map.getBounds();
+        var sw = bounds.getSouthWest();
+        var ne = bounds.getNorthEast();
+        /* WMS 1.1.1: SRS=EPSG:4326, BBOX=minlon,minlat,maxlon,maxlat */
+        var bbox = sw.lng + ',' + sw.lat + ',' + ne.lng + ',' + ne.lat;
+        /* Posición del clic en píxeles desde la esquina NW del mapa */
+        var pt = map.latLngToContainerPoint(latlng);
+        return (
+            'https://sigpac.mapa.es/fega/serviciosvisorsigpac/wms/wms.aspx'
+            + '?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo'
+            + '&LAYERS=SIGPAC&QUERY_LAYERS=SIGPAC'
+            + '&SRS=EPSG:4326'
+            + '&BBOX=' + bbox
+            + '&WIDTH=' + size.x
+            + '&HEIGHT=' + size.y
+            + '&X=' + Math.round(pt.x)
+            + '&Y=' + Math.round(pt.y)
+            + '&INFO_FORMAT=application/json'
+            + '&FEATURE_COUNT=1'
+        );
+    }
+
+    function showManualInput(lat, lon) {
+        var sigpacLink = 'https://sigpac.mapa.es/fega/visor/#lon='
+            + lon + '&lat=' + lat + '&zoom=17';
+        panel.className = '';
+        panel.innerHTML =
+            'Coords: <code>' + lat + ', ' + lon + '</code>'
+            + ' &nbsp;<a href="' + sigpacLink + '" target="_blank" '
+            + 'style="color:#0056b3;font-size:11px;">Abrir en SIGPAC &#8599;</a>'
+            + '<br><small>Introduce la referencia (prov-mun-pol-par-rec):</small>'
+            + '<br><input id="ref-input" type="text" placeholder="ej: 27-16-79-1047-1"'
+            + ' style="width:180px;margin-top:4px;padding:3px 6px;border:1px solid #aaa;border-radius:3px;font-size:13px;"/>'
+            + ' <button id="btn-ref-ok"'
+            + ' style="padding:3px 10px;background:#28a745;color:#fff;border:none;border-radius:3px;cursor:pointer;">OK</button>';
+
+        var btnOk = document.getElementById('btn-ref-ok');
+        if (btnOk) {
+            btnOk.addEventListener('click', function () {
+                var ref = (document.getElementById('ref-input') || {}).value || '';
+                ref = ref.trim().replace(/:/g, '-');
+                if (!ref) { return; }
+                selection = { lat: parseFloat(lat), lon: parseFloat(lon), ref: ref };
+                panel.className = 'ok';
+                panel.innerHTML =
+                    '<strong>&#10003; Referencia:</strong> <code>' + ref + '</code>'
+                    + ' &nbsp;|&nbsp;' + lat + ', ' + lon
+                    + ' &nbsp;<button id="btn-import">&#8681; Importar a Odoo</button>';
+                var btn2 = document.getElementById('btn-import');
+                if (btn2) { btn2.addEventListener('click', doImport); }
+            });
+        }
+    }
+
+    function parseGfiResult(json, lat, lon) {
+        var features = json.features || [];
+        if (!features.length) { return null; }
+        var p = features[0].properties || {};
+        /* SIGPAC GFI devuelve campos como DN_PK_PROVINCIA, DN_PK_MUNICIPIO, etc.
+           o bien provincia, municipio, poligono, parcela, recinto según versión */
+        var prov = p.DN_PK_PROVINCIA || p.provincia || p.PROVINCIA || '';
+        var mun  = p.DN_PK_MUNICIPIO || p.municipio || p.MUNICIPIO || '';
+        var pol  = p.DN_PK_POLIGONO  || p.poligono  || p.POLIGONO  || '';
+        var par  = p.DN_PK_PARCELA   || p.parcela   || p.PARCELA   || '';
+        var rec  = p.DN_PK_RECINTO   || p.recinto   || p.RECINTO   || '';
+        var ref  = [prov, mun, pol, par, rec].map(String).join('-');
+        var uso  = p.DN_USO || p.dn_uso || p.uso || p.USO || '?';
+        var m2   = parseFloat(p.DN_SUPERFICIE || p.dn_surface || p.superficie || p.SUPERFICIE || 0);
+        return { ref: ref, uso: uso, m2: m2 };
+    }
+
     map.on('click', function (e) {
         var lat = e.latlng.lat.toFixed(7);
         var lon = e.latlng.lng.toFixed(7);
         panel.className = 'loading';
         panel.innerHTML = '&#8987; Consultando SIGPAC&hellip;';
 
-        fetch('/vinedo/sigpac_consultar', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                jsonrpc: '2.0', method: 'call', id: 1,
-                params: { lat: parseFloat(lat), lon: parseFloat(lon) }
+        /* Estrategia 1: WMS GetFeatureInfo directo desde el navegador */
+        var gfiUrl = buildGfiUrl(e.latlng);
+        fetch(gfiUrl)
+            .then(function (r) {
+                if (!r.ok) { throw new Error('HTTP ' + r.status); }
+                return r.json();
             })
-        })
-        .then(function (resp) { return resp.json(); })
-        .then(function (data) {
-            var result = data.result;
-            if (!result || result.error) {
-                panel.className = 'err';
-                panel.innerHTML = '&#9888; ' + ((result && result.error) || 'Error desconocido');
-                return;
-            }
-            var features = result.features || [];
-            if (!features.length) {
-                panel.className = '';
-                panel.innerHTML = 'No se encontr\u00f3 ninguna parcela. '
-                    + 'Prueba a hacer clic m\u00e1s cerca del centro de la parcela.';
-                return;
-            }
-            var p   = features[0].properties || {};
-            var ref = [p.provincia, p.municipio, p.poligono, p.parcela, p.recinto]
-                        .map(function (v) { return v || ''; }).join('-');
-            var uso = p.dn_uso || p.uso || '?';
-            var m2  = parseFloat(p.dn_surface || p.superficie || 0);
-
-            selection = { lat: parseFloat(lat), lon: parseFloat(lon), ref: ref };
-
-            panel.className = 'ok';
-            panel.innerHTML =
-                '<strong>&#10003; Parcela:</strong>'
-                + ' <code>' + ref + '</code>'
-                + ' &nbsp;<span class="tag">' + uso + '</span>'
-                + ' &nbsp;' + m2.toLocaleString('es-ES') + '&nbsp;m&sup2;'
-                + ' &nbsp;|&nbsp;' + lat + ', ' + lon
-                + ' &nbsp;<button id="btn-import">&#8681; Importar a Odoo</button>';
-
-            var btn = document.getElementById('btn-import');
-            if (btn) { btn.addEventListener('click', doImport); }
-        })
-        .catch(function (err) {
-            panel.className = 'err';
-            panel.innerHTML = '&#9888; Error de red: ' + err.message;
-        });
+            .then(function (json) {
+                var info = parseGfiResult(json, lat, lon);
+                if (!info) {
+                    /* sin parcela en este punto */
+                    panel.className = '';
+                    panel.innerHTML = 'Sin parcela. Haz clic dentro de una parcela SIGPAC.';
+                    return;
+                }
+                selection = { lat: parseFloat(lat), lon: parseFloat(lon), ref: info.ref };
+                panel.className = 'ok';
+                panel.innerHTML =
+                    '<strong>&#10003; Parcela:</strong>'
+                    + ' <code>' + info.ref + '</code>'
+                    + ' &nbsp;<span class="tag">' + info.uso + '</span>'
+                    + ' &nbsp;' + info.m2.toLocaleString('es-ES') + '&nbsp;m&sup2;'
+                    + ' &nbsp;|&nbsp;' + lat + ', ' + lon
+                    + ' &nbsp;<button id="btn-import">&#8681; Importar a Odoo</button>';
+                var btn = document.getElementById('btn-import');
+                if (btn) { btn.addEventListener('click', doImport); }
+            })
+            .catch(function () {
+                /* Estrategia 2: proxy Odoo (por si hay CORS en GFI) */
+                fetch('/vinedo/sigpac_consultar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0', method: 'call', id: 1,
+                        params: { lat: parseFloat(lat), lon: parseFloat(lon) }
+                    })
+                })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    var result = data.result;
+                    if (result && !result.error && (result.features || []).length) {
+                        var p   = result.features[0].properties || {};
+                        var ref = [p.provincia, p.municipio, p.poligono, p.parcela, p.recinto]
+                                    .map(function (v) { return v || ''; }).join('-');
+                        var uso = p.dn_uso || p.uso || '?';
+                        var m2  = parseFloat(p.dn_surface || p.superficie || 0);
+                        selection = { lat: parseFloat(lat), lon: parseFloat(lon), ref: ref };
+                        panel.className = 'ok';
+                        panel.innerHTML =
+                            '<strong>&#10003; Parcela:</strong>'
+                            + ' <code>' + ref + '</code>'
+                            + ' &nbsp;<span class="tag">' + uso + '</span>'
+                            + ' &nbsp;' + m2.toLocaleString('es-ES') + '&nbsp;m&sup2;'
+                            + ' &nbsp;|&nbsp;' + lat + ', ' + lon
+                            + ' &nbsp;<button id="btn-import">&#8681; Importar a Odoo</button>';
+                        var btn = document.getElementById('btn-import');
+                        if (btn) { btn.addEventListener('click', doImport); }
+                    } else {
+                        /* Estrategia 3: entrada manual con enlace al visor oficial */
+                        showManualInput(lat, lon);
+                    }
+                })
+                .catch(function () { showManualInput(lat, lon); });
+            });
     });
 
     /* ── 6. Importar parcela seleccionada ── */
@@ -150,7 +241,7 @@
                 params: { rec_id: REC_ID, lat: selection.lat, lon: selection.lon }
             })
         })
-        .then(function (resp) { return resp.json(); })
+        .then(function (r) { return r.json(); })
         .then(function (data) {
             var result = data.result;
             if (result && result.ok) {
@@ -162,16 +253,16 @@
             } else {
                 panel.className = 'err';
                 panel.innerHTML = '&#9888; ' + ((result && result.error) || 'Error desconocido')
-                    + ' &nbsp;<button id="btn-import">Reintentar</button>';
-                var b2 = document.getElementById('btn-import');
+                    + ' &nbsp;<button id="btn-retry">Reintentar</button>';
+                var b2 = document.getElementById('btn-retry');
                 if (b2) { b2.addEventListener('click', doImport); }
             }
         })
         .catch(function (err) {
             panel.className = 'err';
             panel.innerHTML = '&#9888; Error de red: ' + err.message
-                + ' &nbsp;<button id="btn-import">Reintentar</button>';
-            var b2 = document.getElementById('btn-import');
+                + ' &nbsp;<button id="btn-retry">Reintentar</button>';
+            var b2 = document.getElementById('btn-retry');
             if (b2) { b2.addEventListener('click', doImport); }
         });
     }
