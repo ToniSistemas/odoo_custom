@@ -1,0 +1,82 @@
+/* sigpac_viewer.css – estilos para el visor SIGPAC embebido en Odoo
+   Archivo externo para cumplir con la CSP de Odoo 19 (no inline styles) */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+}
+
+/* El mapa ocupa todo menos la barra inferior (52px) */
+#map {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 52px;
+    background: #d0e8f5;
+}
+
+/* Barra de información inferior */
+#panel {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 52px;
+    padding: 6px 12px;
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+    overflow: hidden;
+}
+
+#panel.loading { color: #6c757d; }
+#panel.ok   { background: #d4edda; border-top-color: #28a745; }
+#panel.err  { background: #f8d7da; border-top-color: #dc3545; }
+#panel.done { background: #cce5ff; border-top-color: #004085; }
+
+.hint { color: #6c757d; font-size: 11px; }
+
+.tag {
+    display: inline-block;
+    background: #495057;
+    color: #fff;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+#btn-import {
+    padding: 3px 12px;
+    background: #28a745;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+#btn-import:hover    { background: #218838; }
+#btn-import:disabled { background: #6c757d; cursor: default; }
+
+/* Aviso de zoom */
+#zoom-hint {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, .6);
+    color: #fff;
+    padding: 5px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 1000;
+    display: none;
+    white-space: nowrap;
+}
