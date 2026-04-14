@@ -141,7 +141,8 @@
         <field name="view_mode">list,form</field>
     </record>
 
-    <menuitem id="menu_vinedo_root" name="Viñedo" sequence="10"/>
+    <menuitem id="menu_vinedo_root" name="Viñedo" sequence="10"
+        web_icon="vinedo_field_service,static/description/icon.png"/>
     <menuitem id="menu_vinedo_fincas" name="Fincas" parent="menu_vinedo_root" action="action_finca" sequence="1"/>
 
     <!-- Variedad Views -->
