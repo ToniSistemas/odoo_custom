@@ -806,9 +806,16 @@ class Tratamiento(models.Model):
 
     @api.onchange('fitosanitario_id')
     def _onchange_fitosanitario_id(self):
-        """When a MAPA record is selected, fill producto with its name."""
-        if self.fitosanitario_id:
-            self.producto = self.fitosanitario_id.nombre
+        """When a MAPA record is selected, fill producto and auto-fetch funcion if missing."""
+        if not self.fitosanitario_id:
+            return
+        self.producto = self.fitosanitario_id.nombre
+        # If funcion not yet populated on the fitosanitario record, fetch it from MAPA now
+        fito = self.fitosanitario_id
+        if fito.id_mapa and not fito.funcion:
+            funcion = _mapa_obtener_funcion(fito.id_mapa)
+            if funcion is not None:
+                fito.write({'funcion': funcion if funcion else '-'})
 
     @api.onchange('producto')
     def _onchange_producto(self):
