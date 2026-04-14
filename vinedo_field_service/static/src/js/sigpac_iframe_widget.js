@@ -31,6 +31,8 @@ class SigpacIframeWidget extends Component {
         <div t-ref="sigpac_container" class="o_sigpac_iframe_container"/>
     `;
 
+    static supportedTypes = ["html"];
+
     static props = {
         ...standardFieldProps,
     };
