@@ -12,6 +12,301 @@ _logger = logging.getLogger(__name__)
 # evitando el bloqueo X-Frame-Options del visor oficial de SIGPAC.
 # Las llamadas a la API de SIGPAC se hacen desde el servidor Odoo (proxy),
 # evitando el bloqueo CORS en el navegador.
+#
+# NOTA: el template usa marcadores __PLACEHOLDER__ en lugar de {placeholder}
+# para evitar conflictos con las llaves de CSS y JavaScript.
+# ─────────────────────────────────────────────────────────────────────────────
+
+_VIEWER_HTML = """<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Visor SIGPAC</title>
+<link rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/WPeE=" crossorigin=""></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; font-family: Arial, sans-serif; font-size: 13px; }
+  body { display: flex; flex-direction: column; }
+  #map { flex: 1; min-height: 0; }
+  #panel {
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  #panel.loading { color: #6c757d; }
+  #panel.ok  { background: #d4edda; border-top-color: #28a745; }
+  #panel.err { background: #f8d7da; border-top-color: #dc3545; }
+  #panel.done { background: #cce5ff; border-top-color: #004085; }
+  .tag {
+    display: inline-block;
+    background: #495057; color: #fff;
+    padding: 1px 6px; border-radius: 3px; font-size: 11px;
+  }
+  #btn-import {
+    padding: 4px 14px;
+    background: #28a745; color: #fff;
+    border: none; border-radius: 4px;
+    cursor: pointer; font-size: 12px; font-weight: bold;
+  }
+  #btn-import:hover    { background: #218838; }
+  #btn-import:disabled { background: #6c757d; cursor: default; }
+  #zoom-hint {
+    position: absolute; bottom: 50px; left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,.65); color: #fff;
+    padding: 6px 14px; border-radius: 20px; font-size: 12px;
+    pointer-events: none; z-index: 1000;
+  }
+</style>
+</head>
+<body>
+<div id="map" style="position:relative;">
+  <div id="zoom-hint" style="display:none;">
+    Acerca el mapa (zoom &ge; 14) para ver las parcelas SIGPAC
+  </div>
+</div>
+<div id="panel">
+  Haz clic en una parcela del mapa para seleccionarla.
+  <span style="color:#6c757d;font-size:11px;">(usa zoom &ge; 14 para ver los l\u00edmites)</span>
+</div>
+
+<script>
+var REC_ID = __REC_ID__;
+var LAT    = __LAT__;
+var LON    = __LON__;
+var ZOOM   = __ZOOM__;
+
+var map = L.map('map').setView([LAT, LON], ZOOM);
+
+var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap',
+    maxZoom: 19
+});
+
+var pnoaLayer = L.tileLayer.wms('https://www.ign.es/wms-inspire/pnoa-ma', {
+    layers: 'OI.OrthoimageCoverage',
+    format: 'image/jpeg',
+    transparent: false,
+    attribution: '&copy; IGN PNOA',
+    maxZoom: 20
+});
+
+var sigpacLayer = L.tileLayer.wms(
+    'https://sigpac.mapa.es/fega/serviciosvisorsigpac/wms/wms.aspx', {
+    layers: 'SIGPAC',
+    format: 'image/png',
+    transparent: true,
+    version: '1.3.0',
+    opacity: 0.85,
+    attribution: '&copy; MAPA SIGPAC',
+    maxZoom: 19
+});
+
+osmLayer.addTo(map);
+sigpacLayer.addTo(map);
+
+L.control.layers(
+    { 'OpenStreetMap': osmLayer, 'Foto a\u00e9rea (PNOA)': pnoaLayer },
+    { 'Parcelas SIGPAC': sigpacLayer },
+    { collapsed: false }
+).addTo(map);
+
+__MARKER_JS__
+
+var zoomHint = document.getElementById('zoom-hint');
+function updateZoomHint() {
+    zoomHint.style.display = map.getZoom() < 14 ? 'block' : 'none';
+}
+map.on('zoomend', updateZoomHint);
+updateZoomHint();
+
+var panel = document.getElementById('panel');
+var selection = null;
+
+map.on('click', async function(e) {
+    var lat = e.latlng.lat.toFixed(7);
+    var lon = e.latlng.lng.toFixed(7);
+    panel.className = 'loading';
+    panel.innerHTML = '&#8987; Consultando SIGPAC&hellip;';
+    try {
+        var resp = await fetch('/vinedo/sigpac_consultar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                jsonrpc: '2.0', method: 'call', id: 1,
+                params: { lat: parseFloat(lat), lon: parseFloat(lon) }
+            })
+        });
+        var data = await resp.json();
+        var result = data.result;
+        if (!result || result.error) {
+            panel.className = 'err';
+            panel.innerHTML = '&#9888; ' + ((result && result.error) || 'Error desconocido');
+            return;
+        }
+        var features = result.features || [];
+        if (!features.length) {
+            panel.className = '';
+            panel.innerHTML = 'No se encontr\u00f3 ninguna parcela en ese punto. '
+                + 'Prueba a hacer clic m\u00e1s cerca del centro de una parcela.';
+            return;
+        }
+        var p = features[0].properties || {};
+        var prov = p.provincia  || '';
+        var mun  = p.municipio  || '';
+        var pol  = p.poligono   || '';
+        var par  = p.parcela    || '';
+        var rec  = p.recinto    || '';
+        var uso  = p.dn_uso     || p.uso       || '?';
+        var m2   = p.dn_surface || p.superficie || 0;
+        var ref  = prov + '-' + mun + '-' + pol + '-' + par + '-' + rec;
+        selection = { lat: parseFloat(lat), lon: parseFloat(lon), ref: ref };
+        panel.className = 'ok';
+        panel.innerHTML = '<strong>&#10003; Parcela:</strong>'
+            + ' <code>' + ref + '</code>'
+            + ' &nbsp;<span class="tag">' + uso + '</span>'
+            + ' &nbsp;' + parseFloat(m2).toLocaleString('es-ES') + '&nbsp;m&sup2;'
+            + ' &nbsp;|&nbsp; ' + lat + ', ' + lon
+            + ' &nbsp;<button id="btn-import" onclick="doImport()">&#8681; Importar a Odoo</button>';
+    } catch(err) {
+        panel.className = 'err';
+        panel.innerHTML = '&#9888; Error de red: ' + err.message;
+    }
+});
+
+async function doImport() {
+    if (!selection) return;
+    var btn = document.getElementById('btn-import');
+    if (btn) { btn.disabled = true; btn.textContent = 'Importando\u2026'; }
+    try {
+        var resp = await fetch('/vinedo/sigpac_importar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                jsonrpc: '2.0', method: 'call', id: 1,
+                params: { rec_id: REC_ID, lat: selection.lat, lon: selection.lon }
+            })
+        });
+        var data = await resp.json();
+        var result = data.result;
+        if (result && result.ok) {
+            panel.className = 'done';
+            panel.innerHTML = '&#9989; Importado: <strong>' + (result.ref_sigpac || selection.ref)
+                + '</strong> &mdash; Recargando\u2026';
+            setTimeout(function() { window.parent.location.reload(); }, 1400);
+        } else {
+            panel.className = 'err';
+            panel.innerHTML = '&#9888; ' + ((result && result.error) || 'Error desconocido')
+                + ' &nbsp;<button id="btn-import" onclick="doImport()">Reintentar</button>';
+        }
+    } catch(err) {
+        panel.className = 'err';
+        panel.innerHTML = '&#9888; Error de red: ' + err.message
+            + ' &nbsp;<button id="btn-import" onclick="doImport()">Reintentar</button>';
+    }
+}
+</script>
+</body>
+</html>"""
+
+
+def _render_viewer(rec_id, lat, lon, zoom, marker_js):
+    """Sustituye los marcadores __PLACEHOLDER__ en el template HTML."""
+    return (
+        _VIEWER_HTML
+        .replace('__REC_ID__', str(rec_id))
+        .replace('__LAT__', str(lat))
+        .replace('__LON__', str(lon))
+        .replace('__ZOOM__', str(zoom))
+        .replace('__MARKER_JS__', marker_js)
+    )
+
+
+class SigpacController(http.Controller):
+
+    @http.route('/vinedo/sigpac_viewer/<int:rec_id>', type='http', auth='user')
+    def sigpac_viewer(self, rec_id, **kwargs):
+        """Sirve el visor SIGPAC como HTML propio de Odoo (mismo origen).
+        Evita el bloqueo X-Frame-Options del visor oficial de SIGPAC."""
+        record = request.env['vinedo.finca'].browse(rec_id)
+        if not record.exists():
+            return request.make_response(
+                '<html><body style="font-family:Arial;padding:20px;color:#dc3545;">'
+                '<strong>Finca no encontrada.</strong></body></html>',
+                headers=[('Content-Type', 'text/html; charset=utf-8')]
+            )
+
+        has_coords = bool(record.latitude and record.longitude)
+        lat  = record.latitude  or 40.4168
+        lon  = record.longitude or -3.7038
+        zoom = 17 if has_coords else 6
+
+        if has_coords:
+            marker_js = (
+                "L.marker([" + str(record.latitude) + ", " + str(record.longitude) + "]).addTo(map)"
+                ".bindPopup('Ubicaci\u00f3n actual de la finca');"
+            )
+        else:
+            marker_js = "// sin coordenadas guardadas aun"
+
+        html_content = _render_viewer(rec_id, lat, lon, zoom, marker_js)
+        return request.make_response(
+            html_content,
+            headers=[('Content-Type', 'text/html; charset=utf-8')]
+        )
+
+    @http.route('/vinedo/sigpac_consultar', type='json', auth='user', csrf=False)
+    def sigpac_consultar(self, lat, lon, **kwargs):
+        """Proxy: consulta la API REST de SIGPAC desde el servidor Odoo.
+        Evita el bloqueo CORS que tendría la llamada directa desde el navegador."""
+        import urllib.request as _req
+        import json as _json
+
+        url = (
+            'https://sigpac.mapa.es/fega/serviciosvisorsigpac'
+            '/query/recintos/' + str(float(lon)) + '/' + str(float(lat))
+        )
+        try:
+            req = _req.Request(url, headers={'User-Agent': 'Mozilla/5.0 (OdooSIGPAC/1.7)'})
+            with _req.urlopen(req, timeout=12) as resp:
+                return _json.loads(resp.read().decode('utf-8'))
+        except Exception as e:
+            _logger.warning('sigpac_consultar error: %s', e)
+            return {'error': str(e), 'features': []}
+
+    @http.route('/vinedo/sigpac_importar', type='json', auth='user', csrf=False)
+    def sigpac_importar(self, rec_id, lat, lon, **kwargs):
+        """Escribe las coordenadas en la finca y ejecuta la consulta SIGPAC completa."""
+        record = request.env['vinedo.finca'].browse(int(rec_id))
+        if not record.exists():
+            return {'error': 'Finca no encontrada'}
+        try:
+            record.write({'latitude': float(lat), 'longitude': float(lon)})
+            record.action_consultar_sigpac()
+            return {'ok': True, 'ref_sigpac': record.ref_sigpac or ''}
+        except UserError as e:
+            return {'error': str(e.args[0] if e.args else e)}
+        except Exception as e:
+            _logger.exception('sigpac_importar error rec_id=%s', rec_id)
+            return {'error': str(e)}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Visor SIGPAC  –  HTML embebido en el formulario de Finca
+# El iframe apunta a /vinedo/sigpac_viewer/<rec_id> (mismo origen Odoo),
+# evitando el bloqueo X-Frame-Options del visor oficial de SIGPAC.
+# Las llamadas a la API de SIGPAC se hacen desde el servidor Odoo (proxy),
+# evitando el bloqueo CORS en el navegador.
 # ─────────────────────────────────────────────────────────────────────────────
 
 _VIEWER_HTML = r"""<!DOCTYPE html>
