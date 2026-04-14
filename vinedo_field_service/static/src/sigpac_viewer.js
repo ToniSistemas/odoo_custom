@@ -44,6 +44,7 @@
         format: 'image/png',
         transparent: true,
         version: '1.3.0',
+        crs: L.CRS.EPSG3857,
         opacity: 0.85,
         attribution: '&copy; FEGA SIGPAC',
         maxZoom: 19
