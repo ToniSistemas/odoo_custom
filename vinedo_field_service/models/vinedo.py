@@ -302,6 +302,7 @@ class Finca(models.Model):
     tratamiento_ids = fields.One2many('vinedo.tratamiento', 'finca_id', string='Tratamientos')
     poda_ids = fields.One2many('vinedo.poda', 'finca_id', string='Podas')
     trabajo_ids = fields.One2many('vinedo.trabajo', 'finca_id', string='Trabajos')
+    recinto_ids = fields.One2many('vinedo.recinto', 'finca_id', string='Recintos SIGPAC')
     anada_ids = fields.One2many('vinedo.anada', 'finca_id', string='Añadas')
     sigpac_visor_embed = fields.Html(compute='_compute_sigpac_visor_embed', sanitize=False)
 
@@ -517,6 +518,13 @@ class Finca(models.Model):
                 + osm_html
             )
 
+    def _recompute_area_from_recintos(self):
+        """Actualiza el campo area sumando los recintos activos."""
+        for rec in self:
+            activos = rec.recinto_ids.filtered('activo')
+            if activos:
+                rec.area = round(sum(activos.mapped('superficie_ha')), 4)
+
     def action_consultar_sigpac(self):
         """Consulta la API de SIGPAC para obtener referencia y superficies por uso."""
         self.ensure_one()
@@ -606,10 +614,23 @@ class Finca(models.Model):
             'recintos': all_recintos,
         }
         total_m2 = sum(r['superficie'] for r in all_recintos) or sfc_principal
+        recinto_vals = [(5, 0, 0)]
+        for r in all_recintos:
+            try:
+                rnum = int(r['recinto'])
+            except (ValueError, TypeError):
+                continue
+            recinto_vals.append((0, 0, {
+                'recinto_num': rnum,
+                'uso_sigpac': r['uso'],
+                'superficie_ha': round(r['superficie'] / 10000, 4),
+                'activo': True,
+            }))
         vals = {
             'ref_sigpac': ref_sigpac,
             'area': round(total_m2 / 10000, 4),
             'sigpac_json': json.dumps(summary, ensure_ascii=False, indent=2),
+            'recinto_ids': recinto_vals,
         }
         self.write(vals)
 
@@ -929,6 +950,30 @@ class Trabajo(models.Model):
     tipo_trabajo = fields.Many2one('vinedo.tipo.trabajo', string='Trabajo realizado', required=True)
     horas = fields.Float(string='Horas', digits=(5, 2))
     observaciones = fields.Text(string='Observaciones')
+
+
+class Recinto(models.Model):
+    _name = 'vinedo.recinto'
+    _description = 'Recinto SIGPAC de una finca'
+    _order = 'recinto_num'
+
+    finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True, ondelete='cascade', index=True)
+    recinto_num = fields.Integer(string='Recinto', required=True)
+    uso_sigpac = fields.Char(string='Uso SIGPAC')
+    superficie_ha = fields.Float(string='Superficie (ha)', digits=(10, 4))
+    activo = fields.Boolean(string='Incluir', default=True)
+
+    def write(self, vals):
+        result = super().write(vals)
+        if 'activo' in vals or 'superficie_ha' in vals:
+            self.mapped('finca_id')._recompute_area_from_recintos()
+        return result
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        records.mapped('finca_id')._recompute_area_from_recintos()
+        return records
 
 
 class Fitosanitario(models.Model):

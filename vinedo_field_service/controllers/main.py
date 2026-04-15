@@ -27,6 +27,8 @@ _VIEWER_HTML = (
     '  data-lat="__LAT__"'
     '  data-lon="__LON__"'
     '  data-zoom="__ZOOM__"'
+    '  data-ref-sigpac="__REF_SIGPAC__"'
+    '  data-recintos="__RECINTOS__"'
     '  __MARKER_ATTRS__>'
     '<head>'
     '<meta charset="utf-8"/>'
@@ -34,9 +36,9 @@ _VIEWER_HTML = (
     '<title>Visor SIGPAC</title>'
     # CSS externo - mismo origen - pasa CSP style-src 'self'
     '<link rel="stylesheet"'
-    '  href="/vinedo_field_service/static/src/lib/leaflet/leaflet.css?v=1.9.6"/>'
+    '  href="/vinedo_field_service/static/src/lib/leaflet/leaflet.css?v=1.9.8"/>'
     '<link rel="stylesheet"'
-    '  href="/vinedo_field_service/static/src/sigpac_viewer.css?v=1.9.6"/>'
+    '  href="/vinedo_field_service/static/src/sigpac_viewer.css?v=1.9.8"/>'
     '</head>'
     '<body>'
     '<div id="descripcion">'
@@ -55,15 +57,16 @@ _VIEWER_HTML = (
     '  <span class="hint">(zoom &ge;&nbsp;14 para ver los l&iacute;mites)</span>'
     '</div>'
     # Scripts externos - mismo origen - pasan CSP script-src 'self'
-    '<script src="/vinedo_field_service/static/src/lib/leaflet/leaflet.js?v=1.9.5"></script>'
-        '<script src="/vinedo_field_service/static/src/sigpac_viewer.js?v=1.9.5"></script>'
+    '<script src="/vinedo_field_service/static/src/lib/leaflet/leaflet.js?v=1.9.8"></script>'
+        '<script src="/vinedo_field_service/static/src/sigpac_viewer.js?v=1.9.8"></script>'
     '</body>'
     '</html>'
 )
 
 
-def _render_viewer(rec_id, lat, lon, zoom, marker_attrs):
+def _render_viewer(rec_id, lat, lon, zoom, marker_attrs, ref_sigpac='', recintos_json='[]'):
     """Sustituye los marcadores __PLACEHOLDER__ en el template HTML."""
+    import html as _html
     return (
         _VIEWER_HTML
         .replace('__REC_ID__',      str(rec_id))
@@ -71,6 +74,8 @@ def _render_viewer(rec_id, lat, lon, zoom, marker_attrs):
         .replace('__LON__',         str(lon))
         .replace('__ZOOM__',        str(zoom))
         .replace('__MARKER_ATTRS__', marker_attrs)
+        .replace('__REF_SIGPAC__',  _html.escape(ref_sigpac, quote=True))
+        .replace('__RECINTOS__',    _html.escape(recintos_json, quote=True))
     )
 
 
@@ -102,7 +107,14 @@ class SigpacController(http.Controller):
         else:
             marker_attrs = ''
 
-        html_content = _render_viewer(rec_id, lat, lon, zoom, marker_attrs)
+        import json as _json
+        ref_sigpac = record.ref_sigpac or ''
+        recintos_json = _json.dumps([
+            {'recinto': r.recinto_num, 'activo': r.activo}
+            for r in record.recinto_ids
+        ])
+
+        html_content = _render_viewer(rec_id, lat, lon, zoom, marker_attrs, ref_sigpac, recintos_json)
         return request.make_response(
             html_content,
             headers=[

@@ -11,7 +11,7 @@
  * (which strips <iframe> from HTML strings in Odoo 19's HtmlField).
  */
 
-import { Component, onMounted, onWillUnmount, useRef, xml } from "@odoo/owl";
+import { Component, onMounted, onWillUnmount, useEffect, useRef, xml } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 
 class SigpacViewerWidget extends Component {
@@ -25,8 +25,37 @@ class SigpacViewerWidget extends Component {
     setup() {
         this.containerRef = useRef("sigpac_container");
         this.iframe = null;
+        this._prevActivos = null;
         onMounted(() => this._mount());
         onWillUnmount(() => this._cleanup());
+
+        /* Enviar postMessage al iframe cuando cambia el estado activo de los recintos */
+        useEffect(() => {
+            const recintos = this.props.record?.data?.recinto_ids;
+            if (!recintos || !this.iframe?.contentWindow) { return; }
+            const activos = (recintos.records || [])
+                .filter(r => r.data.activo)
+                .map(r => r.data.recinto_num);
+            const activosStr = [...activos].sort().join(',');
+            if (this._prevActivos === null) {
+                this._prevActivos = activosStr;
+                return;
+            }
+            if (this._prevActivos === activosStr) { return; }
+            this._prevActivos = activosStr;
+            this.iframe.contentWindow.postMessage(
+                { type: 'recinto_update', activos },
+                window.location.origin
+            );
+        }, () => {
+            const recintos = this.props.record?.data?.recinto_ids;
+            if (!recintos) { return [null]; }
+            return [(recintos.records || [])
+                .filter(r => r.data.activo)
+                .map(r => r.data.recinto_num)
+                .sort()
+                .join(',')];
+        });
     }
 
     _mount() {

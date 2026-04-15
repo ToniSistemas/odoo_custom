@@ -83,6 +83,16 @@
                                 </list>
                             </field>
                         </page>
+                        <page string="Recintos SIGPAC">
+                            <field name="recinto_ids">
+                                <list editable="bottom">
+                                    <field name="recinto_num" readonly="1"/>
+                                    <field name="uso_sigpac" readonly="1"/>
+                                    <field name="superficie_ha" readonly="1" sum="Total (ha)"/>
+                                    <field name="activo"/>
+                                </list>
+                            </field>
+                        </page>
                         <page string="Aportaciones">
                             <field name="aportacion_ids">
                                 <list editable="bottom">

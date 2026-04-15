@@ -14,6 +14,8 @@
     var ZOOM       = parseInt(root.getAttribute('data-zoom')   || '6', 10);
     var MARKER_LAT = root.getAttribute('data-marker-lat');
     var MARKER_LON = root.getAttribute('data-marker-lon');
+    var REF_SIGPAC    = root.getAttribute('data-ref-sigpac') || '';
+    var RECINTOS_JSON = root.getAttribute('data-recintos') || '[]';
 
     /* ── 2. Rutas locales de los iconos de Leaflet ── */
     delete L.Icon.Default.prototype._getIconUrl;
@@ -80,14 +82,46 @@
     /* ── 5. Clic en parcela ── */
     var panel = document.getElementById('panel');
     var selection = null;
-    var parcelaLayer = null;
     var singleRecintoHa = 0;
     var parcelaTotalHa = null;
+    var recintoLayers = {};   /* { recinto_num: L.GeoJSON } para coloreado individual */
 
-    /* Dibuja en el mapa los recintos de la parcela clicada usando recinfoparc.geojson
-       y calcula parcelaTotalHa (suma de superficies de todos los recintos en ha) */
+    /* Estilo según activo/inactivo */
+    function recintoStyle(activo) {
+        return activo
+            ? { color: '#cc0000', weight: 2.5, fillColor: '#ff4444', fillOpacity: 0.2 }
+            : { color: '#888888', weight: 1.5, fillColor: '#cccccc', fillOpacity: 0.1 };
+    }
+
+    /* Eliminar todas las capas de recintos del mapa */
+    function clearRecintoLayers() {
+        Object.keys(recintoLayers).forEach(function (num) {
+            map.removeLayer(recintoLayers[num]);
+        });
+        recintoLayers = {};
+    }
+
+    /* Dibuja todos los recintos del geojson coloreados según activoMap {num: bool}
+       Devuelve el total de ha de los recintos activos */
+    function drawRecintoLayers(geojson, activoMap) {
+        clearRecintoLayers();
+        var features = geojson.features || [];
+        var total = 0;
+        features.forEach(function (f) {
+            var num = f.properties && f.properties.recinto;
+            var activo = activoMap[num] !== undefined ? activoMap[num] : true;
+            if (activo) {
+                total += parseFloat((f.properties && f.properties.superficie) || 0);
+            }
+            var layer = L.geoJSON(f, { style: recintoStyle(activo) }).addTo(map);
+            recintoLayers[num] = layer;
+        });
+        return total;
+    }
+
+    /* Dibuja recintos de la parcela al hacer clic (todos activos por defecto) */
     function drawParcela(ref) {
-        if (parcelaLayer) { map.removeLayer(parcelaLayer); parcelaLayer = null; }
+        clearRecintoLayers();
         parcelaTotalHa = null;
         var parts = ref.split(':');
         if (parts.length < 6) { return; }
@@ -97,22 +131,13 @@
         fetch(url)
             .then(function (r) { if (!r.ok) { throw new Error('HTTP ' + r.status); } return r.json(); })
             .then(function (geojson) {
-                parcelaLayer = L.geoJSON(geojson, {
-                    style: {
-                        color: '#cc0000',
-                        weight: 2.5,
-                        fillColor: '#ff4444',
-                        fillOpacity: 0.15
+                var activoMap = {};
+                (geojson.features || []).forEach(function (f) {
+                    if (f.properties && f.properties.recinto !== undefined) {
+                        activoMap[f.properties.recinto] = true;
                     }
-                }).addTo(map);
-                /* Calcular superficie total sumando todos los recintos */
-                var features = geojson.features || [];
-                var total = 0;
-                features.forEach(function (f) {
-                    total += parseFloat((f.properties && f.properties.superficie) || 0);
                 });
-                parcelaTotalHa = total;
-                /* Actualizar etiqueta del check si el panel sigue visible */
+                parcelaTotalHa = drawRecintoLayers(geojson, activoMap);
                 var spanTotal = document.getElementById('span-total-ha');
                 if (spanTotal) {
                     spanTotal.textContent = parcelaTotalHa.toFixed(4) + ' ha';
@@ -120,6 +145,36 @@
             })
             .catch(function () { /* silencioso si falla */ });
     }
+
+    /* Auto-cargar recintos guardados en Odoo al abrir el visor */
+    var recintoActivoMap = {};
+    try {
+        var rList = JSON.parse(RECINTOS_JSON);
+        rList.forEach(function (r) { recintoActivoMap[r.recinto] = r.activo; });
+    } catch (e) {}
+
+    if (REF_SIGPAC) {
+        var rParts = REF_SIGPAC.split(':');
+        if (rParts.length >= 6) {
+            var autoUrl = 'https://sigpac-hubcloud.es/servicioconsultassigpac/query/recinfoparc/'
+                + rParts[0] + '/' + rParts[1] + '/' + rParts[2] + '/'
+                + rParts[3] + '/' + rParts[4] + '/' + rParts[5] + '.geojson';
+            fetch(autoUrl)
+                .then(function (r) { if (!r.ok) { throw new Error(); } return r.json(); })
+                .then(function (geojson) { drawRecintoLayers(geojson, recintoActivoMap); })
+                .catch(function () {});
+        }
+    }
+
+    /* Actualizar colores al recibir cambios de checkboxes desde el formulario Odoo */
+    window.addEventListener('message', function (e) {
+        if (!e.data || e.data.type !== 'recinto_update') { return; }
+        var activos = e.data.activos || [];
+        Object.keys(recintoLayers).forEach(function (num) {
+            var isActivo = activos.indexOf(parseInt(num, 10)) !== -1;
+            recintoLayers[num].setStyle(recintoStyle(isActivo));
+        });
+    });
 
     /* REST endpoint sigpac-hubcloud.es: consulta el recinto por coordenadas WGS84 */
     function buildHubcloudUrl(latlng) {
@@ -181,7 +236,7 @@
     map.on('click', function (e) {
         var lat = e.latlng.lat.toFixed(7);
         var lon = e.latlng.lng.toFixed(7);
-        if (parcelaLayer) { map.removeLayer(parcelaLayer); parcelaLayer = null; }
+        clearRecintoLayers();
         panel.className = 'loading';
         panel.innerHTML = '&#8987; Consultando SIGPAC&hellip;';
 
