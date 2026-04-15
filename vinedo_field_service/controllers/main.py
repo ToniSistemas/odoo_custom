@@ -49,8 +49,8 @@ _VIEWER_HTML = (
     '  <span class="hint">(zoom &ge;&nbsp;14 para ver los l&iacute;mites)</span>'
     '</div>'
     # Scripts externos - mismo origen - pasan CSP script-src 'self'
-    '<script src="/vinedo_field_service/static/src/lib/leaflet/leaflet.js?v=1.9.3"></script>'
-        '<script src="/vinedo_field_service/static/src/sigpac_viewer.js?v=1.9.3"></script>'
+    '<script src="/vinedo_field_service/static/src/lib/leaflet/leaflet.js?v=1.9.4"></script>'
+        '<script src="/vinedo_field_service/static/src/sigpac_viewer.js?v=1.9.4"></script>'
     '</body>'
     '</html>'
 )
@@ -135,14 +135,18 @@ class SigpacController(http.Controller):
             return {'error': str(e), 'features': []}
 
     @http.route('/vinedo/sigpac_importar', type='jsonrpc', auth='user', csrf=False)
-    def sigpac_importar(self, rec_id, lat, lon, **kwargs):
-        """Escribe las coordenadas en la finca y ejecuta la consulta SIGPAC completa."""
+    def sigpac_importar(self, rec_id, lat, lon, area_ha=None, **kwargs):
+        """Escribe las coordenadas en la finca y ejecuta la consulta SIGPAC completa.
+        Si area_ha se recibe, sobreescribe el área calculada por action_consultar_sigpac
+        (se usa cuando el usuario deselecciona 'Importar superficie total' en el mapa)."""
         record = request.env['vinedo.finca'].browse(int(rec_id))
         if not record.exists():
             return {'error': 'Finca no encontrada'}
         try:
             record.write({'latitude': float(lat), 'longitude': float(lon)})
             record.action_consultar_sigpac()
+            if area_ha is not None:
+                record.write({'area': round(float(area_ha), 4)})
             return {'ok': True, 'ref_sigpac': record.ref_sigpac or ''}
         except UserError as e:
             return {'error': str(e.args[0] if e.args else e)}

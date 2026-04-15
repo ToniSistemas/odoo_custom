@@ -81,10 +81,14 @@
     var panel = document.getElementById('panel');
     var selection = null;
     var parcelaLayer = null;
+    var singleRecintoHa = 0;
+    var parcelaTotalHa = null;
 
-    /* Dibuja en el mapa los recintos de la parcela clicada usando recinfoparc.geojson */
+    /* Dibuja en el mapa los recintos de la parcela clicada usando recinfoparc.geojson
+       y calcula parcelaTotalHa (suma de superficies de todos los recintos en ha) */
     function drawParcela(ref) {
         if (parcelaLayer) { map.removeLayer(parcelaLayer); parcelaLayer = null; }
+        parcelaTotalHa = null;
         var parts = ref.split(':');
         if (parts.length < 6) { return; }
         var url = 'https://sigpac-hubcloud.es/servicioconsultassigpac/query/recinfoparc/'
@@ -101,6 +105,18 @@
                         fillOpacity: 0.15
                     }
                 }).addTo(map);
+                /* Calcular superficie total sumando todos los recintos */
+                var features = geojson.features || [];
+                var total = 0;
+                features.forEach(function (f) {
+                    total += parseFloat((f.properties && f.properties.superficie) || 0);
+                });
+                parcelaTotalHa = total;
+                /* Actualizar etiqueta del check si el panel sigue visible */
+                var spanTotal = document.getElementById('span-total-ha');
+                if (spanTotal) {
+                    spanTotal.textContent = parcelaTotalHa.toFixed(4) + ' ha';
+                }
             })
             .catch(function () { /* silencioso si falla */ });
     }
@@ -157,7 +173,8 @@
         var ref = [p.provincia, p.municipio, agr, zon, p.poligono, p.parcela]
                     .map(function (v) { return v !== undefined ? String(v) : ''; }).join(':');
         var uso = p.uso_sigpac || '?';
-        var m2  = parseFloat(p.superficie || 0) * 10000; /* ha → m² */
+        singleRecintoHa = parseFloat(p.superficie || 0); /* ha del recinto clicado */
+        var m2  = singleRecintoHa * 10000; /* ha → m² */
         return { ref: ref, uso: uso, m2: m2 };
     }
 
@@ -192,6 +209,11 @@
                     + ' &nbsp;<span class="tag">' + info.uso + '</span>'
                     + ' &nbsp;' + info.m2.toLocaleString('es-ES') + '&nbsp;m&sup2;'
                     + ' &nbsp;|&nbsp;' + lat + ', ' + lon
+                    + '<br><label style="font-size:12px;cursor:pointer;">'
+                    + '<input type="checkbox" id="chk-parcela" checked style="margin-right:4px;"/>'
+                    + 'Importar superficie total de la parcela'
+                    + ' (<span id="span-total-ha">calculando&hellip;</span>)'
+                    + '</label>'
                     + ' &nbsp;<button id="btn-import">&#8681; Importar a Odoo</button>';
                 var btn = document.getElementById('btn-import');
                 if (btn) { btn.addEventListener('click', doImport); }
@@ -220,6 +242,11 @@
                             + ' &nbsp;<span class="tag">' + info.uso + '</span>'
                             + ' &nbsp;' + info.m2.toLocaleString('es-ES') + '&nbsp;m&sup2;'
                             + ' &nbsp;|&nbsp;' + lat + ', ' + lon
+                            + '<br><label style="font-size:12px;cursor:pointer;">'
+                            + '<input type="checkbox" id="chk-parcela" checked style="margin-right:4px;"/>'
+                            + 'Importar superficie total de la parcela'
+                            + ' (<span id="span-total-ha">calculando&hellip;</span>)'
+                            + '</label>'
                             + ' &nbsp;<button id="btn-import">&#8681; Importar a Odoo</button>';
                         var btn = document.getElementById('btn-import');
                         if (btn) { btn.addEventListener('click', doImport); }
@@ -238,12 +265,20 @@
         var btn = document.getElementById('btn-import');
         if (btn) { btn.disabled = true; btn.textContent = 'Importando\u2026'; }
 
+        var chk = document.getElementById('chk-parcela');
+        var importarTotal = !chk || chk.checked;
+        var params = { rec_id: REC_ID, lat: selection.lat, lon: selection.lon };
+        if (!importarTotal) {
+            /* Sólo el recinto clicado: pasar área explícita para sobrescribir el total */
+            params.area_ha = singleRecintoHa;
+        }
+
         fetch('/vinedo/sigpac_importar', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 jsonrpc: '2.0', method: 'call', id: 1,
-                params: { rec_id: REC_ID, lat: selection.lat, lon: selection.lon }
+                params: params
             })
         })
         .then(function (r) { return r.json(); })
