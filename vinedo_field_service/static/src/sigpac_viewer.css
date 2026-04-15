@@ -11,10 +11,23 @@ html, body {
     font-size: 13px;
 }
 
-/* El mapa ocupa todo menos la barra inferior (52px) */
+/* Barra de descripción superior */
+#descripcion {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    padding: 6px 12px;
+    background: #e8f4fd;
+    border-bottom: 1px solid #b8daff;
+    font-size: 12px;
+    color: #004085;
+    line-height: 1.4;
+    z-index: 1000;
+}
+
+/* El mapa ocupa todo menos la barra superior y la inferior (52px) */
 #map {
     position: absolute;
-    top: 0; left: 0; right: 0; bottom: 52px;
+    top: 54px; left: 0; right: 0; bottom: 52px;
     background: #d0e8f5;
 }
 
