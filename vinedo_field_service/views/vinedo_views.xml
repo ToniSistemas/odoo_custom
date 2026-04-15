@@ -24,6 +24,7 @@
                             <field name="name"/>
                             <field name="territory_id"/>
                             <field name="area"/>
+                            <field name="area_m2" readonly="1"/>
                         </group>
                         <group>
                             <field name="latitude" string="Latitud"/>

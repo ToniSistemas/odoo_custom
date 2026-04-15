@@ -287,6 +287,7 @@ class Finca(models.Model):
     name = fields.Char(string='Nombre', required=True, index=True)
     territory_id = fields.Many2one('vinedo.territorio', string='Territorio', index=True)
     area = fields.Float(string='Extensión (ha)')
+    area_m2 = fields.Float(string='Extensión (m²)', compute='_compute_area_m2', digits=(12, 2))
     latitude = fields.Float(string='Latitud', digits=(10, 7))
     longitude = fields.Float(string='Longitud', digits=(10, 7))
     gmap_url = fields.Char(string='Google Maps', compute='_compute_map_urls')
@@ -312,6 +313,11 @@ class Finca(models.Model):
                 raise ValidationError(_('Latitud debe estar entre -90 y 90 grados.'))
             if rec.longitude and not (-180 <= rec.longitude <= 180):
                 raise ValidationError(_('Longitud debe estar entre -180 y 180 grados.'))
+
+    @api.depends('area')
+    def _compute_area_m2(self):
+        for rec in self:
+            rec.area_m2 = round((rec.area or 0) * 10000, 2)
 
     @api.depends('latitude', 'longitude')
     def _compute_map_urls(self):
