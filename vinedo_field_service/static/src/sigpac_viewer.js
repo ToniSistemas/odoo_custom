@@ -39,23 +39,35 @@
         maxZoom: 20
     });
 
-    var sigpacLayer = L.tileLayer.wms('https://sigpac-hubcloud.es/wms?', {
+    var sigpacRecintoLayer = L.tileLayer.wms('https://sigpac-hubcloud.es/wms?', {
         layers: 'AU.Sigpac:recinto',
         format: 'image/png',
         transparent: true,
         version: '1.3.0',
         crs: L.CRS.EPSG3857,
-        opacity: 0.85,
+        opacity: 0.7,
         attribution: '&copy; FEGA SIGPAC',
         maxZoom: 19
     });
 
+    /* Catastro WMS: parcelas (perímetro exterior, igual que la capa Parcela del visor oficial) */
+    var catastroLayer = L.tileLayer.wms(
+        'https://ovc.catastro.meh.es/Cartografia/WMS/ServidorWMS.aspx', {
+        layers: 'Catastro',
+        format: 'image/png',
+        transparent: true,
+        version: '1.1.1',
+        opacity: 0.9,
+        attribution: '&copy; Catastro',
+        maxZoom: 20
+    });
+
     pnoaLayer.addTo(map);
-    sigpacLayer.addTo(map);
+    catastroLayer.addTo(map);
 
     L.control.layers(
         { 'OpenStreetMap': osmLayer, 'Foto a\u00e9rea (PNOA)': pnoaLayer },
-        { 'Parcelas SIGPAC': sigpacLayer },
+        { 'Parcelas (Catastro)': catastroLayer, 'Recintos SIGPAC': sigpacRecintoLayer },
         { collapsed: false }
     ).addTo(map);
 
