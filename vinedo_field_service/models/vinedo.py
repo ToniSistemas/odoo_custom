@@ -906,6 +906,18 @@ class Poda(models.Model):
     empleado_id = fields.Many2one('hr.employee', string='Empleado', index=True)
 
 
+class TipoTrabajo(models.Model):
+    _name = 'vinedo.tipo.trabajo'
+    _description = 'Tipo de trabajo en viñedo'
+    _order = 'name'
+
+    name = fields.Char(string='Tipo de trabajo', required=True)
+
+    _sql_constraints = [
+        ('name_uniq', 'unique(name)', 'Ya existe un tipo de trabajo con ese nombre.'),
+    ]
+
+
 class Trabajo(models.Model):
     _name = 'vinedo.trabajo'
     _description = 'Trabajo realizado en finca'
@@ -914,7 +926,7 @@ class Trabajo(models.Model):
     finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True, ondelete='cascade', index=True)
     fecha = fields.Date(string='Fecha', default=fields.Date.today, required=True, index=True)
     empleado_id = fields.Many2one('hr.employee', string='Empleado', index=True)
-    tipo_trabajo = fields.Char(string='Trabajo realizado', required=True)
+    tipo_trabajo = fields.Many2one('vinedo.tipo.trabajo', string='Trabajo realizado', required=True)
     horas = fields.Float(string='Horas', digits=(5, 2))
     observaciones = fields.Text(string='Observaciones')
 

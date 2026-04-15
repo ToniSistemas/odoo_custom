@@ -62,14 +62,6 @@
                                 </list>
                             </field>
                         </page>
-                        <page string="Podas">
-                            <field name="poda_ids">
-                                <list editable="bottom">
-                                    <field name="fecha"/>
-                                    <field name="empleado_id"/>
-                                </list>
-                            </field>
-                        </page>
                         <page string="Trabajos">
                             <field name="trabajo_ids">
                                 <list editable="bottom">

@@ -7,6 +7,7 @@ access_vinedo_aportacion,vinedo.aportacion,model_vinedo_aportacion,base.group_us
 access_vinedo_tratamiento,vinedo.tratamiento,model_vinedo_tratamiento,base.group_user,1,1,1,1
 access_vinedo_poda,vinedo.poda,model_vinedo_poda,base.group_user,1,1,1,1
 access_vinedo_trabajo,vinedo.trabajo,model_vinedo_trabajo,base.group_user,1,1,1,1
+access_vinedo_tipo_trabajo,vinedo.tipo.trabajo,model_vinedo_tipo_trabajo,base.group_user,1,1,1,1
 access_vinedo_territorio,vinedo.territorio,model_vinedo_territorio,base.group_user,1,1,1,1
 access_vinedo_fitosanitario,vinedo.fitosanitario,model_vinedo_fitosanitario,base.group_user,1,1,1,1
 access_vinedo_fitosanitario_wizard,vinedo.fitosanitario.wizard,model_vinedo_fitosanitario_wizard,base.group_user,1,1,1,1
