@@ -525,6 +525,32 @@ class Finca(models.Model):
             if activos:
                 rec.area = round(sum(activos.mapped('superficie_ha')), 4)
 
+    def _sync_variedades_from_recintos(self):
+        """Crea o actualiza vinedo.plantacion agrupando recintos activos por variedad.
+        Solo actualiza la superficie; no elimina plantaciones sin recinto."""
+        Plantacion = self.env['vinedo.plantacion']
+        for finca in self:
+            recintos_con_var = finca.recinto_ids.filtered(lambda r: r.activo and r.variedad_id)
+            # Agrupar superficie por variedad
+            sup_por_var = {}
+            for r in recintos_con_var:
+                vid = r.variedad_id.id
+                sup_por_var[vid] = sup_por_var.get(vid, 0) + r.superficie_ha
+            # Crear o actualizar plantaciones
+            for vid, sup in sup_por_var.items():
+                existing = Plantacion.search([
+                    ('finca_id', '=', finca.id),
+                    ('variedad_id', '=', vid),
+                ], limit=1)
+                if existing:
+                    existing.superficie = round(sup, 4)
+                else:
+                    Plantacion.create({
+                        'finca_id': finca.id,
+                        'variedad_id': vid,
+                        'superficie': round(sup, 4),
+                    })
+
     def action_consultar_sigpac(self):
         """Consulta la API de SIGPAC para obtener referencia y superficies por uso."""
         self.ensure_one()
@@ -991,17 +1017,21 @@ class Recinto(models.Model):
     uso_sigpac = fields.Char(string='Uso SIGPAC')
     superficie_ha = fields.Float(string='Superficie (ha)', digits=(10, 4))
     activo = fields.Boolean(string='Incluir', default=True)
+    variedad_id = fields.Many2one('vinedo.variedad', string='Variedad')
 
     def write(self, vals):
         result = super().write(vals)
         if 'activo' in vals or 'superficie_ha' in vals:
             self.mapped('finca_id')._recompute_area_from_recintos()
+        if 'variedad_id' in vals or 'activo' in vals or 'superficie_ha' in vals:
+            self.mapped('finca_id')._sync_variedades_from_recintos()
         return result
 
     @api.model_create_multi
     def create(self, vals_list):
         records = super().create(vals_list)
         records.mapped('finca_id')._recompute_area_from_recintos()
+        records.mapped('finca_id')._sync_variedades_from_recintos()
         return records
 
 
