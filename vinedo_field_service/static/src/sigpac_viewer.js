@@ -50,24 +50,12 @@
         maxZoom: 19
     });
 
-    /* Catastro WMS: parcelas (perímetro exterior, igual que la capa Parcela del visor oficial) */
-    var catastroLayer = L.tileLayer.wms(
-        'https://ovc.catastro.meh.es/Cartografia/WMS/ServidorWMS.aspx', {
-        layers: 'Catastro',
-        format: 'image/png',
-        transparent: true,
-        version: '1.1.1',
-        opacity: 0.9,
-        attribution: '&copy; Catastro',
-        maxZoom: 20
-    });
-
     pnoaLayer.addTo(map);
-    catastroLayer.addTo(map);
+    sigpacRecintoLayer.addTo(map);
 
     L.control.layers(
         { 'OpenStreetMap': osmLayer, 'Foto a\u00e9rea (PNOA)': pnoaLayer },
-        { 'Parcelas (Catastro)': catastroLayer, 'Recintos SIGPAC': sigpacRecintoLayer },
+        { 'Recintos SIGPAC': sigpacRecintoLayer },
         { collapsed: false }
     ).addTo(map);
 
@@ -92,6 +80,30 @@
     /* ── 5. Clic en parcela ── */
     var panel = document.getElementById('panel');
     var selection = null;
+    var parcelaLayer = null;
+
+    /* Dibuja en el mapa los recintos de la parcela clicada usando recinfoparc.geojson */
+    function drawParcela(ref) {
+        if (parcelaLayer) { map.removeLayer(parcelaLayer); parcelaLayer = null; }
+        var parts = ref.split(':');
+        if (parts.length < 6) { return; }
+        var url = 'https://sigpac-hubcloud.es/servicioconsultassigpac/query/recinfoparc/'
+            + parts[0] + '/' + parts[1] + '/' + parts[2] + '/'
+            + parts[3] + '/' + parts[4] + '/' + parts[5] + '.geojson';
+        fetch(url)
+            .then(function (r) { if (!r.ok) { throw new Error('HTTP ' + r.status); } return r.json(); })
+            .then(function (geojson) {
+                parcelaLayer = L.geoJSON(geojson, {
+                    style: {
+                        color: '#cc0000',
+                        weight: 2.5,
+                        fillColor: '#ff4444',
+                        fillOpacity: 0.15
+                    }
+                }).addTo(map);
+            })
+            .catch(function () { /* silencioso si falla */ });
+    }
 
     /* REST endpoint sigpac-hubcloud.es: consulta el recinto por coordenadas WGS84 */
     function buildHubcloudUrl(latlng) {
@@ -152,6 +164,7 @@
     map.on('click', function (e) {
         var lat = e.latlng.lat.toFixed(7);
         var lon = e.latlng.lng.toFixed(7);
+        if (parcelaLayer) { map.removeLayer(parcelaLayer); parcelaLayer = null; }
         panel.className = 'loading';
         panel.innerHTML = '&#8987; Consultando SIGPAC&hellip;';
 
@@ -171,6 +184,7 @@
                     return;
                 }
                 selection = { lat: parseFloat(lat), lon: parseFloat(lon), ref: info.ref };
+                drawParcela(info.ref);
                 panel.className = 'ok';
                 panel.innerHTML =
                     '<strong>&#10003; Parcela:</strong>'
@@ -198,6 +212,7 @@
                     var info = Array.isArray(result) ? parseHubcloudResult(result) : null;
                     if (info) {
                         selection = { lat: parseFloat(lat), lon: parseFloat(lon), ref: info.ref };
+                        drawParcela(info.ref);
                         panel.className = 'ok';
                         panel.innerHTML =
                             '<strong>&#10003; Parcela:</strong>'
