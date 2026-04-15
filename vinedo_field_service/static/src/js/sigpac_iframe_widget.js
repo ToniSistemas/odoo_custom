@@ -79,7 +79,7 @@ class SigpacViewerWidget extends Component {
 
         this.iframe = document.createElement("iframe");
         this.iframe.style.cssText = (
-            "width:100%;height:620px;"
+            "width:100%;height:560px;"
             + "border:1px solid #ccc;"
             + "border-radius:4px;"
             + "display:block;"

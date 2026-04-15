@@ -83,16 +83,6 @@
                                 </list>
                             </field>
                         </page>
-                        <page string="Recintos SIGPAC">
-                            <field name="recinto_ids">
-                                <list editable="bottom">
-                                    <field name="recinto_num" readonly="1"/>
-                                    <field name="uso_sigpac" readonly="1"/>
-                                    <field name="superficie_ha" readonly="1" sum="Total (ha)"/>
-                                    <field name="activo"/>
-                                </list>
-                            </field>
-                        </page>
                         <page string="Aportaciones">
                             <field name="aportacion_ids">
                                 <list editable="bottom">
@@ -104,11 +94,26 @@
                             </field>
                         </page>
                     </notebook>
-                    <div style="margin-top:16px;">
-                        <h4 style="margin-bottom:6px;color:#5c5c5c;font-size:14px;font-weight:600;">
-                            <i class="fa fa-map"/> Visor SIGPAC
-                        </h4>
-                        <widget name="sigpac_viewer"/>
+                    <div style="display:flex;gap:16px;margin-top:16px;align-items:flex-start;">
+                        <div style="flex:2 1 0;min-width:0;">
+                            <h4 style="margin-bottom:6px;color:#5c5c5c;font-size:14px;font-weight:600;">
+                                <i class="fa fa-map"/> Visor SIGPAC
+                            </h4>
+                            <widget name="sigpac_viewer"/>
+                        </div>
+                        <div style="flex:1 1 0;min-width:0;">
+                            <h4 style="margin-bottom:6px;color:#5c5c5c;font-size:14px;font-weight:600;">
+                                <i class="fa fa-list"/> Recintos SIGPAC
+                            </h4>
+                            <field name="recinto_ids">
+                                <list editable="bottom">
+                                    <field name="recinto_num" readonly="1"/>
+                                    <field name="uso_sigpac" readonly="1"/>
+                                    <field name="superficie_ha" readonly="1" sum="Total (ha)"/>
+                                    <field name="activo"/>
+                                </list>
+                            </field>
+                        </div>
                     </div>
                 </sheet>
             </form>
