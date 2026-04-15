@@ -85,6 +85,11 @@
                                     <field name="acidez_total" optional="show"/>
                                     <field name="acidez_volatil" optional="hide"/>
                                     <field name="malico" optional="hide"/>
+                                    <button name="action_open_attachments" type="object"
+                                        icon="fa-paperclip"
+                                        attrs="{'invisible': [('id', '=', False)]}"
+                                        string="" class="btn btn-sm btn-link"
+                                        help="Adjuntar analíticas PDF"/>
                                 </list>
                             </field>
                         </page>
@@ -218,6 +223,7 @@
                         </group>
                     </group>
                 </sheet>
+                <chatter/>
             </form>
         </field>
     </record>

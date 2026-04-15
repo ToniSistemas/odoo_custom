@@ -783,6 +783,7 @@ class Anada(models.Model):
     _name = 'vinedo.anada'
     _description = 'Añada / Cosecha por variedad'
     _order = 'anio desc, finca_id, variedad_id'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
 
     name = fields.Char(string='Nombre', compute='_compute_name', store=True, index=True)
     finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True, index=True)
@@ -796,6 +797,29 @@ class Anada(models.Model):
     acidez_total = fields.Float(string='Acidez total (g/L)', digits=(5, 2))
     acidez_volatil = fields.Float(string='Acidez volátil (g/L)', digits=(5, 2))
     malico = fields.Float(string='Málico (g/L)', digits=(5, 2))
+    attachment_count = fields.Integer(string='Analíticas', compute='_compute_attachment_count')
+
+    def _compute_attachment_count(self):
+        for rec in self:
+            rec.attachment_count = self.env['ir.attachment'].search_count([
+                ('res_model', '=', 'vinedo.anada'),
+                ('res_id', '=', rec.id),
+            ])
+
+    def action_open_attachments(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'Analíticas — {self.name}',
+            'res_model': 'ir.attachment',
+            'view_mode': 'list,form',
+            'domain': [('res_model', '=', 'vinedo.anada'), ('res_id', '=', self.id)],
+            'context': {
+                'default_res_model': 'vinedo.anada',
+                'default_res_id': self.id,
+            },
+            'target': 'new',
+        }
 
     @api.depends('finca_id', 'variedad_id', 'anio')
     def _compute_name(self):
