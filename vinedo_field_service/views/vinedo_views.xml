@@ -79,7 +79,12 @@
                                     <field name="variedad_id"/>
                                     <field name="cantidad" sum="Total kg"/>
                                     <field name="graduacion"/>
-                                    <field name="acidez"/>
+                                    <field name="sulfuroso_total" optional="show"/>
+                                    <field name="ph" optional="show"/>
+                                    <field name="densidad" optional="hide"/>
+                                    <field name="acidez_total" optional="show"/>
+                                    <field name="acidez_volatil" optional="hide"/>
+                                    <field name="malico" optional="hide"/>
                                 </list>
                             </field>
                         </page>
@@ -177,7 +182,7 @@
                 <field name="variedad_id"/>
                 <field name="cantidad" sum="Total kg"/>
                 <field name="graduacion" avg="Graduación Media"/>
-                <field name="acidez" avg="Acidez Media"/>
+                <field name="acidez_total" avg="Acidez Total Media"/>
             </list>
         </field>
     </record>
@@ -201,8 +206,15 @@
                         </group>
                         <group>
                             <field name="graduacion"/>
-                            <field name="acidez"/>
                             <field name="cantidad"/>
+                        </group>
+                        <group string="Análisis">
+                            <field name="sulfuroso_total"/>
+                            <field name="ph"/>
+                            <field name="densidad"/>
+                            <field name="acidez_total"/>
+                            <field name="acidez_volatil"/>
+                            <field name="malico"/>
                         </group>
                     </group>
                 </sheet>

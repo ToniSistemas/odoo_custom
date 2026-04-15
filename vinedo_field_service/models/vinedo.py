@@ -789,8 +789,13 @@ class Anada(models.Model):
     variedad_id = fields.Many2one('vinedo.variedad', string='Variedad', required=True, index=True)
     anio = fields.Integer(string='Año', required=True, default=lambda self: fields.Date.today().year)
     graduacion = fields.Float(string='Graduación alcohólica (%vol)', digits=(5, 2))
-    acidez = fields.Float(string='Acidez (g/L)', digits=(5, 2))
     cantidad = fields.Float(string='Cantidad recolectada (kg)', digits=(12, 2))
+    sulfuroso_total = fields.Float(string='Sulfuroso total (mg/L)', digits=(6, 2))
+    ph = fields.Float(string='pH', digits=(4, 2))
+    densidad = fields.Float(string='Densidad (g/mL)', digits=(6, 4))
+    acidez_total = fields.Float(string='Acidez total (g/L)', digits=(5, 2))
+    acidez_volatil = fields.Float(string='Acidez volátil (g/L)', digits=(5, 2))
+    malico = fields.Float(string='Málico (g/L)', digits=(5, 2))
 
     @api.depends('finca_id', 'variedad_id', 'anio')
     def _compute_name(self):
