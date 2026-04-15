@@ -549,7 +549,7 @@ class Finca(models.Model):
         rec_num = str(p.get('recinto', ''))
         uso_principal = p.get('uso_sigpac', '')
         sfc_principal = float(p.get('superficie', 0) or 0) * 10000   # ha → m²
-        ref_sigpac = f'{prov}:{mun}:{agr}:{zona}:{pol}:{par}:{rec_num}'
+        ref_sigpac = f'{prov}:{mun}:{agr}:{zona}:{pol}:{par}'
 
         # Paso 2: todos los recintos de la parcela (sigpac-hubcloud.es)
         all_recintos = []

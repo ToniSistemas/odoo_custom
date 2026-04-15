@@ -49,8 +49,8 @@ _VIEWER_HTML = (
     '  <span class="hint">(zoom &ge;&nbsp;14 para ver los l&iacute;mites)</span>'
     '</div>'
     # Scripts externos - mismo origen - pasan CSP script-src 'self'
-    '<script src="/vinedo_field_service/static/src/lib/leaflet/leaflet.js?v=1.9.1"></script>'
-    '<script src="/vinedo_field_service/static/src/sigpac_viewer.js?v=1.9.1"></script>'
+    '<script src="/vinedo_field_service/static/src/lib/leaflet/leaflet.js?v=1.9.2"></script>'
+    '<script src="/vinedo_field_service/static/src/sigpac_viewer.js?v=1.9.2"></script>'
     '</body>'
     '</html>'
 )
