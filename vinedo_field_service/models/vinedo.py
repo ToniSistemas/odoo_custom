@@ -1016,8 +1016,14 @@ class Recinto(models.Model):
     recinto_num = fields.Integer(string='Recinto', required=True)
     uso_sigpac = fields.Char(string='Uso SIGPAC')
     superficie_ha = fields.Float(string='Superficie (ha)', digits=(10, 4))
+    superficie_m2 = fields.Float(string='Superficie (m²)', compute='_compute_superficie_m2', digits=(12, 2))
     activo = fields.Boolean(string='Incluir', default=True)
     variedad_id = fields.Many2one('vinedo.variedad', string='Variedad')
+
+    @api.depends('superficie_ha')
+    def _compute_superficie_m2(self):
+        for rec in self:
+            rec.superficie_m2 = round((rec.superficie_ha or 0) * 10000, 2)
 
     def write(self, vals):
         result = super().write(vals)

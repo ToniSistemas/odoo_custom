@@ -119,7 +119,7 @@
                                 <list editable="bottom">
                                     <field name="recinto_num" readonly="1"/>
                                     <field name="uso_sigpac" readonly="1"/>
-                                    <field name="superficie_ha" readonly="1" sum="Total (ha)"/>
+                                    <field name="superficie_m2" readonly="1" sum="Total (m²)"/>
                                     <field name="variedad_id"/>
                                     <field name="activo"/>
                                 </list>
