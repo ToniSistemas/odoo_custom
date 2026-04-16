@@ -36,9 +36,9 @@ _VIEWER_HTML = (
     '<title>Visor SIGPAC</title>'
     # CSS externo - mismo origen - pasa CSP style-src 'self'
     '<link rel="stylesheet"'
-    '  href="/vinedo_field_service/static/src/lib/leaflet/leaflet.css?v=1.9.8"/>'
+    '  href="/vinedo_field_service/static/src/lib/leaflet/leaflet.css?v=2.0.5"/>'
     '<link rel="stylesheet"'
-    '  href="/vinedo_field_service/static/src/sigpac_viewer.css?v=1.9.8"/>'
+    '  href="/vinedo_field_service/static/src/sigpac_viewer.css?v=2.0.5"/>'
     '</head>'
     '<body>'
     '<div id="descripcion">'
@@ -57,8 +57,8 @@ _VIEWER_HTML = (
     '  <span class="hint">(zoom &ge;&nbsp;14 para ver los l&iacute;mites)</span>'
     '</div>'
     # Scripts externos - mismo origen - pasan CSP script-src 'self'
-    '<script src="/vinedo_field_service/static/src/lib/leaflet/leaflet.js?v=1.9.8"></script>'
-        '<script src="/vinedo_field_service/static/src/sigpac_viewer.js?v=1.9.8"></script>'
+    '<script src="/vinedo_field_service/static/src/lib/leaflet/leaflet.js?v=2.0.5"></script>'
+        '<script src="/vinedo_field_service/static/src/sigpac_viewer.js?v=2.0.5"></script>'
     '</body>'
     '</html>'
 )
@@ -173,30 +173,3 @@ class SigpacController(http.Controller):
             return {'error': str(e)}
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Visor SIGPAC  –  HTML embebido en el formulario de Finca
-# El iframe apunta a /vinedo/sigpac_viewer/<rec_id> (mismo origen Odoo),
-# evitando el bloqueo X-Frame-Options del visor oficial de SIGPAC.
-# Las llamadas a la API de SIGPAC se hacen desde el servidor Odoo (proxy),
-# evitando el bloqueo CORS en el navegador.
-#
-# NOTA: el template usa marcadores __PLACEHOLDER__ en lugar de {placeholder}
-# para evitar conflictos con las llaves de CSS y JavaScript al concatenar.
-# ─────────────────────────────────────────────────────────────────────────────
-
-# CSP permisiva para la respuesta del visor:
-# - script-src: permite unpkg.com (Leaflet)
-# - style-src: permite unpkg.com (Leaflet CSS) e inline
-# - img-src: permite tiles OSM, IGN PNOA y SIGPAC WMS
-# - connect-src: permite llamadas AJAX al propio Odoo (/vinedo/sigpac_*)
-_VIEWER_CSP = (
-    "default-src 'self' 'unsafe-inline'; "
-    "script-src 'self' 'unsafe-inline' https://unpkg.com; "
-    "style-src 'self' 'unsafe-inline' https://unpkg.com; "
-    "img-src 'self' data: blob: "
-    "https://*.tile.openstreetmap.org "
-    "https://*.ign.es "
-    "https://sigpac.mapa.es http://sigpac.mapa.es; "
-    "connect-src 'self'; "
-    "font-src 'self' https://unpkg.com;"
-)
