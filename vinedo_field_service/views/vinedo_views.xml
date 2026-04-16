@@ -43,7 +43,8 @@
                                 <list editable="bottom">
                                     <field name="variedad_id"/>
                                     <field name="fecha_plantacion"/>
-                                    <field name="superficie"/>
+                                    <field name="superficie" sum="Total (ha)"/>
+                                    <field name="superficie_m2" readonly="1" sum="Total (m²)"/>
                                 </list>
                             </field>
                         </page>

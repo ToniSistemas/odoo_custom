@@ -789,7 +789,13 @@ class Plantacion(models.Model):
     finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True, ondelete='cascade', index=True)
     variedad_id = fields.Many2one('vinedo.variedad', string='Variedad', required=True, index=True)
     fecha_plantacion = fields.Date(string='Fecha de plantación')
-    superficie = fields.Float(string='Superficie (ha)', digits=(10, 2))
+    superficie = fields.Float(string='Superficie (ha)', digits=(10, 4))
+    superficie_m2 = fields.Float(string='Superficie (m²)', compute='_compute_superficie_m2', digits=(12, 2))
+
+    @api.depends('superficie')
+    def _compute_superficie_m2(self):
+        for rec in self:
+            rec.superficie_m2 = round((rec.superficie or 0) * 10000, 2)
 
     @api.constrains('finca_id', 'variedad_id')
     def _check_unique_finca_variedad(self):
