@@ -8,13 +8,14 @@
 
     /* ── 1. Leer datos inyectados por el controlador ── */
     var root = document.documentElement;
-    var REC_ID     = parseInt(root.getAttribute('data-rec-id') || '0', 10);
-    var LAT        = parseFloat(root.getAttribute('data-lat')  || '40.4168');
-    var LON        = parseFloat(root.getAttribute('data-lon')  || '-3.7038');
-    var ZOOM       = parseInt(root.getAttribute('data-zoom')   || '6', 10);
-    var MARKER_LAT = root.getAttribute('data-marker-lat');
-    var MARKER_LON = root.getAttribute('data-marker-lon');
-    var REF_SIGPAC    = root.getAttribute('data-ref-sigpac') || '';
+    var REC_ID      = parseInt(root.getAttribute('data-rec-id')     || '0',       10);
+    var LAT         = parseFloat(root.getAttribute('data-lat')       || '40.4168');
+    var LON         = parseFloat(root.getAttribute('data-lon')       || '-3.7038');
+    var ZOOM        = parseInt(root.getAttribute('data-zoom')        || '6',       10);
+    var MARKER_LAT  = root.getAttribute('data-marker-lat');
+    var MARKER_LON  = root.getAttribute('data-marker-lon');
+    var REF_SIGPAC  = root.getAttribute('data-ref-sigpac')  || '';
+    var REF_SIGPAC2 = root.getAttribute('data-ref-sigpac2') || '';
     var RECINTOS_JSON = root.getAttribute('data-recintos') || '[]';
 
     /* ── 2. Rutas locales de los iconos de Leaflet ── */
@@ -61,14 +62,13 @@
         { collapsed: false }
     ).addTo(map);
 
-    /* Marcador de posición actual si tiene coordenadas */
+    /* Marcador de posición actual */
     if (MARKER_LAT && MARKER_LON) {
         L.marker([parseFloat(MARKER_LAT), parseFloat(MARKER_LON)])
             .addTo(map)
             .bindPopup('Ubicaci\u00f3n actual de la finca');
     }
 
-    /* Forzar recalculo de tamaño tras el render del iframe */
     setTimeout(function () { map.invalidateSize(); }, 300);
 
     /* ── 4. Aviso de zoom ── */
@@ -79,55 +79,73 @@
     map.on('zoomend', updateZoomHint);
     updateZoomHint();
 
-    /* ── 5. Clic en parcela ── */
+    /* ── 5. Capas y estilos ── */
     var panel = document.getElementById('panel');
     var selection = null;
     var singleRecintoHa = 0;
     var parcelaTotalHa = null;
-    var modoSegundaParcela = false;
-    var recintoLayers = {};   /* { recinto_num: L.GeoJSON } para coloreado individual */
+    /* recintoLayers: capas de recintos ya importados en Odoo.
+       Claves: número (1ª parcela) o '2p_N' (2ª parcela). */
+    var recintoLayers = {};
+    /* previewLayer: contorno naranja de la parcela seleccionada al hacer clic */
+    var previewLayer = null;
 
-    /* Estilo según activo/inactivo */
+    /* Estilo 1ª parcela: rojo (activo) / gris (inactivo) */
     function recintoStyle(activo) {
         return activo
-            ? { color: '#cc0000', weight: 2.5, fillColor: '#ff4444', fillOpacity: 0.2 }
+            ? { color: '#cc0000', weight: 2.5, fillColor: '#ff4444', fillOpacity: 0.25 }
             : { color: '#888888', weight: 1.5, fillColor: '#cccccc', fillOpacity: 0.1 };
     }
 
-    /* Estilo para recintos de la segunda parcela (azul) */
-    function recintoStyleSegunda() {
-        return { color: '#0056b3', weight: 2.5, fillColor: '#17a2b8', fillOpacity: 0.25 };
+    /* Estilo 2ª parcela: azul (activo) / azul claro (inactivo) */
+    function recintoStyleSegunda(activo) {
+        return activo !== false
+            ? { color: '#0056b3', weight: 2.5, fillColor: '#17a2b8', fillOpacity: 0.25 }
+            : { color: '#6baed6', weight: 1.5, fillColor: '#c6dbef', fillOpacity: 0.1 };
     }
 
-    /* Eliminar todas las capas de recintos del mapa */
+    /* Estilo de previsualización (parcela clicada) */
+    var _previewStyle = { color: '#e67e00', weight: 2.5, fillColor: '#ffaa00', fillOpacity: 0.15 };
+
+    /* Borra todas las capas de recintos importados */
     function clearRecintoLayers() {
-        Object.keys(recintoLayers).forEach(function (num) {
-            map.removeLayer(recintoLayers[num]);
-        });
+        Object.keys(recintoLayers).forEach(function (k) { map.removeLayer(recintoLayers[k]); });
         recintoLayers = {};
     }
 
-    /* Dibuja todos los recintos del geojson coloreados según activoMap {num: bool}
-       Devuelve el total de ha de los recintos activos */
+    /* Borra la capa de previsualización */
+    function clearPreview() {
+        if (previewLayer) { map.removeLayer(previewLayer); previewLayer = null; }
+    }
+
+    /* Dibuja los recintos de la 1ª parcela según activoMap {num → bool} */
     function drawRecintoLayers(geojson, activoMap) {
         clearRecintoLayers();
-        var features = geojson.features || [];
-        var total = 0;
-        features.forEach(function (f) {
+        (geojson.features || []).forEach(function (f) {
             var num = f.properties && f.properties.recinto;
             var activo = activoMap[num] !== undefined ? activoMap[num] : true;
-            if (activo) {
-                total += parseFloat((f.properties && f.properties.superficie) || 0);
-            }
             var layer = L.geoJSON(f, { style: recintoStyle(activo) }).addTo(map);
             recintoLayers[num] = layer;
         });
-        return total;
     }
 
-    /* Dibuja recintos de la parcela al hacer clic (todos activos por defecto) */
-    function drawParcela(ref, esSegunda) {
-        if (!esSegunda) { clearRecintoLayers(); }
+    /* Dibuja los recintos de la 2ª parcela en azul.
+       En Odoo el recinto_num es offset+original (offset = 1000), por eso
+       se busca activoMap[1000 + num] para obtener el estado real. */
+    function drawSegundaParcelaLayers(geojson, activoMap) {
+        (geojson.features || []).forEach(function (f) {
+            var num = f.properties && f.properties.recinto;
+            var odooNum = 1000 + parseInt(num || 0, 10);
+            var activo = activoMap[odooNum] !== undefined ? activoMap[odooNum] : true;
+            var layer = L.geoJSON(f, { style: recintoStyleSegunda(activo) }).addTo(map);
+            recintoLayers['2p_' + num] = layer;
+        });
+    }
+
+    /* Dibuja la previsualización naranja de una parcela (no modifica recintoLayers).
+       Actualiza parcelaTotalHa y #span-total-ha si existe. */
+    function drawPreview(ref) {
+        clearPreview();
         parcelaTotalHa = null;
         var parts = ref.split(':');
         if (parts.length < 6) { return; }
@@ -137,127 +155,137 @@
         fetch(url)
             .then(function (r) { if (!r.ok) { throw new Error('HTTP ' + r.status); } return r.json(); })
             .then(function (geojson) {
-                if (esSegunda) {
-                    /* Segunda parcela: dibujar en azul sin limpiar las anteriores */
-                    (geojson.features || []).forEach(function (f) {
-                        var num = f.properties && f.properties.recinto;
-                        var layer = L.geoJSON(f, { style: recintoStyleSegunda() }).addTo(map);
-                        recintoLayers['2p_' + num] = layer;
-                    });
-                } else {
-                    var activoMap = {};
-                    (geojson.features || []).forEach(function (f) {
-                        if (f.properties && f.properties.recinto !== undefined) {
-                            activoMap[f.properties.recinto] = true;
-                        }
-                    });
-                    parcelaTotalHa = drawRecintoLayers(geojson, activoMap);
-                    var spanTotal = document.getElementById('span-total-ha');
-                    if (spanTotal) {
-                        spanTotal.textContent = parcelaTotalHa.toFixed(4) + ' ha';
-                    }
-                }
+                previewLayer = L.geoJSON(geojson, { style: _previewStyle }).addTo(map);
+                parcelaTotalHa = (geojson.features || []).reduce(function (s, f) {
+                    return s + parseFloat((f.properties && f.properties.superficie) || 0);
+                }, 0);
+                var spanTotal = document.getElementById('span-total-ha');
+                if (spanTotal) { spanTotal.textContent = parcelaTotalHa.toFixed(4) + ' ha'; }
             })
-            .catch(function () { /* silencioso si falla */ });
+            .catch(function () {});
     }
 
-    /* Auto-cargar recintos guardados en Odoo al abrir el visor */
+    /* ── 6. Construir mapa de activos desde RECINTOS_JSON ── */
     var recintoActivoMap = {};
     try {
         var rList = JSON.parse(RECINTOS_JSON);
         rList.forEach(function (r) { recintoActivoMap[r.recinto] = r.activo; });
     } catch (e) {}
 
-    if (REF_SIGPAC) {
-        var rParts = REF_SIGPAC.split(':');
-        if (rParts.length >= 6) {
-            var autoUrl = 'https://sigpac-hubcloud.es/servicioconsultassigpac/query/recinfoparc/'
-                + rParts[0] + '/' + rParts[1] + '/' + rParts[2] + '/'
-                + rParts[3] + '/' + rParts[4] + '/' + rParts[5] + '.geojson';
-            fetch(autoUrl)
-                .then(function (r) { if (!r.ok) { throw new Error(); } return r.json(); })
-                .then(function (geojson) { drawRecintoLayers(geojson, recintoActivoMap); })
-                .catch(function () {});
-        }
+    /* ── 7. Auto-cargar recintos existentes al abrir el visor ── */
+    function _fetchGeojson(ref, onSuccess) {
+        var parts = ref.split(':');
+        if (parts.length < 6) { return; }
+        var url = 'https://sigpac-hubcloud.es/servicioconsultassigpac/query/recinfoparc/'
+            + parts[0] + '/' + parts[1] + '/' + parts[2] + '/'
+            + parts[3] + '/' + parts[4] + '/' + parts[5] + '.geojson';
+        fetch(url)
+            .then(function (r) { if (!r.ok) { throw new Error(); } return r.json(); })
+            .then(onSuccess)
+            .catch(function () {});
     }
 
-    /* Actualizar colores al recibir cambios de checkboxes desde el formulario Odoo */
+    if (REF_SIGPAC) {
+        _fetchGeojson(REF_SIGPAC, function (geojson) {
+            drawRecintoLayers(geojson, recintoActivoMap);
+        });
+    }
+
+    if (REF_SIGPAC2) {
+        _fetchGeojson(REF_SIGPAC2, function (geojson) {
+            drawSegundaParcelaLayers(geojson, recintoActivoMap);
+        });
+    }
+
+    /* ── 8. Sincronizar colores con los checkboxes de Odoo (postMessage) ── */
     window.addEventListener('message', function (e) {
         if (!e.data || e.data.type !== 'recinto_update') { return; }
         var activos = e.data.activos || [];
-        Object.keys(recintoLayers).forEach(function (num) {
-            var isActivo = activos.indexOf(parseInt(num, 10)) !== -1;
-            recintoLayers[num].setStyle(recintoStyle(isActivo));
+        Object.keys(recintoLayers).forEach(function (key) {
+            if (key.indexOf('2p_') === 0) {
+                /* 2ª parcela: recinto_num en Odoo = 1000 + num_original */
+                var origNum = parseInt(key.slice(3), 10);
+                var isActivo = activos.indexOf(1000 + origNum) !== -1;
+                recintoLayers[key].setStyle(recintoStyleSegunda(isActivo));
+            } else {
+                var isActivo = activos.indexOf(parseInt(key, 10)) !== -1;
+                recintoLayers[key].setStyle(recintoStyle(isActivo));
+            }
         });
     });
 
-    /* REST endpoint sigpac-hubcloud.es: consulta el recinto por coordenadas WGS84 */
+    /* ── 9. Helpers de consulta ── */
     function buildHubcloudUrl(latlng) {
-        var lon = latlng.lng.toFixed(7);
-        var lat = latlng.lat.toFixed(7);
         return (
             'https://sigpac-hubcloud.es/servicioconsultassigpac'
-            + '/query/recinfobypoint/4326/' + lon + '/' + lat + '.json'
+            + '/query/recinfobypoint/4326/'
+            + latlng.lng.toFixed(7) + '/' + latlng.lat.toFixed(7) + '.json'
         );
     }
 
-    function showManualInput(lat, lon) {
-        var sigpacLink = 'https://sigpac.mapa.es/fega/visor/#lon='
-            + lon + '&lat=' + lat + '&zoom=17';
-        panel.className = '';
-        panel.innerHTML =
-            'Coords: <code>' + lat + ', ' + lon + '</code>'
-            + ' &nbsp;<a href="' + sigpacLink + '" target="_blank" '
-            + 'style="color:#0056b3;font-size:11px;">Abrir en SIGPAC &#8599;</a>'
-            + '<br><small>Introduce la referencia (prov-mun-pol-par-rec):</small>'
-            + '<br><input id="ref-input" type="text" placeholder="ej: 27-16-79-1047-1"'
-            + ' style="width:180px;margin-top:4px;padding:3px 6px;border:1px solid #aaa;border-radius:3px;font-size:13px;"/>'
-            + ' <button id="btn-ref-ok"'
-            + ' style="padding:3px 10px;background:#28a745;color:#fff;border:none;border-radius:3px;cursor:pointer;">OK</button>';
-
-        var btnOk = document.getElementById('btn-ref-ok');
-        if (btnOk) {
-            btnOk.addEventListener('click', function () {
-                var ref = (document.getElementById('ref-input') || {}).value || '';
-                ref = ref.trim().replace(/:/g, '-');
-                if (!ref) { return; }
-                selection = { lat: parseFloat(lat), lon: parseFloat(lon), ref: ref };
-                panel.className = 'ok';
-                panel.innerHTML =
-                    '<strong>&#10003; Referencia:</strong> <code>' + ref + '</code>'
-                    + ' &nbsp;|&nbsp;' + lat + ', ' + lon
-                    + ' &nbsp;<button id="btn-import">&#8681; Importar a Odoo</button>';
-                var btn2 = document.getElementById('btn-import');
-                if (btn2) { btn2.addEventListener('click', doImport); }
-            });
-        }
-    }
-
-    /* Analiza la respuesta JSON de sigpac-hubcloud.es/servicioconsultassigpac
-       Formato: [{provincia, municipio, agregado, zona, poligono, parcela, recinto, superficie (ha), uso_sigpac, ...}] */
     function parseHubcloudResult(arr) {
         if (!Array.isArray(arr) || !arr.length) { return null; }
         var p = arr[0];
         var agr = (p.agregado !== undefined && p.agregado !== null) ? p.agregado : 0;
-        var zon = (p.zona !== undefined && p.zona !== null) ? p.zona : 0;
+        var zon = (p.zona  !== undefined && p.zona  !== null) ? p.zona  : 0;
         var ref = [p.provincia, p.municipio, agr, zon, p.poligono, p.parcela]
                     .map(function (v) { return v !== undefined ? String(v) : ''; }).join(':');
         var uso = p.uso_sigpac || '?';
-        singleRecintoHa = parseFloat(p.superficie || 0); /* ha del recinto clicado */
-        var m2  = singleRecintoHa * 10000; /* ha → m² */
-        return { ref: ref, uso: uso, m2: m2 };
+        singleRecintoHa = parseFloat(p.superficie || 0);
+        return { ref: ref, uso: uso, m2: singleRecintoHa * 10000 };
     }
 
+    /* Muestra la selección en el panel con los dos botones de acción */
+    function showParcelPanel(info, lat, lon) {
+        selection = { lat: parseFloat(lat), lon: parseFloat(lon), ref: info.ref };
+        drawPreview(info.ref);
+        panel.className = 'ok';
+        panel.innerHTML =
+            '<strong>Parcela:</strong> <code>' + info.ref + '</code>'
+            + ' &nbsp;<span class="tag">' + info.uso + '</span>'
+            + ' &nbsp;' + info.m2.toLocaleString('es-ES') + '&nbsp;m&sup2;'
+            + ' &nbsp;|&nbsp;' + parseFloat(lat).toFixed(5) + ', ' + parseFloat(lon).toFixed(5)
+            + '<br><label style="font-size:12px;cursor:pointer;">'
+            + '<input type="checkbox" id="chk-parcela" checked style="margin-right:4px;"/>'
+            + 'Importar superficie total (&Sigma; recintos):'
+            + ' <span id="span-total-ha">calculando&hellip;</span>'
+            + '</label>'
+            + ' &nbsp;<button id="btn-import">&#8681; Importar (reemplaza)</button>'
+            + ' &nbsp;<button id="btn-agregar"'
+            + ' style="padding:3px 12px;background:#17a2b8;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;font-weight:bold;white-space:nowrap;">'
+            + '&#43; A\u00f1adir recintos</button>';
+        document.getElementById('btn-import').addEventListener('click', doImport);
+        document.getElementById('btn-agregar').addEventListener('click', doAgregarParcela);
+    }
+
+    function showManualInput(lat, lon) {
+        var sigpacLink = 'https://sigpac.mapa.es/fega/visor/#lon=' + lon + '&lat=' + lat + '&zoom=17';
+        panel.className = '';
+        panel.innerHTML =
+            'Coords: <code>' + lat + ', ' + lon + '</code>'
+            + ' &nbsp;<a href="' + sigpacLink + '" target="_blank"'
+            + ' style="color:#0056b3;font-size:11px;">Abrir en SIGPAC &#8599;</a>'
+            + '<br><small>Introduce la referencia SIGPAC (prov:mun:agr:zona:pol:par):</small>'
+            + '<br><input id="ref-input" type="text" placeholder="ej: 27:16:0:0:79:1047"'
+            + ' style="width:200px;margin-top:4px;padding:3px 6px;border:1px solid #aaa;border-radius:3px;font-size:13px;"/>'
+            + ' <button id="btn-ref-ok"'
+            + ' style="padding:3px 10px;background:#28a745;color:#fff;border:none;border-radius:3px;cursor:pointer;">OK</button>';
+        document.getElementById('btn-ref-ok').addEventListener('click', function () {
+            var ref = ((document.getElementById('ref-input') || {}).value || '').trim().replace(/-/g, ':');
+            if (!ref) { return; }
+            showParcelPanel({ ref: ref, uso: '?', m2: 0 }, lat, lon);
+        });
+    }
+
+    /* ── 10. Clic en el mapa ── */
     map.on('click', function (e) {
         var lat = e.latlng.lat.toFixed(7);
         var lon = e.latlng.lng.toFixed(7);
-        if (!modoSegundaParcela) { clearRecintoLayers(); }
         panel.className = 'loading';
         panel.innerHTML = '&#8987; Consultando SIGPAC&hellip;';
 
-        /* Estrategia 1: REST sigpac-hubcloud.es directo desde el navegador */
-        var hubUrl = buildHubcloudUrl(e.latlng);
-        fetch(hubUrl)
+        /* Estrategia 1: REST directo desde el navegador */
+        fetch(buildHubcloudUrl(e.latlng))
             .then(function (r) {
                 if (!r.ok) { throw new Error('HTTP ' + r.status); }
                 return r.json();
@@ -269,52 +297,10 @@
                     panel.innerHTML = 'Sin parcela. Haz clic dentro de una parcela SIGPAC.';
                     return;
                 }
-                selection = { lat: parseFloat(lat), lon: parseFloat(lon), ref: info.ref };
-                drawParcela(info.ref, modoSegundaParcela);
-                panel.className = 'ok';
-                if (modoSegundaParcela) {
-                    panel.innerHTML =
-                        '<strong>2\u00aa parcela:</strong>'
-                        + ' <code>' + info.ref + '</code>'
-                        + ' &nbsp;<span class="tag">' + info.uso + '</span>'
-                        + ' &nbsp;' + info.m2.toLocaleString('es-ES') + '&nbsp;m&sup2;'
-                        + ' &nbsp;|&nbsp;' + lat + ', ' + lon
-                        + ' &nbsp;<button id="btn-add-odoo">&#8681; A\u00f1adir a Odoo</button>'
-                        + ' &nbsp;<button id="btn-cancelar-2" style="padding:3px 10px;background:#6c757d;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;">Cancelar</button>';
-                    var btnAdd = document.getElementById('btn-add-odoo');
-                    if (btnAdd) { btnAdd.addEventListener('click', doAgregarParcela); }
-                    var btnCan = document.getElementById('btn-cancelar-2');
-                    if (btnCan) {
-                        btnCan.addEventListener('click', function () {
-                            modoSegundaParcela = false;
-                            selection = null;
-                            /* quitar capas de segunda parcela del mapa */
-                            Object.keys(recintoLayers).forEach(function (k) {
-                                if (k.indexOf('2p_') === 0) { map.removeLayer(recintoLayers[k]); delete recintoLayers[k]; }
-                            });
-                            panel.className = '';
-                            panel.innerHTML = 'Haz clic en una parcela del mapa para seleccionarla.';
-                        });
-                    }
-                } else {
-                    panel.innerHTML =
-                        '<strong>&#10003; Parcela:</strong>'
-                        + ' <code>' + info.ref + '</code>'
-                        + ' &nbsp;<span class="tag">' + info.uso + '</span>'
-                        + ' &nbsp;' + info.m2.toLocaleString('es-ES') + '&nbsp;m&sup2;'
-                        + ' &nbsp;|&nbsp;' + lat + ', ' + lon
-                        + '<br><label style="font-size:12px;cursor:pointer;">'
-                        + '<input type="checkbox" id="chk-parcela" checked style="margin-right:4px;"/>'
-                        + 'Importar superficie total de la parcela'
-                        + ' (<span id="span-total-ha">calculando&hellip;</span>)'
-                        + '</label>'
-                        + ' &nbsp;<button id="btn-import">&#8681; Importar a Odoo</button>';
-                    var btn = document.getElementById('btn-import');
-                    if (btn) { btn.addEventListener('click', doImport); }
-                }
+                showParcelPanel(info, lat, lon);
             })
             .catch(function () {
-                /* Estrategia 2: proxy Odoo (por si hay CORS en GFI) */
+                /* Estrategia 2: proxy Odoo (por si hay CORS) */
                 fetch('/vinedo/sigpac_consultar', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -325,39 +311,10 @@
                 })
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
-                    var result = data.result;
-                    var info = Array.isArray(result) ? parseHubcloudResult(result) : null;
+                    var info = Array.isArray(data.result) ? parseHubcloudResult(data.result) : null;
                     if (info) {
-                        selection = { lat: parseFloat(lat), lon: parseFloat(lon), ref: info.ref };
-                        drawParcela(info.ref, modoSegundaParcela);
-                        panel.className = 'ok';
-                        if (modoSegundaParcela) {
-                            panel.innerHTML =
-                                '<strong>2\u00aa parcela:</strong>'
-                                + ' <code>' + info.ref + '</code>'
-                                + ' &nbsp;<span class="tag">' + info.uso + '</span>'
-                                + ' &nbsp;' + info.m2.toLocaleString('es-ES') + '&nbsp;m&sup2;'
-                                + ' &nbsp;<button id="btn-add-odoo">&#8681; A\u00f1adir a Odoo</button>';
-                            var btnA = document.getElementById('btn-add-odoo');
-                            if (btnA) { btnA.addEventListener('click', doAgregarParcela); }
-                        } else {
-                            panel.innerHTML =
-                                '<strong>&#10003; Parcela:</strong>'
-                                + ' <code>' + info.ref + '</code>'
-                                + ' &nbsp;<span class="tag">' + info.uso + '</span>'
-                                + ' &nbsp;' + info.m2.toLocaleString('es-ES') + '&nbsp;m&sup2;'
-                                + ' &nbsp;|&nbsp;' + lat + ', ' + lon
-                                + '<br><label style="font-size:12px;cursor:pointer;">'
-                                + '<input type="checkbox" id="chk-parcela" checked style="margin-right:4px;"/>'
-                                + 'Importar superficie total de la parcela'
-                                + ' (<span id="span-total-ha">calculando&hellip;</span>)'
-                                + '</label>'
-                                + ' &nbsp;<button id="btn-import">&#8681; Importar a Odoo</button>';
-                            var btn = document.getElementById('btn-import');
-                            if (btn) { btn.addEventListener('click', doImport); }
-                        }
+                        showParcelPanel(info, lat, lon);
                     } else {
-                        /* Estrategia 3: entrada manual con enlace al visor oficial */
                         showManualInput(lat, lon);
                     }
                 })
@@ -365,79 +322,60 @@
             });
     });
 
-    /* ── 6. Importar parcela seleccionada ── */
+    /* ── 11. Importar parcela (reemplaza todos los recintos existentes) ── */
     function doImport() {
         if (!selection) { return; }
-        var btn = document.getElementById('btn-import');
-        if (btn) { btn.disabled = true; btn.textContent = 'Importando\u2026'; }
+        var btnIm = document.getElementById('btn-import');
+        var btnAg = document.getElementById('btn-agregar');
+        if (btnIm) { btnIm.disabled = true; btnIm.textContent = 'Importando\u2026'; }
+        if (btnAg) { btnAg.disabled = true; }
 
         var chk = document.getElementById('chk-parcela');
         var importarTotal = !chk || chk.checked;
         var params = { rec_id: REC_ID, lat: selection.lat, lon: selection.lon };
-        if (!importarTotal) {
-            /* Sólo el recinto clicado: pasar área explícita para sobrescribir el total */
-            params.area_ha = singleRecintoHa;
-        }
+        if (!importarTotal) { params.area_ha = singleRecintoHa; }
 
         fetch('/vinedo/sigpac_importar', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                jsonrpc: '2.0', method: 'call', id: 1,
-                params: params
-            })
+            body: JSON.stringify({ jsonrpc: '2.0', method: 'call', id: 1, params: params })
         })
         .then(function (r) { return r.json(); })
         .then(function (data) {
             var result = data.result;
             if (result && result.ok) {
+                clearPreview();
                 panel.className = 'done';
                 panel.innerHTML =
-                    '\u2705 Importada: <strong>'
-                    + (result.ref_sigpac || selection.ref)
-                    + '</strong>'
-                    + ' &nbsp;<button id="btn-add-parcela">\u2795 A\u00f1adir segunda parcela</button>'
-                    + ' &nbsp;<button id="btn-reload" style="padding:3px 10px;background:#6c757d;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;">Recargar p\u00e1gina</button>';
-                var btnAdd = document.getElementById('btn-add-parcela');
-                if (btnAdd) { btnAdd.addEventListener('click', activarModoSegundaParcela); }
-                var btnRel = document.getElementById('btn-reload');
-                if (btnRel) { btnRel.addEventListener('click', function () { window.parent.location.reload(); }); }
-                /* Actualizar recintoActivoMap con los recintos ya importados (todos activos) */
-                Object.keys(recintoLayers).forEach(function (num) {
-                    recintoActivoMap[parseInt(num, 10)] = true;
+                    '\u2705 Importada: <strong>' + (result.ref_sigpac || selection.ref) + '</strong>'
+                    + ' &nbsp;<button id="btn-reload"'
+                    + ' style="padding:3px 10px;background:#6c757d;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;">'
+                    + 'Recargar p\u00e1gina</button>';
+                document.getElementById('btn-reload').addEventListener('click', function () {
+                    window.parent.location.reload();
                 });
             } else {
                 panel.className = 'err';
                 panel.innerHTML = '\u26a0 ' + ((result && result.error) || 'Error desconocido')
                     + ' &nbsp;<button id="btn-retry">Reintentar</button>';
-                var b2 = document.getElementById('btn-retry');
-                if (b2) { b2.addEventListener('click', doImport); }
+                document.getElementById('btn-retry').addEventListener('click', doImport);
             }
         })
         .catch(function (err) {
             panel.className = 'err';
             panel.innerHTML = '\u26a0 Error de red: ' + err.message
                 + ' &nbsp;<button id="btn-retry">Reintentar</button>';
-            var b2 = document.getElementById('btn-retry');
-            if (b2) { b2.addEventListener('click', doImport); }
+            document.getElementById('btn-retry').addEventListener('click', doImport);
         });
     }
 
-    /* ── 7. Modo segunda parcela ── */
-
-    function activarModoSegundaParcela() {
-        modoSegundaParcela = true;
-        selection = null;
-        panel.className = '';
-        panel.innerHTML =
-            '\ud83d\udccd <strong>Modo segunda parcela:</strong>'
-            + ' Haz clic sobre la segunda parcela en el mapa para seleccionarla.';
-    }
-
+    /* ── 12. Añadir recintos de otra parcela (no borra los existentes) ── */
     function doAgregarParcela() {
         if (!selection) { return; }
-        var btn = document.getElementById('btn-add-odoo');
-        if (btn) { btn.disabled = true; btn.textContent = 'A\u00f1adiendo\u2026'; }
+        var btnAg = document.getElementById('btn-agregar');
+        var btnIm = document.getElementById('btn-import');
+        if (btnAg) { btnAg.disabled = true; btnAg.textContent = 'A\u00f1adiendo\u2026'; }
+        if (btnIm) { btnIm.disabled = true; }
 
         fetch('/vinedo/sigpac_agregar_parcela', {
             method: 'POST',
@@ -451,29 +389,30 @@
         .then(function (data) {
             var result = data.result;
             if (result && result.ok) {
-                modoSegundaParcela = false;
+                clearPreview();
                 panel.className = 'done';
                 panel.innerHTML =
                     '\u2705 A\u00f1adida: <strong>' + result.ref_sigpac2 + '</strong>'
                     + ' &mdash; ' + result.n_recintos + ' recinto(s)'
                     + ' | ' + result.total_m2.toLocaleString('es-ES') + '&nbsp;m&sup2;'
-                    + ' &nbsp;<button id="btn-reload2" style="padding:3px 10px;background:#6c757d;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;">Recargar p\u00e1gina</button>';
-                var btnR = document.getElementById('btn-reload2');
-                if (btnR) { btnR.addEventListener('click', function () { window.parent.location.reload(); }); }
+                    + ' &nbsp;<button id="btn-reload2"'
+                    + ' style="padding:3px 10px;background:#6c757d;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;">'
+                    + 'Recargar p\u00e1gina</button>';
+                document.getElementById('btn-reload2').addEventListener('click', function () {
+                    window.parent.location.reload();
+                });
             } else {
                 panel.className = 'err';
                 panel.innerHTML = '\u26a0 ' + ((result && result.error) || 'Error desconocido')
-                    + ' &nbsp;<button id="btn-retry2">Reintentar</button>';
-                var b2 = document.getElementById('btn-retry2');
-                if (b2) { b2.addEventListener('click', doAgregarParcela); }
+                    + ' &nbsp;<button id="btn-retry3">Reintentar</button>';
+                document.getElementById('btn-retry3').addEventListener('click', doAgregarParcela);
             }
         })
         .catch(function (err) {
             panel.className = 'err';
             panel.innerHTML = '\u26a0 Error de red: ' + err.message
-                + ' &nbsp;<button id="btn-retry2">Reintentar</button>';
-            var b2 = document.getElementById('btn-retry2');
-            if (b2) { b2.addEventListener('click', doAgregarParcela); }
+                + ' &nbsp;<button id="btn-retry3">Reintentar</button>';
+            document.getElementById('btn-retry3').addEventListener('click', doAgregarParcela);
         });
     }
 

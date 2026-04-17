@@ -28,6 +28,7 @@ _VIEWER_HTML = (
     '  data-lon="__LON__"'
     '  data-zoom="__ZOOM__"'
     '  data-ref-sigpac="__REF_SIGPAC__"'
+    '  data-ref-sigpac2="__REF_SIGPAC2__"'
     '  data-recintos="__RECINTOS__"'
     '  __MARKER_ATTRS__>'
     '<head>'
@@ -36,9 +37,9 @@ _VIEWER_HTML = (
     '<title>Visor SIGPAC</title>'
     # CSS externo - mismo origen - pasa CSP style-src 'self'
     '<link rel="stylesheet"'
-    '  href="/vinedo_field_service/static/src/lib/leaflet/leaflet.css?v=2.0.6"/>'
+    '  href="/vinedo_field_service/static/src/lib/leaflet/leaflet.css?v=2.0.7"/>'
     '<link rel="stylesheet"'
-    '  href="/vinedo_field_service/static/src/sigpac_viewer.css?v=2.0.6"/>'
+    '  href="/vinedo_field_service/static/src/sigpac_viewer.css?v=2.0.7"/>'
     '</head>'
     '<body>'
     '<div id="descripcion">'
@@ -57,25 +58,26 @@ _VIEWER_HTML = (
     '  <span class="hint">(zoom &ge;&nbsp;14 para ver los l&iacute;mites)</span>'
     '</div>'
     # Scripts externos - mismo origen - pasan CSP script-src 'self'
-    '<script src="/vinedo_field_service/static/src/lib/leaflet/leaflet.js?v=2.0.6"></script>'
-        '<script src="/vinedo_field_service/static/src/sigpac_viewer.js?v=2.0.6"></script>'
+    '<script src="/vinedo_field_service/static/src/lib/leaflet/leaflet.js?v=2.0.7"></script>'
+        '<script src="/vinedo_field_service/static/src/sigpac_viewer.js?v=2.0.7"></script>'
     '</body>'
     '</html>'
 )
 
 
-def _render_viewer(rec_id, lat, lon, zoom, marker_attrs, ref_sigpac='', recintos_json='[]'):
+def _render_viewer(rec_id, lat, lon, zoom, marker_attrs, ref_sigpac='', recintos_json='[]', ref_sigpac2=''):
     """Sustituye los marcadores __PLACEHOLDER__ en el template HTML."""
     import html as _html
     return (
         _VIEWER_HTML
-        .replace('__REC_ID__',      str(rec_id))
-        .replace('__LAT__',         str(lat))
-        .replace('__LON__',         str(lon))
-        .replace('__ZOOM__',        str(zoom))
+        .replace('__REC_ID__',       str(rec_id))
+        .replace('__LAT__',          str(lat))
+        .replace('__LON__',          str(lon))
+        .replace('__ZOOM__',         str(zoom))
         .replace('__MARKER_ATTRS__', marker_attrs)
-        .replace('__REF_SIGPAC__',  _html.escape(ref_sigpac, quote=True))
-        .replace('__RECINTOS__',    _html.escape(recintos_json, quote=True))
+        .replace('__REF_SIGPAC__',   _html.escape(ref_sigpac,  quote=True))
+        .replace('__REF_SIGPAC2__',  _html.escape(ref_sigpac2, quote=True))
+        .replace('__RECINTOS__',     _html.escape(recintos_json, quote=True))
     )
 
 
@@ -113,8 +115,16 @@ class SigpacController(http.Controller):
             {'recinto': r.recinto_num, 'activo': r.activo}
             for r in record.recinto_ids
         ])
+        # Leer ref_sigpac2 guardada en sigpac_json (por sigpac_agregar_parcela)
+        ref_sigpac2 = ''
+        if record.sigpac_json:
+            try:
+                _sj = _json.loads(record.sigpac_json)
+                ref_sigpac2 = _sj.get('ref_sigpac2', '') or ''
+            except Exception:
+                pass
 
-        html_content = _render_viewer(rec_id, lat, lon, zoom, marker_attrs, ref_sigpac, recintos_json)
+        html_content = _render_viewer(rec_id, lat, lon, zoom, marker_attrs, ref_sigpac, recintos_json, ref_sigpac2)
         return request.make_response(
             html_content,
             headers=[
@@ -270,6 +280,15 @@ class SigpacController(http.Controller):
             return {'error': 'No se obtuvieron recintos válidos de la segunda parcela.'}
 
         record.write({'recinto_ids': recinto_vals})
+
+        # Guardar ref_sigpac2 en sigpac_json para que el visor la cargue automáticamente
+        import json as _json3
+        try:
+            _sj = _json3.loads(record.sigpac_json) if record.sigpac_json else {}
+        except Exception:
+            _sj = {}
+        _sj['ref_sigpac2'] = ref2
+        record.write({'sigpac_json': _json3.dumps(_sj, ensure_ascii=False, indent=2)})
 
         n_rec = len(recinto_vals)
         return {'ok': True, 'ref_sigpac2': ref2, 'n_recintos': n_rec, 'total_m2': round(total_m2, 0)}

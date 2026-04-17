@@ -31,20 +31,6 @@ html, body {
     background: #d0e8f5;
 }
 
-#btn-add-parcela {
-    padding: 3px 12px;
-    background: #17a2b8;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: bold;
-    white-space: nowrap;
-}
-#btn-add-parcela:hover    { background: #138496; }
-#btn-add-parcela:disabled { background: #6c757d; cursor: default; }
-
 /* Barra de información inferior */
 #panel {
     position: absolute;
