@@ -139,11 +139,11 @@
                                 <i class="fa fa-list"/> Recintos SIGPAC
                             </h4>
                             <field name="recinto_ids">
-                                <list>
-                                    <field name="recinto_num"/>
-                                    <field name="uso_sigpac"/>
-                                    <field name="superficie_m2" sum="Total (m²)"/>
-                                    <field name="variedad_resumen"/>
+                                <list editable="bottom">
+                                    <field name="recinto_num" readonly="1"/>
+                                    <field name="uso_sigpac" readonly="1"/>
+                                    <field name="superficie_m2" readonly="1" sum="Total (m²)"/>
+                                    <field name="variedad_resumen" readonly="1"/>
                                     <field name="activo"/>
                                 </list>
                                 <form string="Recinto SIGPAC">
