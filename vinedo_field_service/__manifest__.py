@@ -1,6 +1,6 @@
 {
     'name': 'Viñedo - Field Service',
-    'version': '2.1.5',
+    'version': '2.1.6',
     'summary': 'Gestión completa de viñedos: fincas, variedades, trabajos y añadas con mapas',
     'description': """
         Gestión de Viñedos
@@ -17,7 +17,7 @@
     'author': 'ToniSistemas',
     'website': 'https://github.com/ToniSistemas/odoo_custom',
     'license': 'LGPL-3',
-    'depends': ['base', 'hr', 'mail'],
+    'depends': ['base', 'hr', 'mail', 'board'],
     'data': [
         'security/ir.model.access.csv',
         'views/vinedo_views.xml',
