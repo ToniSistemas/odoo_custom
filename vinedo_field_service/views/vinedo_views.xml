@@ -289,10 +289,36 @@
         </field>
     </record>
 
+    <record id="view_anada_pivot" model="ir.ui.view">
+        <field name="name">vinedo.anada.pivot</field>
+        <field name="model">vinedo.anada</field>
+        <field name="arch" type="xml">
+            <pivot string="Añadas" sample="1">
+                <field name="anio" type="row"/>
+                <field name="finca_id" type="row"/>
+                <field name="variedad_id" type="col"/>
+                <field name="cantidad" type="measure"/>
+                <field name="graduacion" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_anada_graph" model="ir.ui.view">
+        <field name="name">vinedo.anada.graph</field>
+        <field name="model">vinedo.anada</field>
+        <field name="arch" type="xml">
+            <graph string="Añadas" type="bar" sample="1">
+                <field name="finca_id" type="row"/>
+                <field name="variedad_id" type="col"/>
+                <field name="cantidad" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
     <record id="action_anada" model="ir.actions.act_window">
         <field name="name">Añadas</field>
         <field name="res_model">vinedo.anada</field>
-        <field name="view_mode">list,form</field>
+        <field name="view_mode">list,form,pivot,graph</field>
     </record>
 
     <menuitem id="menu_vinedo_anadas" name="Añadas" parent="menu_vinedo_root" action="action_anada" sequence="3"/>
@@ -560,14 +586,114 @@
         </field>
     </record>
 
+    <record id="view_tratamiento_pivot" model="ir.ui.view">
+        <field name="name">vinedo.tratamiento.pivot</field>
+        <field name="model">vinedo.tratamiento</field>
+        <field name="arch" type="xml">
+            <pivot string="Tratamientos" sample="1">
+                <field name="finca_id" type="row"/>
+                <field name="tipo" type="col"/>
+                <field name="litros" type="measure"/>
+                <field name="precio_litro" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_tratamiento_graph" model="ir.ui.view">
+        <field name="name">vinedo.tratamiento.graph</field>
+        <field name="model">vinedo.tratamiento</field>
+        <field name="arch" type="xml">
+            <graph string="Tratamientos" type="bar" sample="1">
+                <field name="finca_id" type="row"/>
+                <field name="tipo" type="col"/>
+                <field name="litros" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
     <record id="action_tratamiento" model="ir.actions.act_window">
         <field name="name">Tratamientos</field>
         <field name="res_model">vinedo.tratamiento</field>
-        <field name="view_mode">list,form</field>
+        <field name="view_mode">list,form,pivot,graph</field>
     </record>
 
     <menuitem id="menu_vinedo_tratamientos" name="Tratamientos"
         parent="menu_vinedo_root" action="action_tratamiento" sequence="4"/>
+
+    <!-- ============================================================ -->
+    <!-- Aportaciones — standalone con pivot                        -->
+    <!-- ============================================================ -->
+
+    <record id="view_aportacion_pivot" model="ir.ui.view">
+        <field name="name">vinedo.aportacion.pivot</field>
+        <field name="model">vinedo.aportacion</field>
+        <field name="arch" type="xml">
+            <pivot string="Aportaciones" sample="1">
+                <field name="finca_id" type="row"/>
+                <field name="producto" type="col"/>
+                <field name="cantidad" type="measure"/>
+                <field name="precio_kg" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_aportacion_graph" model="ir.ui.view">
+        <field name="name">vinedo.aportacion.graph</field>
+        <field name="model">vinedo.aportacion</field>
+        <field name="arch" type="xml">
+            <graph string="Aportaciones" type="bar" sample="1">
+                <field name="finca_id" type="row"/>
+                <field name="producto" type="col"/>
+                <field name="cantidad" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_aportacion" model="ir.actions.act_window">
+        <field name="name">Aportaciones</field>
+        <field name="res_model">vinedo.aportacion</field>
+        <field name="view_mode">list,form,pivot,graph</field>
+    </record>
+
+    <menuitem id="menu_vinedo_aportaciones" name="Aportaciones"
+        parent="menu_vinedo_root" action="action_aportacion" sequence="6"/>
+
+    <!-- ============================================================ -->
+    <!-- Trabajos — standalone con pivot                             -->
+    <!-- ============================================================ -->
+
+    <record id="view_trabajo_pivot" model="ir.ui.view">
+        <field name="name">vinedo.trabajo.pivot</field>
+        <field name="model">vinedo.trabajo</field>
+        <field name="arch" type="xml">
+            <pivot string="Trabajos" sample="1">
+                <field name="finca_id" type="row"/>
+                <field name="tipo_trabajo" type="col"/>
+                <field name="horas" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_trabajo_graph" model="ir.ui.view">
+        <field name="name">vinedo.trabajo.graph</field>
+        <field name="model">vinedo.trabajo</field>
+        <field name="arch" type="xml">
+            <graph string="Trabajos" type="bar" sample="1">
+                <field name="finca_id" type="row"/>
+                <field name="tipo_trabajo" type="col"/>
+                <field name="horas" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_trabajo" model="ir.actions.act_window">
+        <field name="name">Trabajos</field>
+        <field name="res_model">vinedo.trabajo</field>
+        <field name="view_mode">list,form,pivot,graph</field>
+    </record>
+
+    <menuitem id="menu_vinedo_trabajos" name="Trabajos"
+        parent="menu_vinedo_root" action="action_trabajo" sequence="7"/>
 
     <!-- ============================================================ -->
     <!-- Maquinaria Views                                            -->
