@@ -597,6 +597,7 @@ class Aportacion(models.Model):
     descripcion = fields.Text(string='Descripción')
     producto = fields.Char(string='Producto/Mineral', required=True)
     cantidad = fields.Float(string='Cantidad (kg)', digits=(10, 2))
+    precio_kg = fields.Float(string='Precio/kg (€)', digits=(10, 4))
 
 
 class Tratamiento(models.Model):
