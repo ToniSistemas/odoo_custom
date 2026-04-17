@@ -44,7 +44,6 @@
                             <field name="variedad_ids">
                                 <list editable="bottom">
                                     <field name="variedad_id"/>
-                                    <field name="fecha_plantacion"/>
                                     <field name="superficie" sum="Total (ha)" readonly="1"
                                            help="Calculado automáticamente desde los recintos"/>
                                     <field name="superficie_m2" readonly="1" sum="Total (m²)"/>
@@ -115,6 +114,15 @@
                                     <field name="producto"/>
                                     <field name="cantidad" sum="Total kg"/>
                                     <field name="descripcion"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Plantaciones">
+                            <field name="plantacion_registro_ids">
+                                <list editable="bottom">
+                                    <field name="fecha"/>
+                                    <field name="num_plantas" sum="Total plantas"/>
+                                    <field name="tipo"/>
                                 </list>
                             </field>
                         </page>

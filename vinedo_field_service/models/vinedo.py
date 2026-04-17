@@ -300,6 +300,7 @@ class Finca(models.Model):
     trabajo_ids = fields.One2many('vinedo.trabajo', 'finca_id', string='Trabajos')
     recinto_ids = fields.One2many('vinedo.recinto', 'finca_id', string='Recintos SIGPAC')
     recinto_variedad_ids = fields.One2many('vinedo.recinto.variedad', 'finca_id', string='Variedades por recinto')
+    plantacion_registro_ids = fields.One2many('vinedo.plantacion.registro', 'finca_id', string='Plantaciones')
     anada_ids = fields.One2many('vinedo.anada', 'finca_id', string='Añadas')
 
     @api.constrains('latitude', 'longitude')
@@ -769,7 +770,9 @@ class Recinto(models.Model):
     _name = 'vinedo.recinto'
     _description = 'Recinto SIGPAC de una finca'
     _order = 'recinto_num'
+    _rec_name = 'name'
 
+    name = fields.Char(string='Nº Recinto', compute='_compute_name', store=True)
     finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True, ondelete='cascade', index=True)
     recinto_num = fields.Integer(string='Recinto', required=True)
     uso_sigpac = fields.Char(string='Uso SIGPAC')
@@ -783,6 +786,11 @@ class Recinto(models.Model):
     def _compute_superficie_m2(self):
         for rec in self:
             rec.superficie_m2 = round((rec.superficie_ha or 0) * 10000, 2)
+
+    @api.depends('recinto_num')
+    def _compute_name(self):
+        for rec in self:
+            rec.name = str(rec.recinto_num) if rec.recinto_num else ''
 
     def _compute_variedad_resumen(self):
         for rec in self:
@@ -808,6 +816,21 @@ class Recinto(models.Model):
         records.mapped('finca_id')._recompute_area_from_recintos()
         records.mapped('finca_id')._sync_variedades_from_recintos()
         return records
+
+
+class PlantacionRegistro(models.Model):
+    """Registro de plantaciones y arranques en una finca."""
+    _name = 'vinedo.plantacion.registro'
+    _description = 'Registro de plantación / arranque'
+    _order = 'fecha desc, finca_id'
+
+    finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True, ondelete='cascade', index=True)
+    fecha = fields.Date(string='Fecha de plantación', default=fields.Date.today, required=True)
+    num_plantas = fields.Integer(string='Nº de plantas')
+    tipo = fields.Selection([
+        ('plantado', 'Plantado'),
+        ('arrancado', 'Arrancado'),
+    ], string='Plantado/Arrancado', required=True, default='plantado')
 
 
 class Fitosanitario(models.Model):
