@@ -144,7 +144,15 @@
                                     <field name="uso_sigpac" readonly="1"/>
                                     <field name="superficie_m2" readonly="1" sum="Total (m²)"/>
                                     <field name="variedad_resumen" readonly="1"/>
-                                    <field name="activo"/>
+                                    <field name="activo" column_invisible="1"/>
+                                    <button name="action_toggle_activo" type="object"
+                                        invisible="not activo"
+                                        icon="fa-toggle-on" title="Incluido — pulse para excluir"
+                                        class="text-success"/>
+                                    <button name="action_toggle_activo" type="object"
+                                        invisible="activo"
+                                        icon="fa-toggle-off" title="Excluido — pulse para incluir"
+                                        class="text-muted"/>
                                 </list>
                                 <form string="Recinto SIGPAC">
                                     <group>

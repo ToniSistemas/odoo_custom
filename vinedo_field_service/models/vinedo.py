@@ -817,6 +817,10 @@ class Recinto(models.Model):
         records.mapped('finca_id')._sync_variedades_from_recintos()
         return records
 
+    def action_toggle_activo(self):
+        for rec in self:
+            rec.activo = not rec.activo
+
 
 class PlantacionRegistro(models.Model):
     """Registro de plantaciones y arranques en una finca."""
