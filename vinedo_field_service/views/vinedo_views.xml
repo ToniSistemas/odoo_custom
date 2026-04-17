@@ -52,20 +52,15 @@
                             </field>
                         </page>
                         <page string="Variedades por recinto">
-                            <field name="recinto_variedad_ids">
-                                <list editable="bottom">
-                                    <field name="recinto_id"
-                                           domain="[('finca_id', '=', parent.id)]"
-                                           options="{'no_create': True, 'no_open': True}"/>
+                            <field name="recinto_variedad_ids" readonly="1">
+                                <list>
+                                    <field name="recinto_id"/>
                                     <field name="variedad_id"/>
                                     <field name="porcentaje"/>
-                                    <field name="superficie_ha" readonly="1" sum="Total (ha)"/>
-                                    <field name="superficie_m2" readonly="1" sum="Total (m²)"/>
+                                    <field name="superficie_ha" sum="Total (ha)"/>
+                                    <field name="superficie_m2" sum="Total (m²)"/>
                                 </list>
                             </field>
-                            <div style="margin-top:8px;padding:8px;background:#f8f8f8;border-radius:4px;font-size:12px;color:#666;">
-                                <i class="fa fa-info-circle"/> La superficie se calcula automáticamente: <strong>superficie recinto × porcentaje / 100</strong>. Los totales de la pestaña <em>Variedades</em> se actualizan al guardar.
-                            </div>
                         </page>
                         <page string="Tratamientos">
                             <field name="tratamiento_ids">
@@ -136,13 +131,38 @@
                                 <i class="fa fa-list"/> Recintos SIGPAC
                             </h4>
                             <field name="recinto_ids">
-                                <list editable="bottom">
-                                    <field name="recinto_num" readonly="1"/>
-                                    <field name="uso_sigpac" readonly="1"/>
-                                    <field name="superficie_m2" readonly="1" sum="Total (m²)"/>
-                                    <field name="variedad_resumen" readonly="1"/>
+                                <list>
+                                    <field name="recinto_num"/>
+                                    <field name="uso_sigpac"/>
+                                    <field name="superficie_m2" sum="Total (m²)"/>
+                                    <field name="variedad_resumen"/>
                                     <field name="activo"/>
                                 </list>
+                                <form string="Recinto SIGPAC">
+                                    <group>
+                                        <group>
+                                            <field name="recinto_num" readonly="1"/>
+                                            <field name="uso_sigpac" readonly="1"/>
+                                            <field name="activo"/>
+                                        </group>
+                                        <group>
+                                            <field name="superficie_ha" readonly="1"/>
+                                            <field name="superficie_m2" readonly="1"/>
+                                        </group>
+                                    </group>
+                                    <separator string="Variedades plantadas en este recinto"/>
+                                    <field name="variedad_ids">
+                                        <list editable="bottom">
+                                            <field name="variedad_id"/>
+                                            <field name="porcentaje"/>
+                                            <field name="superficie_ha" readonly="1" sum="Total (ha)"/>
+                                            <field name="superficie_m2" readonly="1" sum="Total (m²)"/>
+                                        </list>
+                                    </field>
+                                    <div style="margin-top:8px;padding:8px;background:#f8f8f8;border-radius:4px;font-size:12px;color:#666;">
+                                        <i class="fa fa-info-circle"/> Superficie = superficie recinto × <strong>porcentaje / 100</strong>. Los totales de la pestaña <em>Variedades</em> se actualizan al guardar.
+                                    </div>
+                                </form>
                             </field>
                         </div>
                     </div>
