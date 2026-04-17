@@ -28,7 +28,7 @@ _VIEWER_HTML = (
     '  data-lon="__LON__"'
     '  data-zoom="__ZOOM__"'
     '  data-ref-sigpac="__REF_SIGPAC__"'
-    '  data-ref-sigpac2="__REF_SIGPAC2__"'
+    '  data-refs-extra="__REFS_EXTRA__"'
     '  data-recintos="__RECINTOS__"'
     '  __MARKER_ATTRS__>'
     '<head>'
@@ -37,9 +37,9 @@ _VIEWER_HTML = (
     '<title>Visor SIGPAC</title>'
     # CSS externo - mismo origen - pasa CSP style-src 'self'
     '<link rel="stylesheet"'
-    '  href="/vinedo_field_service/static/src/lib/leaflet/leaflet.css?v=2.0.8"/>'
+    '  href="/vinedo_field_service/static/src/lib/leaflet/leaflet.css?v=2.0.9"/>'
     '<link rel="stylesheet"'
-    '  href="/vinedo_field_service/static/src/sigpac_viewer.css?v=2.0.8"/>'
+    '  href="/vinedo_field_service/static/src/sigpac_viewer.css?v=2.0.9"/>'
     '</head>'
     '<body>'
     '<div id="descripcion">'
@@ -58,14 +58,14 @@ _VIEWER_HTML = (
     '  <span class="hint">(zoom &ge;&nbsp;14 para ver los l&iacute;mites)</span>'
     '</div>'
     # Scripts externos - mismo origen - pasan CSP script-src 'self'
-    '<script src="/vinedo_field_service/static/src/lib/leaflet/leaflet.js?v=2.0.8"></script>'
-        '<script src="/vinedo_field_service/static/src/sigpac_viewer.js?v=2.0.8"></script>'
+    '<script src="/vinedo_field_service/static/src/lib/leaflet/leaflet.js?v=2.0.9"></script>'
+        '<script src="/vinedo_field_service/static/src/sigpac_viewer.js?v=2.0.9"></script>'
     '</body>'
     '</html>'
 )
 
 
-def _render_viewer(rec_id, lat, lon, zoom, marker_attrs, ref_sigpac='', recintos_json='[]', ref_sigpac2=''):
+def _render_viewer(rec_id, lat, lon, zoom, marker_attrs, ref_sigpac='', recintos_json='[]', refs_extra='[]'):
     """Sustituye los marcadores __PLACEHOLDER__ en el template HTML."""
     import html as _html
     return (
@@ -75,8 +75,8 @@ def _render_viewer(rec_id, lat, lon, zoom, marker_attrs, ref_sigpac='', recintos
         .replace('__LON__',          str(lon))
         .replace('__ZOOM__',         str(zoom))
         .replace('__MARKER_ATTRS__', marker_attrs)
-        .replace('__REF_SIGPAC__',   _html.escape(ref_sigpac,  quote=True))
-        .replace('__REF_SIGPAC2__',  _html.escape(ref_sigpac2, quote=True))
+        .replace('__REF_SIGPAC__',   _html.escape(ref_sigpac,    quote=True))
+        .replace('__REFS_EXTRA__',   _html.escape(refs_extra,    quote=True))
         .replace('__RECINTOS__',     _html.escape(recintos_json, quote=True))
     )
 
@@ -110,14 +110,21 @@ class SigpacController(http.Controller):
             marker_attrs = ''
 
         import json as _json
-        ref_sigpac  = record.ref_sigpac  or ''
-        ref_sigpac2 = record.ref_sigpac2 or ''
+        ref_sigpac = record.ref_sigpac or ''
         recintos_json = _json.dumps([
             {'recinto': r.recinto_num, 'activo': r.activo}
             for r in record.recinto_ids
         ])
+        # Construir array JSON de parcelas extra [{ref, offset}] desde refs_sigpac_extra
+        refs_extra = '[]'
+        if record.refs_sigpac_extra:
+            extra_list = [r.strip() for r in record.refs_sigpac_extra.strip().splitlines() if r.strip()]
+            refs_extra = _json.dumps([
+                {'ref': ref, 'offset': (i + 1) * 1000}
+                for i, ref in enumerate(extra_list)
+            ])
 
-        html_content = _render_viewer(rec_id, lat, lon, zoom, marker_attrs, ref_sigpac, recintos_json, ref_sigpac2)
+        html_content = _render_viewer(rec_id, lat, lon, zoom, marker_attrs, ref_sigpac, recintos_json, refs_extra)
         return request.make_response(
             html_content,
             headers=[
@@ -272,7 +279,14 @@ class SigpacController(http.Controller):
         if not recinto_vals:
             return {'error': 'No se obtuvieron recintos válidos de la segunda parcela.'}
 
-        record.write({'recinto_ids': recinto_vals, 'ref_sigpac2': ref2})
+        # Añadir ref2 a refs_sigpac_extra (una por línea, preservando las anteriores)
+        existing_extra = record.refs_sigpac_extra or ''
+        extra_lines = [r.strip() for r in existing_extra.strip().splitlines() if r.strip()]
+        extra_lines.append(ref2)
+        record.write({
+            'recinto_ids': recinto_vals,
+            'refs_sigpac_extra': '\n'.join(extra_lines),
+        })
 
         n_rec = len(recinto_vals)
         return {'ok': True, 'ref_sigpac2': ref2, 'n_recintos': n_rec, 'total_m2': round(total_m2, 0)}

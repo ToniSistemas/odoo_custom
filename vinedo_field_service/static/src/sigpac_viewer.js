@@ -15,8 +15,10 @@
     var MARKER_LAT  = root.getAttribute('data-marker-lat');
     var MARKER_LON  = root.getAttribute('data-marker-lon');
     var REF_SIGPAC  = root.getAttribute('data-ref-sigpac')  || '';
-    var REF_SIGPAC2 = root.getAttribute('data-ref-sigpac2') || '';
     var RECINTOS_JSON = root.getAttribute('data-recintos') || '[]';
+    /* REFS_EXTRA: [{ref: 'prov:mun:...',  offset: 1000}, {ref: ..., offset: 2000}, ...] */
+    var REFS_EXTRA = [];
+    try { REFS_EXTRA = JSON.parse(root.getAttribute('data-refs-extra') || '[]'); } catch (e) {}
 
     /* ── 2. Rutas locales de los iconos de Leaflet ── */
     delete L.Icon.Default.prototype._getIconUrl;
@@ -85,7 +87,7 @@
     var singleRecintoHa = 0;
     var parcelaTotalHa = null;
     /* recintoLayers: capas de recintos ya importados en Odoo.
-       Claves: número (1ª parcela) o '2p_N' (2ª parcela). */
+       Claves: número entero (1ª parcela) o 'ex_OFFSET_N' (parcelas extra). */
     var recintoLayers = {};
     /* previewLayer: contorno naranja de la parcela seleccionada al hacer clic */
     var previewLayer = null;
@@ -97,11 +99,21 @@
             : { color: '#888888', weight: 1.5, fillColor: '#cccccc', fillOpacity: 0.1 };
     }
 
-    /* Estilo 2ª parcela: azul (activo) / azul claro (inactivo) */
-    function recintoStyleSegunda(activo) {
+    /* Paleta de colores para parcelas extra (índice 0 = primera extra, etc.) */
+    var _extraColors = [
+        ['#0056b3', '#6baed6', '#17a2b8', '#c6dbef'],  /* azul      */
+        ['#276927', '#74c374', '#3caa3c', '#b5e2b5'],  /* verde     */
+        ['#8b008b', '#cc85cc', '#bb00bb', '#e8c0e8'],  /* morado    */
+        ['#cc5500', '#ffaa66', '#ff7700', '#ffd9b3'],  /* naranja   */
+        ['#996600', '#ccaa44', '#cc8800', '#ffe8bb'],  /* ámbar     */
+    ];
+
+    /* Estilo para parcela extra según índice de color (0-based) y activo/inactivo */
+    function extraStyle(activo, colorIdx) {
+        var c = _extraColors[(colorIdx || 0) % _extraColors.length];
         return activo !== false
-            ? { color: '#0056b3', weight: 2.5, fillColor: '#17a2b8', fillOpacity: 0.25 }
-            : { color: '#6baed6', weight: 1.5, fillColor: '#c6dbef', fillOpacity: 0.1 };
+            ? { color: c[0], weight: 2.5, fillColor: c[2], fillOpacity: 0.25 }
+            : { color: c[1], weight: 1.5, fillColor: c[3], fillOpacity: 0.1 };
     }
 
     /* Estilo de previsualización (parcela clicada) */
@@ -129,16 +141,15 @@
         });
     }
 
-    /* Dibuja los recintos de la 2ª parcela en azul.
-       En Odoo el recinto_num es offset+original (offset = 1000), por eso
-       se busca activoMap[1000 + num] para obtener el estado real. */
-    function drawSegundaParcelaLayers(geojson, activoMap) {
+    /* Dibuja los recintos de una parcela extra con su color y offset.
+       Clave en recintoLayers: 'ex_OFFSET_num' para mapear el postMessage. */
+    function drawExtraParcelaLayers(geojson, activoMap, offset, colorIdx) {
         (geojson.features || []).forEach(function (f) {
             var num = f.properties && f.properties.recinto;
-            var odooNum = 1000 + parseInt(num || 0, 10);
+            var odooNum = offset + parseInt(num || 0, 10);
             var activo = activoMap[odooNum] !== undefined ? activoMap[odooNum] : true;
-            var layer = L.geoJSON(f, { style: recintoStyleSegunda(activo) }).addTo(map);
-            recintoLayers['2p_' + num] = layer;
+            var layer = L.geoJSON(f, { style: extraStyle(activo, colorIdx) }).addTo(map);
+            recintoLayers['ex_' + offset + '_' + num] = layer;
         });
     }
 
@@ -191,22 +202,26 @@
         });
     }
 
-    if (REF_SIGPAC2) {
-        _fetchGeojson(REF_SIGPAC2, function (geojson) {
-            drawSegundaParcelaLayers(geojson, recintoActivoMap);
+    /* Cargar cada parcela extra con su offset y color */
+    REFS_EXTRA.forEach(function (item, idx) {
+        _fetchGeojson(item.ref, function (geojson) {
+            drawExtraParcelaLayers(geojson, recintoActivoMap, item.offset, idx);
         });
-    }
+    });
 
     /* ── 8. Sincronizar colores con los checkboxes de Odoo (postMessage) ── */
     window.addEventListener('message', function (e) {
         if (!e.data || e.data.type !== 'recinto_update') { return; }
         var activos = e.data.activos || [];
         Object.keys(recintoLayers).forEach(function (key) {
-            if (key.indexOf('2p_') === 0) {
-                /* 2ª parcela: recinto_num en Odoo = 1000 + num_original */
-                var origNum = parseInt(key.slice(3), 10);
-                var isActivo = activos.indexOf(1000 + origNum) !== -1;
-                recintoLayers[key].setStyle(recintoStyleSegunda(isActivo));
+            if (key.indexOf('ex_') === 0) {
+                /* Clave formato 'ex_OFFSET_num' */
+                var rest = key.slice(3);                      /* 'OFFSET_num' */
+                var sep  = rest.indexOf('_');
+                var kOffset = parseInt(rest.slice(0, sep), 10);
+                var kNum    = parseInt(rest.slice(sep + 1),  10);
+                var isActivo = activos.indexOf(kOffset + kNum) !== -1;
+                recintoLayers[key].setStyle(extraStyle(isActivo, kOffset / 1000 - 1));
             } else {
                 var isActivo = activos.indexOf(parseInt(key, 10)) !== -1;
                 recintoLayers[key].setStyle(recintoStyle(isActivo));

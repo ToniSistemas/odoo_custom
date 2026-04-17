@@ -1,6 +1,6 @@
 {
     'name': 'Viñedo - Field Service',
-    'version': '2.0.8',
+    'version': '2.0.9',
     'summary': 'Gestión completa de viñedos: fincas, variedades, trabajos y añadas con mapas',
     'description': """
         Gestión de Viñedos
