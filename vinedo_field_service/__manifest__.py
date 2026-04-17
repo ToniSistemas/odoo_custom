@@ -17,7 +17,7 @@
     'author': 'ToniSistemas',
     'website': 'https://github.com/ToniSistemas/odoo_custom',
     'license': 'LGPL-3',
-    'depends': ['base', 'hr', 'mail', 'board'],
+    'depends': ['base', 'hr', 'mail'],
     'data': [
         'security/ir.model.access.csv',
         'views/vinedo_views.xml',

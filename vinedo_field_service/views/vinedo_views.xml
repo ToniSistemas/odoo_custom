@@ -831,49 +831,5 @@
             </form>
         </field>
     </record>
-    <!-- ============================================================ -->
-    <!-- Tablero Viñedo (app Tableros)                               -->
-    <!-- ============================================================ -->
-
-    <record id="view_board_vinedo" model="ir.ui.view">
-        <field name="name">board.vinedo</field>
-        <field name="model">board.board</field>
-        <field name="arch" type="xml">
-            <board style="2-1">
-                <column>
-                    <action string="Variedades por finca"
-                        name="%(vinedo_field_service.action_plantacion_stats)d"
-                        view_mode="graph"/>
-                    <action string="Tratamientos (litros)"
-                        name="%(vinedo_field_service.action_tratamiento_stats)d"
-                        view_mode="graph"/>
-                    <action string="Aportaciones (kg)"
-                        name="%(vinedo_field_service.action_aportacion_stats)d"
-                        view_mode="graph"/>
-                </column>
-                <column>
-                    <action string="Añadas (cosecha kg)"
-                        name="%(vinedo_field_service.action_anada_stats)d"
-                        view_mode="graph"/>
-                    <action string="Trabajos (horas)"
-                        name="%(vinedo_field_service.action_trabajo_stats)d"
-                        view_mode="graph"/>
-                </column>
-            </board>
-        </field>
-    </record>
-
-    <record id="action_board_vinedo" model="ir.actions.act_window">
-        <field name="name">Viñedo</field>
-        <field name="res_model">board.board</field>
-        <field name="view_mode">board</field>
-        <field name="views" eval="[(ref('view_board_vinedo'), 'board')]"/>
-    </record>
-
-    <menuitem id="menu_board_vinedo"
-        name="Viñedo"
-        parent="board.menu_board_note_act"
-        action="action_board_vinedo"
-        sequence="10"/>
 
 </odoo>
