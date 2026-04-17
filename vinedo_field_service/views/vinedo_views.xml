@@ -831,5 +831,14 @@
             </form>
         </field>
     </record>
+    <!-- ============================================================ -->
+    <!-- Grupo Tableros: VIÑEDO                                      -->
+    <!-- Los dashboards individuales se crean desde la UI de Tableros -->
+    <!-- ============================================================ -->
+
+    <record id="spreadsheet_dashboard_group_vinedo" model="spreadsheet.dashboard.group">
+        <field name="name">Viñedo</field>
+        <field name="sequence">50</field>
+    </record>
 
 </odoo>
