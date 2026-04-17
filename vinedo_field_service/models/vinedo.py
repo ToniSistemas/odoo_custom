@@ -291,6 +291,7 @@ class Finca(models.Model):
     latitude = fields.Float(string='Latitud', digits=(10, 7))
     longitude = fields.Float(string='Longitud', digits=(10, 7))
     ref_sigpac = fields.Char(string='Referencia SIGPAC', index=True, help='Prov-Municipio-Polígono-Parcela-Recinto')
+    ref_sigpac2 = fields.Char(string='Referencia SIGPAC 2ª parcela', index=True, readonly=True)
     sigpac_json = fields.Text(string='Datos SIGPAC', readonly=True)
     variedad_ids = fields.One2many('vinedo.plantacion', 'finca_id', string='Variedades plantadas')
     aportacion_ids = fields.One2many('vinedo.aportacion', 'finca_id', string='Aportaciones de minerales')
@@ -449,6 +450,7 @@ class Finca(models.Model):
             }))
         vals = {
             'ref_sigpac': ref_sigpac,
+            'ref_sigpac2': False,
             'area': round(total_m2 / 10000, 4),
             'sigpac_json': json.dumps(summary, ensure_ascii=False, indent=2),
             'recinto_ids': recinto_vals,

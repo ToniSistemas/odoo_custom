@@ -30,6 +30,7 @@
                             <field name="latitude" string="Latitud"/>
                             <field name="longitude" string="Longitud"/>
                             <field name="ref_sigpac"/>
+                            <field name="ref_sigpac2" readonly="1"/>
                         </group>
                     </group>
                     <div style="margin:4px 0 12px 0;">

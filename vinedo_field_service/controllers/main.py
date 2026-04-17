@@ -37,9 +37,9 @@ _VIEWER_HTML = (
     '<title>Visor SIGPAC</title>'
     # CSS externo - mismo origen - pasa CSP style-src 'self'
     '<link rel="stylesheet"'
-    '  href="/vinedo_field_service/static/src/lib/leaflet/leaflet.css?v=2.0.7"/>'
+    '  href="/vinedo_field_service/static/src/lib/leaflet/leaflet.css?v=2.0.8"/>'
     '<link rel="stylesheet"'
-    '  href="/vinedo_field_service/static/src/sigpac_viewer.css?v=2.0.7"/>'
+    '  href="/vinedo_field_service/static/src/sigpac_viewer.css?v=2.0.8"/>'
     '</head>'
     '<body>'
     '<div id="descripcion">'
@@ -58,8 +58,8 @@ _VIEWER_HTML = (
     '  <span class="hint">(zoom &ge;&nbsp;14 para ver los l&iacute;mites)</span>'
     '</div>'
     # Scripts externos - mismo origen - pasan CSP script-src 'self'
-    '<script src="/vinedo_field_service/static/src/lib/leaflet/leaflet.js?v=2.0.7"></script>'
-        '<script src="/vinedo_field_service/static/src/sigpac_viewer.js?v=2.0.7"></script>'
+    '<script src="/vinedo_field_service/static/src/lib/leaflet/leaflet.js?v=2.0.8"></script>'
+        '<script src="/vinedo_field_service/static/src/sigpac_viewer.js?v=2.0.8"></script>'
     '</body>'
     '</html>'
 )
@@ -110,19 +110,12 @@ class SigpacController(http.Controller):
             marker_attrs = ''
 
         import json as _json
-        ref_sigpac = record.ref_sigpac or ''
+        ref_sigpac  = record.ref_sigpac  or ''
+        ref_sigpac2 = record.ref_sigpac2 or ''
         recintos_json = _json.dumps([
             {'recinto': r.recinto_num, 'activo': r.activo}
             for r in record.recinto_ids
         ])
-        # Leer ref_sigpac2 guardada en sigpac_json (por sigpac_agregar_parcela)
-        ref_sigpac2 = ''
-        if record.sigpac_json:
-            try:
-                _sj = _json.loads(record.sigpac_json)
-                ref_sigpac2 = _sj.get('ref_sigpac2', '') or ''
-            except Exception:
-                pass
 
         html_content = _render_viewer(rec_id, lat, lon, zoom, marker_attrs, ref_sigpac, recintos_json, ref_sigpac2)
         return request.make_response(
@@ -279,16 +272,7 @@ class SigpacController(http.Controller):
         if not recinto_vals:
             return {'error': 'No se obtuvieron recintos válidos de la segunda parcela.'}
 
-        record.write({'recinto_ids': recinto_vals})
-
-        # Guardar ref_sigpac2 en sigpac_json para que el visor la cargue automáticamente
-        import json as _json3
-        try:
-            _sj = _json3.loads(record.sigpac_json) if record.sigpac_json else {}
-        except Exception:
-            _sj = {}
-        _sj['ref_sigpac2'] = ref2
-        record.write({'sigpac_json': _json3.dumps(_sj, ensure_ascii=False, indent=2)})
+        record.write({'recinto_ids': recinto_vals, 'ref_sigpac2': ref2})
 
         n_rec = len(recinto_vals)
         return {'ok': True, 'ref_sigpac2': ref2, 'n_recintos': n_rec, 'total_m2': round(total_m2, 0)}
