@@ -67,6 +67,9 @@
                                     <field name="fecha"/>
                                     <field name="tipo"/>
                                     <field name="producto"/>
+                                    <field name="litros" optional="show"/>
+                                    <field name="precio_litro" optional="hide"/>
+                                    <field name="maquinaria_id" optional="show"/>
                                     <field name="fitosanitario_id" optional="show"/>
                                     <field name="materia_activa_info" optional="show" readonly="1"/>
                                     <field name="estado_registro_info" optional="hide" readonly="1"/>
@@ -494,6 +497,9 @@
                 <field name="finca_id"/>
                 <field name="tipo"/>
                 <field name="producto"/>
+                <field name="litros" optional="show"/>
+                <field name="precio_litro" optional="hide"/>
+                <field name="maquinaria_id" optional="show"/>
                 <field name="materia_activa_info" optional="show" readonly="1"/>
                 <field name="funcion_info" optional="show" readonly="1"/>
                 <field name="estado_registro_info" optional="hide" readonly="1"/>
@@ -527,6 +533,9 @@
                             <field name="fecha"/>
                             <field name="tipo"/>
                             <field name="producto"/>
+                            <field name="litros"/>
+                            <field name="precio_litro"/>
+                            <field name="maquinaria_id"/>
                             <field name="dosis"/>
                             <field name="empleado_id"/>
                         </group>
@@ -558,6 +567,53 @@
 
     <menuitem id="menu_vinedo_tratamientos" name="Tratamientos"
         parent="menu_vinedo_root" action="action_tratamiento" sequence="4"/>
+
+    <!-- ============================================================ -->
+    <!-- Maquinaria Views                                            -->
+    <!-- ============================================================ -->
+
+    <record id="view_maquinaria_list" model="ir.ui.view">
+        <field name="name">vinedo.maquinaria.list</field>
+        <field name="model">vinedo.maquinaria</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="titular"/>
+                <field name="tipo"/>
+                <field name="registro"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_maquinaria_form" model="ir.ui.view">
+        <field name="name">vinedo.maquinaria.form</field>
+        <field name="model">vinedo.maquinaria</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="tipo"/>
+                        </group>
+                        <group>
+                            <field name="titular"/>
+                            <field name="registro"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_maquinaria" model="ir.actions.act_window">
+        <field name="name">Maquinaria</field>
+        <field name="res_model">vinedo.maquinaria</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_vinedo_maquinaria" name="Maquinaria"
+        parent="menu_vinedo_root" action="action_maquinaria" sequence="5"/>
 
     <!-- ============================================================ -->
     <!-- Wizard: Buscar Fitosanitario en MAPA                        -->

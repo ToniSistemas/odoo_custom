@@ -614,6 +614,9 @@ class Tratamiento(models.Model):
     fitosanitario_id = fields.Many2one(
         'vinedo.fitosanitario', string='Ficha Reg. MAPA',
         index=True, ondelete='set null')
+    litros = fields.Float(string='Litros', digits=(10, 2))
+    precio_litro = fields.Float(string='Precio/litro (€)', digits=(10, 4))
+    maquinaria_id = fields.Many2one('vinedo.maquinaria', string='Maquinaria', index=True, ondelete='set null')
     materia_activa_info = fields.Char(
         related='fitosanitario_id.materia_activa', string='Materia Activa', readonly=True)
     funcion_info = fields.Char(
@@ -692,6 +695,26 @@ class Poda(models.Model):
                                  string='Tipo de poda')
     descripcion = fields.Text(string='Descripción')
     empleado_id = fields.Many2one('hr.employee', string='Empleado', index=True)
+
+
+class Maquinaria(models.Model):
+    _name = 'vinedo.maquinaria'
+    _description = 'Maquinaria agrícola'
+    _order = 'name'
+
+    name = fields.Char(string='Nombre / Descripción', required=True, index=True)
+    titular = fields.Char(string='Titular')
+    tipo = fields.Selection([
+        ('tractor', 'Tractor'),
+        ('atomizador', 'Atomizador'),
+        ('pulverizador', 'Pulverizador'),
+        ('cisterna', 'Cisterna'),
+        ('remolque', 'Remolque'),
+        ('vendimadora', 'Vendimadora'),
+        ('desbrozadora', 'Desbrozadora'),
+        ('otro', 'Otro'),
+    ], string='Tipo', required=True, default='otro')
+    registro = fields.Char(string='Registro / Matrícula')
 
 
 class TipoTrabajo(models.Model):
