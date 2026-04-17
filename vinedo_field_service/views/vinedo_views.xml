@@ -106,7 +106,7 @@
                         </page>
                     </notebook>
                     <div style="display:flex;gap:16px;margin-top:16px;align-items:flex-start;">
-                        <div style="flex:2 1 0;min-width:0;">
+                        <div style="flex:1 1 0;min-width:0;">
                             <h4 style="margin-bottom:6px;color:#5c5c5c;font-size:14px;font-weight:600;">
                                 <i class="fa fa-map"/> Visor SIGPAC
                             </h4>

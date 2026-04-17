@@ -84,6 +84,7 @@
     var selection = null;
     var singleRecintoHa = 0;
     var parcelaTotalHa = null;
+    var modoSegundaParcela = false;
     var recintoLayers = {};   /* { recinto_num: L.GeoJSON } para coloreado individual */
 
     /* Estilo según activo/inactivo */
@@ -91,6 +92,11 @@
         return activo
             ? { color: '#cc0000', weight: 2.5, fillColor: '#ff4444', fillOpacity: 0.2 }
             : { color: '#888888', weight: 1.5, fillColor: '#cccccc', fillOpacity: 0.1 };
+    }
+
+    /* Estilo para recintos de la segunda parcela (azul) */
+    function recintoStyleSegunda() {
+        return { color: '#0056b3', weight: 2.5, fillColor: '#17a2b8', fillOpacity: 0.25 };
     }
 
     /* Eliminar todas las capas de recintos del mapa */
@@ -120,8 +126,8 @@
     }
 
     /* Dibuja recintos de la parcela al hacer clic (todos activos por defecto) */
-    function drawParcela(ref) {
-        clearRecintoLayers();
+    function drawParcela(ref, esSegunda) {
+        if (!esSegunda) { clearRecintoLayers(); }
         parcelaTotalHa = null;
         var parts = ref.split(':');
         if (parts.length < 6) { return; }
@@ -131,16 +137,25 @@
         fetch(url)
             .then(function (r) { if (!r.ok) { throw new Error('HTTP ' + r.status); } return r.json(); })
             .then(function (geojson) {
-                var activoMap = {};
-                (geojson.features || []).forEach(function (f) {
-                    if (f.properties && f.properties.recinto !== undefined) {
-                        activoMap[f.properties.recinto] = true;
+                if (esSegunda) {
+                    /* Segunda parcela: dibujar en azul sin limpiar las anteriores */
+                    (geojson.features || []).forEach(function (f) {
+                        var num = f.properties && f.properties.recinto;
+                        var layer = L.geoJSON(f, { style: recintoStyleSegunda() }).addTo(map);
+                        recintoLayers['2p_' + num] = layer;
+                    });
+                } else {
+                    var activoMap = {};
+                    (geojson.features || []).forEach(function (f) {
+                        if (f.properties && f.properties.recinto !== undefined) {
+                            activoMap[f.properties.recinto] = true;
+                        }
+                    });
+                    parcelaTotalHa = drawRecintoLayers(geojson, activoMap);
+                    var spanTotal = document.getElementById('span-total-ha');
+                    if (spanTotal) {
+                        spanTotal.textContent = parcelaTotalHa.toFixed(4) + ' ha';
                     }
-                });
-                parcelaTotalHa = drawRecintoLayers(geojson, activoMap);
-                var spanTotal = document.getElementById('span-total-ha');
-                if (spanTotal) {
-                    spanTotal.textContent = parcelaTotalHa.toFixed(4) + ' ha';
                 }
             })
             .catch(function () { /* silencioso si falla */ });
@@ -236,7 +251,7 @@
     map.on('click', function (e) {
         var lat = e.latlng.lat.toFixed(7);
         var lon = e.latlng.lng.toFixed(7);
-        clearRecintoLayers();
+        if (!modoSegundaParcela) { clearRecintoLayers(); }
         panel.className = 'loading';
         panel.innerHTML = '&#8987; Consultando SIGPAC&hellip;';
 
@@ -250,28 +265,53 @@
             .then(function (arr) {
                 var info = parseHubcloudResult(arr);
                 if (!info) {
-                    /* sin parcela en este punto */
                     panel.className = '';
                     panel.innerHTML = 'Sin parcela. Haz clic dentro de una parcela SIGPAC.';
                     return;
                 }
                 selection = { lat: parseFloat(lat), lon: parseFloat(lon), ref: info.ref };
-                drawParcela(info.ref);
+                drawParcela(info.ref, modoSegundaParcela);
                 panel.className = 'ok';
-                panel.innerHTML =
-                    '<strong>&#10003; Parcela:</strong>'
-                    + ' <code>' + info.ref + '</code>'
-                    + ' &nbsp;<span class="tag">' + info.uso + '</span>'
-                    + ' &nbsp;' + info.m2.toLocaleString('es-ES') + '&nbsp;m&sup2;'
-                    + ' &nbsp;|&nbsp;' + lat + ', ' + lon
-                    + '<br><label style="font-size:12px;cursor:pointer;">'
-                    + '<input type="checkbox" id="chk-parcela" checked style="margin-right:4px;"/>'
-                    + 'Importar superficie total de la parcela'
-                    + ' (<span id="span-total-ha">calculando&hellip;</span>)'
-                    + '</label>'
-                    + ' &nbsp;<button id="btn-import">&#8681; Importar a Odoo</button>';
-                var btn = document.getElementById('btn-import');
-                if (btn) { btn.addEventListener('click', doImport); }
+                if (modoSegundaParcela) {
+                    panel.innerHTML =
+                        '<strong>2\u00aa parcela:</strong>'
+                        + ' <code>' + info.ref + '</code>'
+                        + ' &nbsp;<span class="tag">' + info.uso + '</span>'
+                        + ' &nbsp;' + info.m2.toLocaleString('es-ES') + '&nbsp;m&sup2;'
+                        + ' &nbsp;|&nbsp;' + lat + ', ' + lon
+                        + ' &nbsp;<button id="btn-add-odoo">&#8681; A\u00f1adir a Odoo</button>'
+                        + ' &nbsp;<button id="btn-cancelar-2" style="padding:3px 10px;background:#6c757d;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;">Cancelar</button>';
+                    var btnAdd = document.getElementById('btn-add-odoo');
+                    if (btnAdd) { btnAdd.addEventListener('click', doAgregarParcela); }
+                    var btnCan = document.getElementById('btn-cancelar-2');
+                    if (btnCan) {
+                        btnCan.addEventListener('click', function () {
+                            modoSegundaParcela = false;
+                            selection = null;
+                            /* quitar capas de segunda parcela del mapa */
+                            Object.keys(recintoLayers).forEach(function (k) {
+                                if (k.indexOf('2p_') === 0) { map.removeLayer(recintoLayers[k]); delete recintoLayers[k]; }
+                            });
+                            panel.className = '';
+                            panel.innerHTML = 'Haz clic en una parcela del mapa para seleccionarla.';
+                        });
+                    }
+                } else {
+                    panel.innerHTML =
+                        '<strong>&#10003; Parcela:</strong>'
+                        + ' <code>' + info.ref + '</code>'
+                        + ' &nbsp;<span class="tag">' + info.uso + '</span>'
+                        + ' &nbsp;' + info.m2.toLocaleString('es-ES') + '&nbsp;m&sup2;'
+                        + ' &nbsp;|&nbsp;' + lat + ', ' + lon
+                        + '<br><label style="font-size:12px;cursor:pointer;">'
+                        + '<input type="checkbox" id="chk-parcela" checked style="margin-right:4px;"/>'
+                        + 'Importar superficie total de la parcela'
+                        + ' (<span id="span-total-ha">calculando&hellip;</span>)'
+                        + '</label>'
+                        + ' &nbsp;<button id="btn-import">&#8681; Importar a Odoo</button>';
+                    var btn = document.getElementById('btn-import');
+                    if (btn) { btn.addEventListener('click', doImport); }
+                }
             })
             .catch(function () {
                 /* Estrategia 2: proxy Odoo (por si hay CORS en GFI) */
@@ -289,22 +329,33 @@
                     var info = Array.isArray(result) ? parseHubcloudResult(result) : null;
                     if (info) {
                         selection = { lat: parseFloat(lat), lon: parseFloat(lon), ref: info.ref };
-                        drawParcela(info.ref);
+                        drawParcela(info.ref, modoSegundaParcela);
                         panel.className = 'ok';
-                        panel.innerHTML =
-                            '<strong>&#10003; Parcela:</strong>'
-                            + ' <code>' + info.ref + '</code>'
-                            + ' &nbsp;<span class="tag">' + info.uso + '</span>'
-                            + ' &nbsp;' + info.m2.toLocaleString('es-ES') + '&nbsp;m&sup2;'
-                            + ' &nbsp;|&nbsp;' + lat + ', ' + lon
-                            + '<br><label style="font-size:12px;cursor:pointer;">'
-                            + '<input type="checkbox" id="chk-parcela" checked style="margin-right:4px;"/>'
-                            + 'Importar superficie total de la parcela'
-                            + ' (<span id="span-total-ha">calculando&hellip;</span>)'
-                            + '</label>'
-                            + ' &nbsp;<button id="btn-import">&#8681; Importar a Odoo</button>';
-                        var btn = document.getElementById('btn-import');
-                        if (btn) { btn.addEventListener('click', doImport); }
+                        if (modoSegundaParcela) {
+                            panel.innerHTML =
+                                '<strong>2\u00aa parcela:</strong>'
+                                + ' <code>' + info.ref + '</code>'
+                                + ' &nbsp;<span class="tag">' + info.uso + '</span>'
+                                + ' &nbsp;' + info.m2.toLocaleString('es-ES') + '&nbsp;m&sup2;'
+                                + ' &nbsp;<button id="btn-add-odoo">&#8681; A\u00f1adir a Odoo</button>';
+                            var btnA = document.getElementById('btn-add-odoo');
+                            if (btnA) { btnA.addEventListener('click', doAgregarParcela); }
+                        } else {
+                            panel.innerHTML =
+                                '<strong>&#10003; Parcela:</strong>'
+                                + ' <code>' + info.ref + '</code>'
+                                + ' &nbsp;<span class="tag">' + info.uso + '</span>'
+                                + ' &nbsp;' + info.m2.toLocaleString('es-ES') + '&nbsp;m&sup2;'
+                                + ' &nbsp;|&nbsp;' + lat + ', ' + lon
+                                + '<br><label style="font-size:12px;cursor:pointer;">'
+                                + '<input type="checkbox" id="chk-parcela" checked style="margin-right:4px;"/>'
+                                + 'Importar superficie total de la parcela'
+                                + ' (<span id="span-total-ha">calculando&hellip;</span>)'
+                                + '</label>'
+                                + ' &nbsp;<button id="btn-import">&#8681; Importar a Odoo</button>';
+                            var btn = document.getElementById('btn-import');
+                            if (btn) { btn.addEventListener('click', doImport); }
+                        }
                     } else {
                         /* Estrategia 3: entrada manual con enlace al visor oficial */
                         showManualInput(lat, lon);
@@ -341,13 +392,23 @@
             var result = data.result;
             if (result && result.ok) {
                 panel.className = 'done';
-                panel.innerHTML = '&#9989; Importado: <strong>'
+                panel.innerHTML =
+                    '\u2705 Importada: <strong>'
                     + (result.ref_sigpac || selection.ref)
-                    + '</strong> &mdash; Recargando\u2026';
-                setTimeout(function () { window.parent.location.reload(); }, 1500);
+                    + '</strong>'
+                    + ' &nbsp;<button id="btn-add-parcela">\u2795 A\u00f1adir segunda parcela</button>'
+                    + ' &nbsp;<button id="btn-reload" style="padding:3px 10px;background:#6c757d;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;">Recargar p\u00e1gina</button>';
+                var btnAdd = document.getElementById('btn-add-parcela');
+                if (btnAdd) { btnAdd.addEventListener('click', activarModoSegundaParcela); }
+                var btnRel = document.getElementById('btn-reload');
+                if (btnRel) { btnRel.addEventListener('click', function () { window.parent.location.reload(); }); }
+                /* Actualizar recintoActivoMap con los recintos ya importados (todos activos) */
+                Object.keys(recintoLayers).forEach(function (num) {
+                    recintoActivoMap[parseInt(num, 10)] = true;
+                });
             } else {
                 panel.className = 'err';
-                panel.innerHTML = '&#9888; ' + ((result && result.error) || 'Error desconocido')
+                panel.innerHTML = '\u26a0 ' + ((result && result.error) || 'Error desconocido')
                     + ' &nbsp;<button id="btn-retry">Reintentar</button>';
                 var b2 = document.getElementById('btn-retry');
                 if (b2) { b2.addEventListener('click', doImport); }
@@ -355,10 +416,64 @@
         })
         .catch(function (err) {
             panel.className = 'err';
-            panel.innerHTML = '&#9888; Error de red: ' + err.message
+            panel.innerHTML = '\u26a0 Error de red: ' + err.message
                 + ' &nbsp;<button id="btn-retry">Reintentar</button>';
             var b2 = document.getElementById('btn-retry');
             if (b2) { b2.addEventListener('click', doImport); }
+        });
+    }
+
+    /* ── 7. Modo segunda parcela ── */
+
+    function activarModoSegundaParcela() {
+        modoSegundaParcela = true;
+        selection = null;
+        panel.className = '';
+        panel.innerHTML =
+            '\ud83d\udccd <strong>Modo segunda parcela:</strong>'
+            + ' Haz clic sobre la segunda parcela en el mapa para seleccionarla.';
+    }
+
+    function doAgregarParcela() {
+        if (!selection) { return; }
+        var btn = document.getElementById('btn-add-odoo');
+        if (btn) { btn.disabled = true; btn.textContent = 'A\u00f1adiendo\u2026'; }
+
+        fetch('/vinedo/sigpac_agregar_parcela', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                jsonrpc: '2.0', method: 'call', id: 1,
+                params: { rec_id: REC_ID, lat: selection.lat, lon: selection.lon }
+            })
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            var result = data.result;
+            if (result && result.ok) {
+                modoSegundaParcela = false;
+                panel.className = 'done';
+                panel.innerHTML =
+                    '\u2705 A\u00f1adida: <strong>' + result.ref_sigpac2 + '</strong>'
+                    + ' &mdash; ' + result.n_recintos + ' recinto(s)'
+                    + ' | ' + result.total_m2.toLocaleString('es-ES') + '&nbsp;m&sup2;'
+                    + ' &nbsp;<button id="btn-reload2" style="padding:3px 10px;background:#6c757d;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;">Recargar p\u00e1gina</button>';
+                var btnR = document.getElementById('btn-reload2');
+                if (btnR) { btnR.addEventListener('click', function () { window.parent.location.reload(); }); }
+            } else {
+                panel.className = 'err';
+                panel.innerHTML = '\u26a0 ' + ((result && result.error) || 'Error desconocido')
+                    + ' &nbsp;<button id="btn-retry2">Reintentar</button>';
+                var b2 = document.getElementById('btn-retry2');
+                if (b2) { b2.addEventListener('click', doAgregarParcela); }
+            }
+        })
+        .catch(function (err) {
+            panel.className = 'err';
+            panel.innerHTML = '\u26a0 Error de red: ' + err.message
+                + ' &nbsp;<button id="btn-retry2">Reintentar</button>';
+            var b2 = document.getElementById('btn-retry2');
+            if (b2) { b2.addEventListener('click', doAgregarParcela); }
         });
     }
 

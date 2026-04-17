@@ -31,18 +31,32 @@ html, body {
     background: #d0e8f5;
 }
 
+#btn-add-parcela {
+    padding: 3px 12px;
+    background: #17a2b8;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+#btn-add-parcela:hover    { background: #138496; }
+#btn-add-parcela:disabled { background: #6c757d; cursor: default; }
+
 /* Barra de información inferior */
 #panel {
     position: absolute;
     bottom: 0; left: 0; right: 0;
-    height: 52px;
+    min-height: 52px;
     padding: 6px 12px;
     background: #f8f9fa;
     border-top: 1px solid #dee2e6;
     display: flex;
     align-items: center;
     gap: 8px;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     overflow: hidden;
 }
 

@@ -36,9 +36,9 @@ _VIEWER_HTML = (
     '<title>Visor SIGPAC</title>'
     # CSS externo - mismo origen - pasa CSP style-src 'self'
     '<link rel="stylesheet"'
-    '  href="/vinedo_field_service/static/src/lib/leaflet/leaflet.css?v=2.0.5"/>'
+    '  href="/vinedo_field_service/static/src/lib/leaflet/leaflet.css?v=2.0.6"/>'
     '<link rel="stylesheet"'
-    '  href="/vinedo_field_service/static/src/sigpac_viewer.css?v=2.0.5"/>'
+    '  href="/vinedo_field_service/static/src/sigpac_viewer.css?v=2.0.6"/>'
     '</head>'
     '<body>'
     '<div id="descripcion">'
@@ -57,8 +57,8 @@ _VIEWER_HTML = (
     '  <span class="hint">(zoom &ge;&nbsp;14 para ver los l&iacute;mites)</span>'
     '</div>'
     # Scripts externos - mismo origen - pasan CSP script-src 'self'
-    '<script src="/vinedo_field_service/static/src/lib/leaflet/leaflet.js?v=2.0.5"></script>'
-        '<script src="/vinedo_field_service/static/src/sigpac_viewer.js?v=2.0.5"></script>'
+    '<script src="/vinedo_field_service/static/src/lib/leaflet/leaflet.js?v=2.0.6"></script>'
+        '<script src="/vinedo_field_service/static/src/sigpac_viewer.js?v=2.0.6"></script>'
     '</body>'
     '</html>'
 )
@@ -171,5 +171,107 @@ class SigpacController(http.Controller):
         except Exception as e:
             _logger.exception('sigpac_importar error rec_id=%s', rec_id)
             return {'error': str(e)}
+
+    @http.route('/vinedo/sigpac_agregar_parcela', type='jsonrpc', auth='user', csrf=False)
+    def sigpac_agregar_parcela(self, rec_id, lat, lon, **kwargs):
+        """Añade los recintos de una segunda parcela a continuación de los ya existentes.
+        No borra los recintos previos ni modifica lat/lon ni ref_sigpac.
+        Incrementa la numeración de recinto_num para evitar colisiones."""
+        import requests as _req2
+        import json as _json2
+
+        record = request.env['vinedo.finca'].browse(int(rec_id))
+        if not record.exists():
+            return {'error': 'Finca no encontrada'}
+
+        try:
+            # Paso 1: consultar recinto en las coordenadas
+            url1 = (
+                'https://sigpac-hubcloud.es/servicioconsultassigpac'
+                '/query/recinfobypoint/4326/'
+                + str(float(lon)) + '/' + str(float(lat)) + '.json'
+            )
+            resp1 = _req2.get(url1, timeout=15,
+                              headers={'User-Agent': 'OdooSIGPAC/1.8',
+                                       'Accept-Encoding': 'gzip'})
+            resp1.raise_for_status()
+            arr = resp1.json()
+        except Exception as e:
+            return {'error': 'Error conectando con SIGPAC: ' + str(e)}
+
+        if not isinstance(arr, list) or not arr:
+            return {'error': 'No se encontró recinto SIGPAC en esas coordenadas.'}
+
+        p = arr[0]
+        prov = str(p.get('provincia', ''))
+        mun  = str(p.get('municipio', ''))
+        agr  = str(p.get('agregado', 0) or 0)
+        zona = str(p.get('zona', 0) or 0)
+        pol  = str(p.get('poligono', ''))
+        par  = str(p.get('parcela', ''))
+        ref2 = f'{prov}:{mun}:{agr}:{zona}:{pol}:{par}'
+
+        # Paso 2: todos los recintos de la segunda parcela
+        all_recintos = []
+        try:
+            url2 = (
+                'https://sigpac-hubcloud.es/servicioconsultassigpac'
+                '/query/recinfoparc/'
+                + prov + '/' + mun + '/' + agr + '/' + zona + '/' + pol + '/' + par + '.json'
+            )
+            resp2 = _req2.get(url2, timeout=15,
+                              headers={'User-Agent': 'OdooSIGPAC/1.8',
+                                       'Accept-Encoding': 'gzip'})
+            if resp2.status_code == 200:
+                arr2 = resp2.json()
+                if isinstance(arr2, list):
+                    all_recintos = [
+                        {
+                            'recinto': str(r.get('recinto', '')),
+                            'uso': r.get('uso_sigpac', '?'),
+                            'superficie': round(float(r.get('superficie', 0) or 0) * 10000, 2),
+                        }
+                        for r in arr2
+                    ]
+        except Exception as e:
+            _logger.warning('SIGPAC recinfoparc (agregar) error: %s', e)
+
+        if not all_recintos:
+            all_recintos = [
+                {
+                    'recinto': str(r.get('recinto', '')),
+                    'uso': r.get('uso_sigpac', '?'),
+                    'superficie': round(float(r.get('superficie', 0) or 0) * 10000, 2),
+                }
+                for r in arr
+            ]
+
+        # Offset de recinto_num para no colisionar con los existentes
+        # Usamos un bloque 1000+ para identificar fácilmente la segunda parcela
+        existing_nums = record.recinto_ids.mapped('recinto_num')
+        base_offset = (max(existing_nums) // 1000 + 1) * 1000 if existing_nums else 1000
+
+        recinto_vals = []
+        total_m2 = 0
+        for r in all_recintos:
+            try:
+                rnum = int(r['recinto'])
+            except (ValueError, TypeError):
+                continue
+            total_m2 += r['superficie']
+            recinto_vals.append((0, 0, {
+                'recinto_num': base_offset + rnum,
+                'uso_sigpac': r['uso'],
+                'superficie_ha': round(r['superficie'] / 10000, 4),
+                'activo': True,
+            }))
+
+        if not recinto_vals:
+            return {'error': 'No se obtuvieron recintos válidos de la segunda parcela.'}
+
+        record.write({'recinto_ids': recinto_vals})
+
+        n_rec = len(recinto_vals)
+        return {'ok': True, 'ref_sigpac2': ref2, 'n_recintos': n_rec, 'total_m2': round(total_m2, 0)}
 
 
