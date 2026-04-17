@@ -299,6 +299,7 @@ class Finca(models.Model):
     tratamiento_ids = fields.One2many('vinedo.tratamiento', 'finca_id', string='Tratamientos')
     trabajo_ids = fields.One2many('vinedo.trabajo', 'finca_id', string='Trabajos')
     recinto_ids = fields.One2many('vinedo.recinto', 'finca_id', string='Recintos SIGPAC')
+    recinto_variedad_ids = fields.One2many('vinedo.recinto.variedad', 'finca_id', string='Variedades por recinto')
     anada_ids = fields.One2many('vinedo.anada', 'finca_id', string='Añadas')
 
     @api.constrains('latitude', 'longitude')
@@ -323,16 +324,21 @@ class Finca(models.Model):
                 rec.area = round(sum(activos.mapped('superficie_ha')), 4)
 
     def _sync_variedades_from_recintos(self):
-        """Crea o actualiza vinedo.plantacion agrupando recintos activos por variedad.
+        """Crea o actualiza vinedo.plantacion agrupando variedades de recintos activos.
+        Calcula superficie = superficie_ha del recinto × porcentaje / 100.
         Solo actualiza la superficie; no elimina plantaciones sin recinto."""
         Plantacion = self.env['vinedo.plantacion']
         for finca in self:
-            recintos_con_var = finca.recinto_ids.filtered(lambda r: r.activo and r.variedad_id)
-            # Agrupar superficie por variedad
+            recintos_activos = finca.recinto_ids.filtered('activo')
+            # Acumular superficie por variedad aplicando porcentaje de cada recinto.variedad
             sup_por_var = {}
-            for r in recintos_con_var:
-                vid = r.variedad_id.id
-                sup_por_var[vid] = sup_por_var.get(vid, 0) + r.superficie_ha
+            for recinto in recintos_activos:
+                sup_ha = recinto.superficie_ha or 0
+                for rv in recinto.variedad_ids:
+                    if rv.variedad_id:
+                        vid = rv.variedad_id.id
+                        share = round(sup_ha * (rv.porcentaje or 0) / 100, 4)
+                        sup_por_var[vid] = sup_por_var.get(vid, 0) + share
             # Crear o actualizar plantaciones
             for vid, sup in sup_por_var.items():
                 existing = Plantacion.search([
@@ -712,6 +718,53 @@ class Trabajo(models.Model):
     observaciones = fields.Text(string='Observaciones')
 
 
+class RecintoVariedad(models.Model):
+    """Distribución de variedades dentro de un recinto SIGPAC mediante porcentaje."""
+    _name = 'vinedo.recinto.variedad'
+    _description = 'Variedad por recinto SIGPAC'
+    _order = 'recinto_id, variedad_id'
+
+    recinto_id = fields.Many2one('vinedo.recinto', string='Recinto', required=True, ondelete='cascade', index=True)
+    finca_id = fields.Many2one('vinedo.finca', string='Finca', related='recinto_id.finca_id', store=True, index=True, readonly=True)
+    variedad_id = fields.Many2one('vinedo.variedad', string='Variedad', required=True)
+    porcentaje = fields.Float(string='Porcentaje (%)', digits=(5, 2), default=100.0)
+    superficie_ha = fields.Float(string='Superficie (ha)', compute='_compute_superficie', digits=(10, 4), store=True)
+    superficie_m2 = fields.Float(string='Superficie (m²)', compute='_compute_superficie', digits=(12, 2), store=True)
+
+    @api.depends('recinto_id.superficie_ha', 'porcentaje')
+    def _compute_superficie(self):
+        for rec in self:
+            sup_ha = round((rec.recinto_id.superficie_ha or 0) * (rec.porcentaje or 0) / 100, 4)
+            rec.superficie_ha = sup_ha
+            rec.superficie_m2 = round(sup_ha * 10000, 2)
+
+    @api.constrains('porcentaje')
+    def _check_porcentaje(self):
+        for rec in self:
+            if rec.porcentaje <= 0 or rec.porcentaje > 100:
+                raise ValidationError(_('El porcentaje debe estar entre 0.01 y 100.'))
+
+    def write(self, vals):
+        result = super().write(vals)
+        fincas = self.mapped('finca_id')
+        if fincas:
+            fincas._sync_variedades_from_recintos()
+        return result
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        records.mapped('finca_id')._sync_variedades_from_recintos()
+        return records
+
+    def unlink(self):
+        fincas = self.mapped('finca_id')
+        result = super().unlink()
+        if fincas:
+            fincas._sync_variedades_from_recintos()
+        return result
+
+
 class Recinto(models.Model):
     _name = 'vinedo.recinto'
     _description = 'Recinto SIGPAC de una finca'
@@ -723,18 +776,29 @@ class Recinto(models.Model):
     superficie_ha = fields.Float(string='Superficie (ha)', digits=(10, 4))
     superficie_m2 = fields.Float(string='Superficie (m²)', compute='_compute_superficie_m2', digits=(12, 2))
     activo = fields.Boolean(string='Incluir', default=True)
-    variedad_id = fields.Many2one('vinedo.variedad', string='Variedad')
+    variedad_ids = fields.One2many('vinedo.recinto.variedad', 'recinto_id', string='Variedades')
+    variedad_resumen = fields.Char(string='Variedades', compute='_compute_variedad_resumen')
 
     @api.depends('superficie_ha')
     def _compute_superficie_m2(self):
         for rec in self:
             rec.superficie_m2 = round((rec.superficie_ha or 0) * 10000, 2)
 
+    def _compute_variedad_resumen(self):
+        for rec in self:
+            parts = []
+            for rv in rec.variedad_ids:
+                if rv.variedad_id:
+                    pct = rv.porcentaje
+                    pct_str = f'{pct:.0f}%' if pct == int(pct) else f'{pct:.1f}%'
+                    parts.append(f'{rv.variedad_id.name} {pct_str}')
+            rec.variedad_resumen = ', '.join(parts) if parts else ''
+
     def write(self, vals):
         result = super().write(vals)
         if 'activo' in vals or 'superficie_ha' in vals:
             self.mapped('finca_id')._recompute_area_from_recintos()
-        if 'variedad_id' in vals or 'activo' in vals or 'superficie_ha' in vals:
+        if 'activo' in vals or 'superficie_ha' in vals:
             self.mapped('finca_id')._sync_variedades_from_recintos()
         return result
 
