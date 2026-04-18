@@ -532,6 +532,7 @@
                 <field name="precio_litro" optional="hide"/>
                 <field name="coste" optional="show" readonly="1"/>
                 <field name="maquinaria_id" optional="show"/>
+                <field name="producto_id" optional="hide"/>
                 <field name="materia_activa_info" optional="show" readonly="1"/>
                 <field name="funcion_info" optional="show" readonly="1"/>
                 <field name="estado_registro_info" optional="hide" readonly="1"/>
@@ -577,6 +578,9 @@
                             <field name="fitosanitario_id"
                                    options="{'no_quick_create': True}"
                                    domain="[('nombre', 'ilike', producto or '')]"/>
+                            <field name="producto_id"
+                                   options="{'no_quick_create': True}"
+                                   help="Enlaza con el producto de Odoo usando la Referencia Interna = Nº Registro MAPA"/>
                             <field name="funcion_info" readonly="1"/>
                             <field name="materia_activa_info" readonly="1"/>
                             <field name="estado_registro_info" readonly="1"/>

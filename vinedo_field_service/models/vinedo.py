@@ -638,6 +638,11 @@ class Tratamiento(models.Model):
     fitosanitario_id = fields.Many2one(
         'vinedo.fitosanitario', string='Ficha Reg. MAPA',
         index=True, ondelete='set null')
+    producto_id = fields.Many2one(
+        'product.product', string='Producto (Odoo)',
+        index=True, ondelete='set null',
+        domain=[('purchase_ok', '=', True)],
+        help='Enlace con el producto de Odoo (ref. interna = Nº Registro MAPA). Rellena el precio automáticamente.')
     litros = fields.Float(string='Litros', digits=(10, 2))
     precio_litro = fields.Float(string='Precio/litro (€)', digits=(10, 4), aggregator='avg')
     coste = fields.Float(string='Coste (€)', digits=(10, 2), compute='_compute_coste', store=True)
@@ -661,16 +666,31 @@ class Tratamiento(models.Model):
 
     @api.onchange('fitosanitario_id')
     def _onchange_fitosanitario_id(self):
-        """When a MAPA record is selected, fill producto and auto-fetch funcion if missing."""
+        """When a MAPA record is selected, fill producto and auto-fetch funcion if missing.
+        Also tries to auto-link producto_id by matching num_registro with product default_code."""
         if not self.fitosanitario_id:
             return
         self.producto = self.fitosanitario_id.nombre
+        # Auto-link producto_id by num_registro ↔ default_code
+        num_reg = self.fitosanitario_id.num_registro
+        if num_reg:
+            prod = self.env['product.product'].search(
+                [('default_code', '=', num_reg)], limit=1)
+            if prod:
+                self.producto_id = prod
+                self.precio_litro = prod.standard_price
         # If funcion not yet populated on the fitosanitario record, fetch it from MAPA now
         fito = self.fitosanitario_id
         if fito.id_mapa and not fito.funcion:
             funcion = _mapa_obtener_funcion(fito.id_mapa)
             if funcion is not None:
                 fito.write({'funcion': funcion if funcion else '-'})
+
+    @api.onchange('producto_id')
+    def _onchange_producto_id_tratamiento(self):
+        """When producto_id is set manually, update precio_litro from cost price."""
+        if self.producto_id:
+            self.precio_litro = self.producto_id.standard_price
 
     @api.onchange('producto')
     def _onchange_producto(self):
