@@ -749,9 +749,10 @@
         <field name="arch" type="xml">
             <list>
                 <field name="name"/>
-                <field name="titular"/>
+                <field name="titular_id"/>
                 <field name="tipo"/>
                 <field name="registro"/>
+                <field name="fecha_compra" optional="hide"/>
             </list>
         </field>
     </record>
@@ -768,8 +769,9 @@
                             <field name="tipo"/>
                         </group>
                         <group>
-                            <field name="titular"/>
+                            <field name="titular_id"/>
                             <field name="registro"/>
+                            <field name="fecha_compra"/>
                         </group>
                     </group>
                 </sheet>

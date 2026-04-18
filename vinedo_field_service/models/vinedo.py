@@ -727,7 +727,8 @@ class Maquinaria(models.Model):
     _order = 'name'
 
     name = fields.Char(string='Nombre / Descripción', required=True, index=True)
-    titular = fields.Char(string='Titular')
+    titular_id = fields.Many2one('res.partner', string='Titular', index=True)
+    fecha_compra = fields.Date(string='Fecha de compra')
     tipo = fields.Selection([
         ('tractor', 'Tractor'),
         ('atomizador', 'Atomizador'),
