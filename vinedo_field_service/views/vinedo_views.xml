@@ -631,6 +631,42 @@
     <!-- Aportaciones — standalone con pivot                        -->
     <!-- ============================================================ -->
 
+    <record id="view_aportacion_list" model="ir.ui.view">
+        <field name="name">vinedo.aportacion.list</field>
+        <field name="model">vinedo.aportacion</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="fecha"/>
+                <field name="finca_id"/>
+                <field name="producto"/>
+                <field name="cantidad" sum="Total kg"/>
+                <field name="precio_kg" optional="hide"/>
+                <field name="coste" optional="show" sum="Total €"/>
+                <field name="descripcion" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_aportacion_form" model="ir.ui.view">
+        <field name="name">vinedo.aportacion.form</field>
+        <field name="model">vinedo.aportacion</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="finca_id"/>
+                        <field name="fecha"/>
+                        <field name="producto"/>
+                        <field name="cantidad"/>
+                        <field name="precio_kg"/>
+                        <field name="coste" readonly="1"/>
+                        <field name="descripcion"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
     <record id="view_aportacion_pivot" model="ir.ui.view">
         <field name="name">vinedo.aportacion.pivot</field>
         <field name="model">vinedo.aportacion</field>
