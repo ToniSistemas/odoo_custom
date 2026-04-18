@@ -526,7 +526,7 @@ class Anada(models.Model):
     name = fields.Char(string='Nombre', compute='_compute_name', store=True, index=True)
     finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True, index=True)
     variedad_id = fields.Many2one('vinedo.variedad', string='Variedad', required=True, index=True)
-    anio = fields.Integer(string='Año', required=True, default=lambda self: fields.Date.today().year)
+    anio = fields.Integer(string='Año', required=True, default=lambda self: fields.Date.today().year, aggregator=False)
     graduacion = fields.Float(string='Graduación alcohólica (%vol)', digits=(5, 2), aggregator='avg')
     cantidad = fields.Float(string='Cantidad recolectada (kg)', digits=(12, 2))
     sulfuroso_total = fields.Float(string='Sulfuroso total (mg/L)', digits=(6, 2), aggregator='avg')
