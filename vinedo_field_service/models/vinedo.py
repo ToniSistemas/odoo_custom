@@ -288,8 +288,8 @@ class Finca(models.Model):
     territory_id = fields.Many2one('vinedo.territorio', string='Territorio', index=True)
     area = fields.Float(string='Extensión (ha)')
     area_m2 = fields.Float(string='Extensión (m²)', compute='_compute_area_m2', digits=(12, 2))
-    latitude = fields.Float(string='Latitud', digits=(10, 7))
-    longitude = fields.Float(string='Longitud', digits=(10, 7))
+    latitude = fields.Float(string='Latitud', digits=(10, 7), aggregator=False)
+    longitude = fields.Float(string='Longitud', digits=(10, 7), aggregator=False)
     ref_sigpac = fields.Char(string='Referencia SIGPAC', index=True, help='Prov-Municipio-Polígono-Parcela-Recinto')
     refs_sigpac_extra = fields.Text(string='Parcelas adicionales SIGPAC', readonly=True,
         help='Referencias SIGPAC de parcelas adicionales, una por línea')
@@ -608,7 +608,7 @@ class Aportacion(models.Model):
     descripcion = fields.Text(string='Descripción')
     producto = fields.Char(string='Producto/Mineral', required=True)
     cantidad = fields.Float(string='Cantidad (kg)', digits=(10, 2))
-    precio_kg = fields.Float(string='Precio/kg (€)', digits=(10, 4))
+    precio_kg = fields.Float(string='Precio/kg (€)', digits=(10, 4), aggregator='avg')
 
 
 class Tratamiento(models.Model):
@@ -627,7 +627,7 @@ class Tratamiento(models.Model):
         'vinedo.fitosanitario', string='Ficha Reg. MAPA',
         index=True, ondelete='set null')
     litros = fields.Float(string='Litros', digits=(10, 2))
-    precio_litro = fields.Float(string='Precio/litro (€)', digits=(10, 4))
+    precio_litro = fields.Float(string='Precio/litro (€)', digits=(10, 4), aggregator='avg')
     maquinaria_id = fields.Many2one('vinedo.maquinaria', string='Maquinaria', index=True, ondelete='set null')
     materia_activa_info = fields.Char(
         related='fitosanitario_id.materia_activa', string='Materia Activa', readonly=True)
