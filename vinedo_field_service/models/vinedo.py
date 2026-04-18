@@ -606,7 +606,8 @@ class Aportacion(models.Model):
     finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True, ondelete='cascade', index=True)
     fecha = fields.Date(string='Fecha', default=fields.Date.today, required=True)
     descripcion = fields.Text(string='Descripción')
-    producto = fields.Char(string='Producto/Mineral', required=True)
+    producto_id = fields.Many2one('product.product', string='Producto/Mineral', required=True, index=True,
+        domain=[('purchase_ok', '=', True)])
     cantidad = fields.Float(string='Cantidad (kg)', digits=(10, 2))
     precio_kg = fields.Float(string='Precio/kg (€)', digits=(10, 4), aggregator='avg')
     coste = fields.Float(string='Coste (€)', digits=(10, 2), compute='_compute_coste', store=True)
@@ -615,6 +616,11 @@ class Aportacion(models.Model):
     def _compute_coste(self):
         for rec in self:
             rec.coste = round((rec.cantidad or 0) * (rec.precio_kg or 0), 2)
+
+    @api.onchange('producto_id')
+    def _onchange_producto_id(self):
+        if self.producto_id:
+            self.precio_kg = self.producto_id.standard_price
 
 
 class Tratamiento(models.Model):

@@ -115,7 +115,7 @@
                             <field name="aportacion_ids">
                                 <list editable="bottom">
                                     <field name="fecha"/>
-                                    <field name="producto"/>
+                                    <field name="producto_id"/>
                                     <field name="cantidad" sum="Total kg"/>
                                     <field name="precio_kg" optional="show"/>
                                     <field name="coste" optional="show" readonly="1" sum="Total €"/>
@@ -638,7 +638,7 @@
             <list>
                 <field name="fecha"/>
                 <field name="finca_id"/>
-                <field name="producto"/>
+                <field name="producto_id"/>
                 <field name="cantidad" sum="Total kg"/>
                 <field name="precio_kg" optional="hide"/>
                 <field name="coste" optional="show" sum="Total €"/>
@@ -656,7 +656,7 @@
                     <group>
                         <field name="finca_id"/>
                         <field name="fecha"/>
-                        <field name="producto"/>
+                        <field name="producto_id"/>
                         <field name="cantidad"/>
                         <field name="precio_kg"/>
                         <field name="coste" readonly="1"/>
@@ -673,7 +673,7 @@
         <field name="arch" type="xml">
             <pivot string="Aportaciones" sample="1">
                 <field name="finca_id" type="row"/>
-                <field name="producto" type="col"/>
+                <field name="producto_id" type="col"/>
                 <field name="cantidad" type="measure"/>
                 <field name="precio_kg" type="measure"/>
                 <field name="coste" type="measure"/>
@@ -687,7 +687,7 @@
         <field name="arch" type="xml">
             <graph string="Aportaciones" type="bar" sample="1">
                 <field name="finca_id" type="row"/>
-                <field name="producto" type="col"/>
+                <field name="producto_id" type="col"/>
                 <field name="cantidad" type="measure"/>
             </graph>
         </field>
