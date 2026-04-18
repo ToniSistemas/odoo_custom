@@ -609,6 +609,12 @@ class Aportacion(models.Model):
     producto = fields.Char(string='Producto/Mineral', required=True)
     cantidad = fields.Float(string='Cantidad (kg)', digits=(10, 2))
     precio_kg = fields.Float(string='Precio/kg (€)', digits=(10, 4), aggregator='avg')
+    coste = fields.Float(string='Coste (€)', digits=(10, 2), compute='_compute_coste', store=True)
+
+    @api.depends('cantidad', 'precio_kg')
+    def _compute_coste(self):
+        for rec in self:
+            rec.coste = round((rec.cantidad or 0) * (rec.precio_kg or 0), 2)
 
 
 class Tratamiento(models.Model):
