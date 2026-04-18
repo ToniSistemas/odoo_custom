@@ -267,7 +267,8 @@
                     <group>
                         <group>
                             <field name="finca_id"/>
-                            <field name="variedad_id"/>
+                            <field name="variedad_id"
+                                domain="[('id', 'in', finca_id.variedad_ids.variedad_id)]"/>
                             <field name="anio"/>
                         </group>
                         <group>
