@@ -628,6 +628,7 @@ class Tratamiento(models.Model):
         index=True, ondelete='set null')
     litros = fields.Float(string='Litros', digits=(10, 2))
     precio_litro = fields.Float(string='Precio/litro (€)', digits=(10, 4), aggregator='avg')
+    coste = fields.Float(string='Coste (€)', digits=(10, 2), compute='_compute_coste', store=True)
     maquinaria_id = fields.Many2one('vinedo.maquinaria', string='Maquinaria', index=True, ondelete='set null')
     materia_activa_info = fields.Char(
         related='fitosanitario_id.materia_activa', string='Materia Activa', readonly=True)
@@ -640,6 +641,11 @@ class Tratamiento(models.Model):
     observaciones_registro = fields.Text(
         related='fitosanitario_id.observaciones',
         string='Observaciones / Condiciones de Uso', readonly=True)
+
+    @api.depends('litros', 'precio_litro')
+    def _compute_coste(self):
+        for rec in self:
+            rec.coste = round((rec.litros or 0) * (rec.precio_litro or 0), 2)
 
     @api.onchange('fitosanitario_id')
     def _onchange_fitosanitario_id(self):

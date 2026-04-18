@@ -69,6 +69,7 @@
                                     <field name="producto"/>
                                     <field name="litros" optional="show"/>
                                     <field name="precio_litro" optional="hide"/>
+                                    <field name="coste" optional="show" readonly="1"/>
                                     <field name="maquinaria_id" optional="show"/>
                                     <field name="fitosanitario_id" optional="show"/>
                                     <field name="materia_activa_info" optional="show" readonly="1"/>
@@ -528,6 +529,7 @@
                 <field name="producto"/>
                 <field name="litros" optional="show"/>
                 <field name="precio_litro" optional="hide"/>
+                <field name="coste" optional="show" readonly="1"/>
                 <field name="maquinaria_id" optional="show"/>
                 <field name="materia_activa_info" optional="show" readonly="1"/>
                 <field name="funcion_info" optional="show" readonly="1"/>
@@ -564,6 +566,7 @@
                             <field name="producto"/>
                             <field name="litros"/>
                             <field name="precio_litro"/>
+                            <field name="coste" readonly="1"/>
                             <field name="maquinaria_id"/>
                             <field name="dosis"/>
                             <field name="empleado_id"/>
@@ -597,6 +600,7 @@
                 <field name="tipo" type="col"/>
                 <field name="litros" type="measure"/>
                 <field name="precio_litro" type="measure"/>
+                <field name="coste" type="measure"/>
             </pivot>
         </field>
     </record>
