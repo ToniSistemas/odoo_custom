@@ -536,6 +536,17 @@ class Anada(models.Model):
     acidez_volatil = fields.Float(string='Acidez volátil (g/L)', digits=(5, 2))
     malico = fields.Float(string='Málico (g/L)', digits=(5, 2))
     attachment_count = fields.Integer(string='Analíticas', compute='_compute_attachment_count')
+    variedad_disponible_ids = fields.Many2many(
+        'vinedo.variedad', string='Variedades disponibles',
+        compute='_compute_variedad_disponible_ids')
+
+    @api.depends('finca_id')
+    def _compute_variedad_disponible_ids(self):
+        for rec in self:
+            if rec.finca_id:
+                rec.variedad_disponible_ids = rec.finca_id.variedad_ids.mapped('variedad_id')
+            else:
+                rec.variedad_disponible_ids = self.env['vinedo.variedad']
 
     def _compute_attachment_count(self):
         for rec in self:
