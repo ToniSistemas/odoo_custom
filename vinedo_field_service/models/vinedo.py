@@ -632,17 +632,17 @@ class Tratamiento(models.Model):
     tipo = fields.Selection([('fitosanitario', 'Fitosanitario'), ('otro', 'Otro')],
                            string='Tipo', default='fitosanitario', required=True)
     fecha = fields.Date(string='Fecha', default=fields.Date.today, required=True, index=True)
-    producto = fields.Char(string='Producto', required=True)
+    producto = fields.Char(string='Producto')
     dosis = fields.Char(string='Dosis / Observaciones')
     empleado_id = fields.Many2one('hr.employee', string='Empleado', index=True)
     fitosanitario_id = fields.Many2one(
         'vinedo.fitosanitario', string='Ficha Reg. MAPA',
         index=True, ondelete='set null')
     producto_id = fields.Many2one(
-        'product.product', string='Producto (Odoo)',
+        'product.product', string='Producto',
         index=True, ondelete='set null',
-        domain=[('purchase_ok', '=', True)],
-        help='Enlace con el producto de Odoo (ref. interna = Nº Registro MAPA). Rellena el precio automáticamente.')
+        domain=[('categ_id.name', 'ilike', 'fitosanitario'), ('purchase_ok', '=', True)],
+        help='Producto de la categoría Fitosanitarios. La Referencia Interna debe ser el Nº de Registro MAPA.')
     litros = fields.Float(string='Litros', digits=(10, 2))
     precio_litro = fields.Float(string='Precio/litro (€)', digits=(10, 4), aggregator='avg')
     coste = fields.Float(string='Coste (€)', digits=(10, 2), compute='_compute_coste', store=True)
@@ -688,28 +688,17 @@ class Tratamiento(models.Model):
 
     @api.onchange('producto_id')
     def _onchange_producto_id_tratamiento(self):
-        """When producto_id is set manually, update precio_litro from cost price."""
-        if self.producto_id:
-            self.precio_litro = self.producto_id.standard_price
-
-    @api.onchange('producto')
-    def _onchange_producto(self):
-        """When producto is typed, try to auto-link fitosanitario_id.
-
-        Links automatically only when there is exactly one match (case-insensitive).
-        Does not overwrite an already-linked fitosanitario that still matches.
-        """
-        if self.tipo != 'fitosanitario' or not self.producto:
+        """When producto_id is set, fill producto name, precio_litro and try to link fitosanitario_id."""
+        if not self.producto_id:
             return
-        # Keep current link if it still matches what is typed
-        if self.fitosanitario_id and (
-            self.producto.strip().lower() == (self.fitosanitario_id.nombre or '').lower()
-        ):
-            return
-        matches = self.env['vinedo.fitosanitario'].search(
-            [('nombre', '=ilike', self.producto.strip())], limit=2)
-        if len(matches) == 1:
-            self.fitosanitario_id = matches[0]
+        self.producto = self.producto_id.name
+        self.precio_litro = self.producto_id.standard_price
+        # Auto-link fitosanitario_id by default_code = num_registro
+        if self.producto_id.default_code and not self.fitosanitario_id:
+            fito = self.env['vinedo.fitosanitario'].search(
+                [('num_registro', '=', self.producto_id.default_code)], limit=1)
+            if fito:
+                self.fitosanitario_id = fito
 
     def action_ver_ficha_mapa(self):
         """Opens the official MAPA product page for the linked fitosanitario."""
