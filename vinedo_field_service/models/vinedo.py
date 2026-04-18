@@ -607,7 +607,8 @@ class Aportacion(models.Model):
     fecha = fields.Date(string='Fecha', default=fields.Date.today, required=True)
     descripcion = fields.Text(string='Descripción')
     producto_id = fields.Many2one('product.product', string='Producto/Mineral', required=True, index=True,
-        domain=[('purchase_ok', '=', True)])
+        domain=[('categ_id.name', 'ilike', 'mineral'), ('purchase_ok', '=', True)],
+        help='Producto de la categoría Minerales. La Referencia Interna puede usarse para identificarlo.')
     cantidad = fields.Float(string='Cantidad (kg)', digits=(10, 2))
     precio_kg = fields.Float(string='Precio/kg (€)', digits=(10, 4), aggregator='avg')
     coste = fields.Float(string='Coste (€)', digits=(10, 2), compute='_compute_coste', store=True)

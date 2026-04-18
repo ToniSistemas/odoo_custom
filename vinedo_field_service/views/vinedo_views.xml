@@ -660,7 +660,7 @@
                     <group>
                         <field name="finca_id"/>
                         <field name="fecha"/>
-                        <field name="producto_id"/>
+                        <field name="producto_id" options="{'no_quick_create': True}"/>
                         <field name="cantidad"/>
                         <field name="precio_kg"/>
                         <field name="coste" readonly="1"/>
