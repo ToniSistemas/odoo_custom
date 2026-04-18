@@ -66,7 +66,9 @@
                                 <list editable="bottom">
                                     <field name="fecha"/>
                                     <field name="tipo"/>
-                                    <field name="producto"/>
+                                    <field name="producto_id" invisible="tipo != 'fitosanitario'"
+                                           options="{'no_quick_create': True}"/>
+                                    <field name="producto" invisible="tipo == 'fitosanitario'"/>
                                     <field name="litros" optional="show"/>
                                     <field name="precio_litro" optional="hide"/>
                                     <field name="coste" optional="show" readonly="1"/>
@@ -527,12 +529,13 @@
                 <field name="fecha"/>
                 <field name="finca_id"/>
                 <field name="tipo"/>
-                <field name="producto"/>
+                <field name="producto_id" invisible="tipo != 'fitosanitario'"
+                       options="{'no_quick_create': True}"/>
+                <field name="producto" invisible="tipo == 'fitosanitario'"/>
                 <field name="litros" optional="show"/>
                 <field name="precio_litro" optional="hide"/>
                 <field name="coste" optional="show" readonly="1"/>
                 <field name="maquinaria_id" optional="show"/>
-                <field name="producto_id" optional="hide"/>
                 <field name="materia_activa_info" optional="show" readonly="1"/>
                 <field name="funcion_info" optional="show" readonly="1"/>
                 <field name="estado_registro_info" optional="hide" readonly="1"/>
