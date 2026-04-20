@@ -511,7 +511,7 @@
         parent="menu_vinedo_root" action="action_fitosanitario" sequence="5"/>
 
     <menuitem id="menu_vinedo_descargar_catalogo" name="Descargar catálogo MAPA"
-        parent="menu_vinedo_root" action="action_server_importar_catalogo_mapa" sequence="6"/>
+        parent="menu_vinedo_config" action="action_server_importar_catalogo_mapa" sequence="50"/>
 
     <!-- ============================================================ -->
     <!-- Wizard Búsqueda Fitosanitarios                               -->
