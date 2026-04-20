@@ -118,6 +118,7 @@
                                 <list editable="bottom">
                                     <field name="fecha"/>
                                     <field name="producto_id"/>
+                                    <field name="tipo_producto" optional="show"/>
                                     <field name="cantidad" sum="Total kg"/>
                                     <field name="precio_kg" optional="show"/>
                                     <field name="coste" optional="show" readonly="1" sum="Total €"/>
@@ -646,6 +647,7 @@
                 <field name="fecha"/>
                 <field name="finca_id"/>
                 <field name="producto_id"/>
+                <field name="tipo_producto" optional="show"/>
                 <field name="cantidad" sum="Total kg"/>
                 <field name="precio_kg" optional="hide"/>
                 <field name="coste" optional="show" sum="Total €"/>
@@ -664,6 +666,7 @@
                         <field name="finca_id"/>
                         <field name="fecha"/>
                         <field name="producto_id" options="{'no_quick_create': True}"/>
+                        <field name="tipo_producto"/>
                         <field name="cantidad"/>
                         <field name="precio_kg"/>
                         <field name="coste" readonly="1"/>

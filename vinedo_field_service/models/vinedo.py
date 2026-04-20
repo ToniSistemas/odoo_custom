@@ -610,7 +610,11 @@ class Aportacion(models.Model):
         domain=[('categ_id.name', 'ilike', 'mineral'), ('purchase_ok', '=', True)],
         help='Producto de la categoría Minerales. La Referencia Interna puede usarse para identificarlo.')
     cantidad = fields.Float(string='Cantidad (kg)', digits=(10, 2))
-    precio_kg = fields.Float(string='Precio/kg (€)', digits=(10, 4), aggregator='avg')
+    tipo_producto = fields.Selection([
+        ('mineral', 'Mineral'),
+        ('organico', 'Orgánico'),
+    ], string='Tipo', default='mineral')
+    precio_kg = fields.Float(string='Precio (€)', digits=(10, 4), aggregator='avg')
     coste = fields.Float(string='Coste (€)', digits=(10, 2), compute='_compute_coste', store=True)
 
     @api.depends('cantidad', 'precio_kg')
@@ -645,7 +649,7 @@ class Tratamiento(models.Model):
         domain=[('categ_id.name', 'ilike', 'fitosanitario'), ('purchase_ok', '=', True)],
         help='Producto de la categoría Fitosanitarios. La Referencia Interna debe ser el Nº de Registro MAPA.')
     litros = fields.Float(string='Litros', digits=(10, 2))
-    precio_litro = fields.Float(string='Precio/litro (€)', digits=(10, 4), aggregator='avg')
+    precio_litro = fields.Float(string='Precio (€)', digits=(10, 4), aggregator='avg')
     coste = fields.Float(string='Coste (€)', digits=(10, 2), compute='_compute_coste', store=True)
     maquinaria_id = fields.Many2one('vinedo.maquinaria', string='Maquinaria', index=True, ondelete='set null')
     materia_activa_info = fields.Char(
