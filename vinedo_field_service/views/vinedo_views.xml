@@ -716,6 +716,40 @@
     <!-- Trabajos — standalone con pivot                             -->
     <!-- ============================================================ -->
 
+    <record id="view_trabajo_list" model="ir.ui.view">
+        <field name="name">vinedo.trabajo.list</field>
+        <field name="model">vinedo.trabajo</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="fecha"/>
+                <field name="finca_id"/>
+                <field name="tipo_trabajo"/>
+                <field name="empleado_id"/>
+                <field name="horas" sum="Total Horas"/>
+                <field name="observaciones" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_trabajo_form" model="ir.ui.view">
+        <field name="name">vinedo.trabajo.form</field>
+        <field name="model">vinedo.trabajo</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="finca_id"/>
+                        <field name="fecha"/>
+                        <field name="tipo_trabajo"/>
+                        <field name="empleado_id"/>
+                        <field name="horas"/>
+                        <field name="observaciones"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
     <record id="view_trabajo_pivot" model="ir.ui.view">
         <field name="name">vinedo.trabajo.pivot</field>
         <field name="model">vinedo.trabajo</field>
