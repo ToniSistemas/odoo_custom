@@ -606,7 +606,7 @@ class Aportacion(models.Model):
     finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True, ondelete='cascade', index=True)
     fecha = fields.Date(string='Fecha', default=fields.Date.today, required=True)
     descripcion = fields.Text(string='Descripción')
-    producto_id = fields.Many2one('product.product', string='Producto/Mineral', required=True, index=True,
+    producto_id = fields.Many2one('product.product', string='Producto', required=True, index=True,
         domain=[('categ_id.name', 'ilike', 'mineral'), ('purchase_ok', '=', True)],
         help='Producto de la categoría Minerales. La Referencia Interna puede usarse para identificarlo.')
     cantidad = fields.Float(string='Cantidad (kg)', digits=(10, 2))
