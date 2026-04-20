@@ -668,18 +668,23 @@ class Tratamiento(models.Model):
     @api.onchange('fitosanitario_id')
     def _onchange_fitosanitario_id(self):
         """When a MAPA record is selected, fill producto and auto-fetch funcion if missing.
-        Also tries to auto-link producto_id by matching num_registro with product default_code."""
+        Also tries to auto-link producto_id: first by num_registro=default_code, then by name."""
         if not self.fitosanitario_id:
             return
         self.producto = self.fitosanitario_id.nombre
-        # Auto-link producto_id by num_registro ↔ default_code
+        # 1. Try by num_registro ↔ default_code (exact)
+        prod = None
         num_reg = self.fitosanitario_id.num_registro
         if num_reg:
             prod = self.env['product.product'].search(
                 [('default_code', '=', num_reg)], limit=1)
-            if prod:
-                self.producto_id = prod
-                self.precio_litro = prod.standard_price
+        # 2. Fallback: match by product name (case-insensitive)
+        if not prod and self.fitosanitario_id.nombre:
+            prod = self.env['product.product'].search(
+                [('name', '=ilike', self.fitosanitario_id.nombre)], limit=1)
+        if prod:
+            self.producto_id = prod
+            self.precio_litro = prod.standard_price
         # If funcion not yet populated on the fitosanitario record, fetch it from MAPA now
         fito = self.fitosanitario_id
         if fito.id_mapa and not fito.funcion:
