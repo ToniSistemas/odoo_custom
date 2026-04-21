@@ -856,10 +856,7 @@
                 <filter string="Trabajos" name="filter_trabajo"
                     domain="[('tipo','=','trabajo')]"/>
                 <separator/>
-                <filter string="Este mes" name="filter_mes_actual"
-                    domain="[('fecha','>=',context_today().strftime('%Y-%m-01'))]"/>
-                <filter string="Este año" name="filter_anio_actual"
-                    domain="[('fecha','>=',context_today().strftime('%Y-01-01'))]"/>
+                <filter string="Fecha" name="filter_fecha" date="fecha"/>
                 <group expand="1" string="Agrupar por">
                     <filter string="Finca" name="group_finca"
                         context="{'group_by':'finca_id'}"/>
@@ -882,7 +879,7 @@
         <field name="name">Estadística de gasto</field>
         <field name="res_model">vinedo.estadistica.gasto</field>
         <field name="view_mode">pivot,graph,list</field>
-        <field name="context">{'search_default_group_finca': 1, 'search_default_filter_anio_actual': 1}</field>
+        <field name="context">{'search_default_group_finca': 1}</field>
     </record>
 
     <menuitem id="menu_vinedo_estadistica_gasto" name="Estadística de gasto"
