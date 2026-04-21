@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Finca Views -->
+    <!-- ============================================================ -->
+    <!-- Finca Views                                                  -->
+    <!-- ============================================================ -->
     <record id="view_finca_tree" model="ir.ui.view">
         <field name="name">vinedo.finca.tree</field>
         <field name="model">vinedo.finca</field>
@@ -206,7 +208,9 @@
         web_icon="vinedo_field_service,static/description/icon.png"/>
     <menuitem id="menu_vinedo_fincas" name="Fincas" parent="menu_vinedo_root" action="action_finca" sequence="1"/>
 
-    <!-- Variedad Views -->
+    <!-- ============================================================ -->
+    <!-- Variedad Views                                               -->
+    <!-- ============================================================ -->
     <record id="view_variedad_tree" model="ir.ui.view">
         <field name="name">vinedo.variedad.tree</field>
         <field name="model">vinedo.variedad</field>
@@ -241,7 +245,9 @@
 
     <menuitem id="menu_vinedo_variedades" name="Variedades" parent="menu_vinedo_root" action="action_variedad" sequence="2"/>
 
-    <!-- Añada Views -->
+    <!-- ============================================================ -->
+    <!-- Añada Views                                                  -->
+    <!-- ============================================================ -->
     <record id="view_anada_tree" model="ir.ui.view">
         <field name="name">vinedo.anada.tree</field>
         <field name="model">vinedo.anada</field>
@@ -330,7 +336,9 @@
 
     <menuitem id="menu_vinedo_anadas" name="Añadas" parent="menu_vinedo_root" action="action_anada" sequence="3"/>
 
-    <!-- Territorio Views -->
+    <!-- ============================================================ -->
+    <!-- Territorio Views (Configuración)                            -->
+    <!-- ============================================================ -->
     <record id="view_territorio_tree" model="ir.ui.view">
         <field name="name">vinedo.territorio.tree</field>
         <field name="model">vinedo.territorio</field>
@@ -452,7 +460,9 @@
                                invisible="total_errores == 0"/>
                         <div colspan="2">
                             <p>Ya puedes buscar cualquier producto desde el campo
-                               <strong>«Ficha Reg. MAPA»</strong> en los tratamientos.</p>
+                               <strong>«Ficha Reg. MAPA»</strong> en los tratamientos,
+                               o enlazarlo automáticamente desde el campo <strong>«Producto»</strong>
+                               usando la Referencia Interna = Nº de Registro.</p>
                         </div>
                     </group>
                 </sheet>

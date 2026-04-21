@@ -600,7 +600,7 @@ class Anada(models.Model):
 
 class Aportacion(models.Model):
     _name = 'vinedo.aportacion'
-    _description = 'Aportación de minerales'
+    _description = 'Aportación de minerales/abonos con coste'
     _order = 'fecha desc, finca_id'
 
     finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True, ondelete='cascade', index=True)
@@ -630,7 +630,7 @@ class Aportacion(models.Model):
 
 class Tratamiento(models.Model):
     _name = 'vinedo.tratamiento'
-    _description = 'Tratamiento (fitosanitario u otros)'
+    _description = 'Tratamiento fitosanitario u otro con coste y enlace a Registro MAPA'
     _order = 'fecha desc, finca_id'
 
     finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True, ondelete='cascade', index=True)
@@ -748,7 +748,7 @@ class Poda(models.Model):
 
 class Maquinaria(models.Model):
     _name = 'vinedo.maquinaria'
-    _description = 'Maquinaria agrícola'
+    _description = 'Maquinaria agrícola con titular (contacto) y fecha de compra'
     _order = 'name'
 
     name = fields.Char(string='Nombre / Descripción', required=True, index=True)

@@ -1,17 +1,22 @@
 {
     'name': 'Viñedo - Field Service',
-    'version': '2.1.6',
-    'summary': 'Gestión completa de viñedos: fincas, variedades, trabajos y añadas con mapas',
+    'version': '2.1.8',
+    'summary': 'Gestión completa de viñedos: fincas, costes, fitosanitarios, añadas y análisis',
     'description': """
         Gestión de Viñedos
         ==================
-        * Gestión de fincas con geolocalización y polígonos en mapa
-        * Control de variedades plantadas por finca
-        * Registro de añadas con análisis (graduación, acidez, cantidad)
-        * Tratamientos fitosanitarios y aportaciones de minerales
-        * Registro de podas y trabajos por empleado
-        * Búsquedas y agrupaciones avanzadas
-        * Validaciones y constraints de datos
+        * Gestión de fincas con geolocalización y parcelas SIGPAC
+        * Control de variedades plantadas por finca y recinto
+        * Registro de añadas con análisis enológico completo (graduación, acidez, pH, densidad...)
+        * Tratamientos fitosanitarios enlazados con el Registro MAPA y productos de Odoo
+        * Aportaciones de minerales/abonos con enlace a productos y cálculo de costes
+        * Registro de trabajos por empleado con horas
+        * Maquinaria agrícola con titular (contacto Odoo) y fecha de compra
+        * Cálculo automático de costes (litros × precio, cantidad × precio)
+        * Autoenlace fitosanitario ↔ producto Odoo por Nº Registro / nombre
+        * Integración con Tableros (spreadsheet_dashboard)
+        * SIGPAC: consulta automática de recintos y superficies por coordenadas GPS
+        * Búsquedas, agrupaciones y vistas pivot/gráfico en todos los modelos
     """,
     'category': 'Agriculture/Field Service',
     'author': 'ToniSistemas',
