@@ -858,6 +858,63 @@
         parent="menu_vinedo_root" action="action_estadistica_gasto" sequence="8"/>
 
     <!-- ============================================================ -->
+    <!-- Resumen por Añada Views                                     -->
+    <!-- ============================================================ -->
+
+    <record id="view_resumen_anada_list" model="ir.ui.view">
+        <field name="name">vinedo.resumen.anada.list</field>
+        <field name="model">vinedo.resumen.anada</field>
+        <field name="arch" type="xml">
+            <list string="Coste por añada" create="false" delete="false">
+                <field name="anio"/>
+                <field name="finca_id"/>
+                <field name="coste_tratamientos" sum="Total"/>
+                <field name="coste_aportaciones" sum="Total"/>
+                <field name="coste_total" sum="Total"/>
+                <field name="horas_total" sum="Total"/>
+                <field name="cantidad_kg" sum="Total kg"/>
+                <field name="coste_por_kg"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_resumen_anada_pivot" model="ir.ui.view">
+        <field name="name">vinedo.resumen.anada.pivot</field>
+        <field name="model">vinedo.resumen.anada</field>
+        <field name="arch" type="xml">
+            <pivot string="Coste por añada">
+                <field name="anio" type="col"/>
+                <field name="finca_id" type="row"/>
+                <field name="coste_total" type="measure"/>
+                <field name="coste_por_kg" type="measure"/>
+                <field name="cantidad_kg" type="measure"/>
+                <field name="horas_total" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_resumen_anada_graph" model="ir.ui.view">
+        <field name="name">vinedo.resumen.anada.graph</field>
+        <field name="model">vinedo.resumen.anada</field>
+        <field name="arch" type="xml">
+            <graph string="Coste por añada" type="bar" stacked="1">
+                <field name="finca_id" type="row"/>
+                <field name="anio" type="row"/>
+                <field name="coste_total" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_resumen_anada" model="ir.actions.act_window">
+        <field name="name">Coste por añada</field>
+        <field name="res_model">vinedo.resumen.anada</field>
+        <field name="view_mode">pivot,graph,list</field>
+    </record>
+
+    <menuitem id="menu_vinedo_resumen_anada" name="Coste por añada"
+        parent="menu_vinedo_root" action="action_resumen_anada" sequence="9"/>
+
+    <!-- ============================================================ -->
     <!-- Maquinaria Views                                            -->
     <!-- ============================================================ -->
 

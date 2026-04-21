@@ -1320,3 +1320,66 @@ class EstadisticaGasto(models.Model):
                 ) sub
             )
         """)
+
+
+class ResumenAnada(models.Model):
+    """Vista SQL agregada: costes totales y coste/kg por finca y año de añada."""
+    _name = 'vinedo.resumen.anada'
+    _description = 'Coste por añada (resumen finca / año)'
+    _auto = False
+    _rec_name = 'finca_id'
+    _order = 'anio desc, finca_id'
+
+    finca_id = fields.Many2one('vinedo.finca', string='Finca', readonly=True)
+    anio = fields.Integer(string='Año', readonly=True)
+    coste_tratamientos = fields.Float(string='Tratamientos (€)', digits=(10, 2), readonly=True)
+    coste_aportaciones = fields.Float(string='Aportaciones (€)', digits=(10, 2), readonly=True)
+    coste_total = fields.Float(string='Coste total (€)', digits=(10, 2), readonly=True)
+    horas_total = fields.Float(string='Horas trabajadas', digits=(8, 2), readonly=True)
+    cantidad_kg = fields.Float(string='Kg cosechados', digits=(12, 2), readonly=True)
+    coste_por_kg = fields.Float(string='Coste/kg (€)', digits=(10, 4), readonly=True)
+
+    def init(self):
+        tools.drop_view_if_exists(self.env.cr, self._table)
+        self.env.cr.execute("""
+            CREATE VIEW vinedo_resumen_anada AS (
+                SELECT
+                    ROW_NUMBER() OVER (ORDER BY sub.anio DESC, sub.finca_id) AS id,
+                    sub.finca_id,
+                    sub.anio,
+                    sub.coste_tratamientos,
+                    sub.coste_aportaciones,
+                    sub.coste_total,
+                    sub.horas_total,
+                    COALESCE(kg.cantidad_total, 0.0) AS cantidad_kg,
+                    CASE WHEN COALESCE(kg.cantidad_total, 0.0) > 0
+                         THEN ROUND((sub.coste_total / kg.cantidad_total)::numeric, 4)
+                         ELSE 0.0
+                    END AS coste_por_kg
+                FROM (
+                    SELECT
+                        finca_id,
+                        EXTRACT(YEAR FROM fecha)::integer AS anio,
+                        SUM(CASE WHEN tipo = 'tratamiento' THEN coste ELSE 0 END) AS coste_tratamientos,
+                        SUM(CASE WHEN tipo = 'aportacion'  THEN coste ELSE 0 END) AS coste_aportaciones,
+                        SUM(coste)  AS coste_total,
+                        SUM(horas)  AS horas_total
+                    FROM (
+                        SELECT finca_id, fecha, 'tratamiento' AS tipo, coste, 0.0::double precision AS horas
+                            FROM vinedo_tratamiento
+                        UNION ALL
+                        SELECT finca_id, fecha, 'aportacion' AS tipo, coste, 0.0::double precision AS horas
+                            FROM vinedo_aportacion
+                        UNION ALL
+                        SELECT finca_id, fecha, 'trabajo' AS tipo, 0.0::double precision AS coste, horas
+                            FROM vinedo_trabajo
+                    ) movs
+                    GROUP BY finca_id, EXTRACT(YEAR FROM fecha)::integer
+                ) sub
+                LEFT JOIN (
+                    SELECT finca_id, anio, SUM(cantidad) AS cantidad_total
+                        FROM vinedo_anada
+                        GROUP BY finca_id, anio
+                ) kg ON kg.finca_id = sub.finca_id AND kg.anio = sub.anio
+            )
+        """)
