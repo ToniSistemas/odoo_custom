@@ -540,6 +540,50 @@ class Anada(models.Model):
         'vinedo.variedad', string='Variedades disponibles',
         compute='_compute_variedad_disponible_ids')
 
+    # ---- Costes calculados ----
+    coste_tratamientos = fields.Float(
+        string='Coste tratamientos (€)', digits=(10, 2),
+        compute='_compute_costes')
+    coste_aportaciones = fields.Float(
+        string='Coste aportaciones (€)', digits=(10, 2),
+        compute='_compute_costes')
+    coste_total = fields.Float(
+        string='Coste total (€)', digits=(10, 2),
+        compute='_compute_costes')
+    coste_por_kg = fields.Float(
+        string='Coste/kg (€)', digits=(10, 4),
+        compute='_compute_costes',
+        help='Coste total (tratamientos + aportaciones) de la finca en el año de la añada, dividido entre los kg recolectados.')
+
+    @api.depends('finca_id', 'anio', 'cantidad')
+    def _compute_costes(self):
+        for rec in self:
+            if not rec.finca_id or not rec.anio:
+                rec.coste_tratamientos = 0.0
+                rec.coste_aportaciones = 0.0
+                rec.coste_total = 0.0
+                rec.coste_por_kg = 0.0
+                continue
+            fecha_ini = fields.Date.from_string(f'{rec.anio}-01-01')
+            fecha_fin = fields.Date.from_string(f'{rec.anio}-12-31')
+            trats = self.env['vinedo.tratamiento'].search([
+                ('finca_id', '=', rec.finca_id.id),
+                ('fecha', '>=', fecha_ini),
+                ('fecha', '<=', fecha_fin),
+            ])
+            apors = self.env['vinedo.aportacion'].search([
+                ('finca_id', '=', rec.finca_id.id),
+                ('fecha', '>=', fecha_ini),
+                ('fecha', '<=', fecha_fin),
+            ])
+            coste_t = sum(t.coste for t in trats)
+            coste_a = sum(a.coste for a in apors)
+            total = coste_t + coste_a
+            rec.coste_tratamientos = coste_t
+            rec.coste_aportaciones = coste_a
+            rec.coste_total = total
+            rec.coste_por_kg = round(total / rec.cantidad, 4) if rec.cantidad else 0.0
+
     @api.depends('finca_id')
     def _compute_variedad_disponible_ids(self):
         for rec in self:

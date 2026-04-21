@@ -260,6 +260,8 @@
                 <field name="cantidad" sum="Total kg"/>
                 <field name="graduacion" avg="Graduación Media"/>
                 <field name="acidez_total" avg="Acidez Total Media"/>
+                <field name="coste_total" optional="show" string="Coste total (€)"/>
+                <field name="coste_por_kg" optional="show"/>
             </list>
         </field>
     </record>
@@ -294,6 +296,12 @@
                             <field name="acidez_total"/>
                             <field name="acidez_volatil"/>
                             <field name="malico"/>
+                        </group>
+                        <group string="Costes de la finca en este año">
+                            <field name="coste_tratamientos" readonly="1"/>
+                            <field name="coste_aportaciones" readonly="1"/>
+                            <field name="coste_total" readonly="1"/>
+                            <field name="coste_por_kg" readonly="1"/>
                         </group>
                     </group>
                 </sheet>
