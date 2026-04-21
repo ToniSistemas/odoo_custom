@@ -1,103 +1,84 @@
-# Viñedo Field Service v1.3.0
+# Viñedo Field Service v2.1.8
 
-Módulo de Odoo 19 para gestión completa de viñedos.
+Módulo de Odoo 19 CE para gestión completa de viñedos.
 
 ## Características
 
-### 🗺️ Gestión de Fincas
-- Geolocalización con latitud/longitud
-- **Widget de mapa interactivo** con Leaflet.js (compatible Odoo 19 OWL)
-- Dibujo de polígonos para delimitar fincas
-- Widget personalizado con botón pantalla completa
-- Almacenamiento GeoJSON Feature
-- Validación de coordenadas GPS
-- Vinculación con territorios
-- Búsquedas y filtros por territorio
+### Gestión de Fincas
+- Geolocalización con latitud/longitud y apertura directa en visor SIGPAC
+- Consulta automática de recintos y superficies desde la API de SIGPAC por coordenadas GPS
+- Recintos SIGPAC con uso, superficie y distribución de variedades por porcentaje
+- Extensión calculada automáticamente en ha y m²
+- Vinculación con territorios/D.O.
 
-### 📍 Posicionamiento GPS
-Ver guía completa en [`doc/POSICIONAMIENTO_GPS.md`](doc/POSICIONAMIENTO_GPS.md)
-
-**Cómo obtener coordenadas:**
-1. Abre Google Maps
-2. Haz clic derecho en tu finca → Copiar coordenadas
-3. Primer número = Latitud (40.4 para centro España)
-4. Segundo número = Longitud (-3.7 para centro España)
-
-**Ejemplo España:**
-- Latitud: 42.5 (positivo = Norte)
-- Longitud: -3.0 (negativo = Oeste de Greenwich)
-
-### 🍇 Variedades y Plantaciones
+### Variedades y Plantaciones
 - Catálogo de variedades de uva
-- Registro de plantaciones por finca y variedad
-- Control de superficie y fecha de plantación
-- Constraint de unicidad (finca + variedad)
+- Plantaciones por finca y variedad con superficie calculada desde recintos SIGPAC
+- Constraint de unicidad por finca + variedad
 
-### 📊 Añadas (Cosechas)
-- Registro por finca, variedad y año
-- Análisis: graduación alcohólica, acidez, cantidad
-- Nombre auto-generado
-- Agrupaciones y filtros avanzados
-- Constraint de unicidad
+### Añadas (Cosechas)
+- Registro por finca, variedad y año con nombre auto-generado
+- Análisis enológico completo: graduación alcohólica, cantidad, sulfuroso total, pH, densidad, acidez total, acidez volátil, málico
+- Agregaciones correctas (avg en campos de ratio, sum en cantidades)
+- Adjuntos de analíticas PDF por añada
+- Variedad filtrada por las variedades plantadas en la finca seleccionada
 
-### 🛠️ Trabajos y Mantenimiento
-- **Tratamientos**: fitosanitarios y otros con producto y dosis
-- **Podas**: registro de podas de invierno y en verde
-- **Trabajos**: registro de horas por empleado y tipo
-- **Aportaciones**: minerales con producto y cantidad
+### Tratamientos Fitosanitarios
+- Registro por finca con tipo (fitosanitario / otro)
+- Campo **Producto** enlazado a productos Odoo (categoría Fitosanitarios, filtra automáticamente)
+- Autoenlace con Registro MAPA por Referencia Interna (Nº Registro) o por nombre
+- Integración con el **Registro Oficial MAPA**: búsqueda, importación masiva del catálogo
+- Precio unitario y cálculo automático de coste (litros × precio)
+- Maquinaria utilizada, empleado, dosis/observaciones
 
-### ⚡ Optimizaciones
-- Índices en campos clave (búsquedas rápidas)
-- Ordenamiento predeterminado en vistas
-- Validaciones y constraints SQL
-- Normalización automática de polígonos (sin recursión)
-- Campos calculados automáticamente
-- Vistas de búsqueda con filtros y agrupaciones
-- Suma/promedio automático en listas
+### Aportaciones de Minerales/Abonos
+- Registro por finca con tipo (mineral / orgánico)
+- Campo **Producto** enlazado a productos Odoo (categoría Minerales)
+- Precio de coste tomado automáticamente desde el producto al seleccionarlo
+- Cálculo automático de coste (cantidad × precio)
+
+### Trabajos
+- Registro de horas por tipo de trabajo, finca y empleado
+- Tipos de trabajo configurables desde Configuración
+
+### Maquinaria
+- Catálogo de maquinaria agrícola por tipo
+- Titular enlazado a contactos de Odoo (res.partner)
+- Fecha de compra
+
+### Costes e Integración con Compras
+- Los precios de tratamientos y aportaciones se sincronizan con el coste estándar (`standard_price`) del producto en Odoo
+- Compatible con método de valoración **AVCO**: al registrar una compra, el precio se actualiza automáticamente en el producto y se reflejará en los próximos registros
+
+### Vistas y Análisis
+- Vistas pivot y gráfico en Añadas, Tratamientos, Aportaciones y Trabajos
+- Grupo **Viñedo** en el módulo Tableros (`spreadsheet_dashboard`) para dashboards personalizados
+- Filtros, agrupaciones y búsquedas avanzadas en todos los modelos
 
 ## Instalación
 
-1. Copiar el módulo a tu carpeta de addons
-2. Actualizar lista de aplicaciones
+1. Copiar el módulo a la carpeta de addons
+2. Actualizar lista de aplicaciones en Odoo
 3. Instalar "Viñedo - Field Service"
 
-## Uso del Mapa
+## Configuración inicial
 
-- El widget de mapa carga automáticamente Leaflet + Leaflet.draw desde CDN
-- Botón "Editar pantalla completa" para trabajar con más espacio
-- Dibujar polígono → se guarda como GeoJSON Feature
-- Normalización automática al guardar
+1. **Categorías de productos**: crear "Fitosanitarios" y "Minerales/Abonos" en Inventario → Configuración → Categorías de productos
+2. **Fitosanitarios Odoo**: al crear un producto fitosanitario, asignar categoría "Fitosanitarios" y poner el Nº de Registro MAPA en el campo **Referencia Interna** para el autoenlace automático
+3. **Territorios**: configurar desde Viñedo → Configuración → Territorios
+4. **Tipos de trabajo**: configurar desde Viñedo → Configuración
 
 ## Dependencias
 
 - `base`
-- `hr` (para empleados en trabajos/tratamientos/podas)
-
-## Notas Técnicas
-
-**Modelo de datos:**
-- 9 modelos principales con relaciones One2many/Many2one
-- Constraints SQL para unicidad
-- Campos compute con store=True
-- Validaciones @api.constrains
-
-**Rendimiento:**
-- Índices en campos FK y búsquedas frecuentes
-- Normalización de polígonos sin write recursivo (SQL directo)
-- Logging de errores sin bloquear operaciones
-- Uso de `@api.model_create_multi` para creación masiva
-
-**Próximas mejoras sugeridas:**
-- Integración robusta con geoengine
-- Proyección de coordenadas con proj4
-- Reports PDF de añadas y tratamientos
-- Dashboard analítico con gráficos
-- Importación/exportación de datos
-- Integración con inventario/facturación
+- `hr` — empleados en trabajos y tratamientos
+- `mail` — chatter en añadas
+- `product` — enlace con productos de Odoo
+- `spreadsheet_dashboard` — grupo Viñedo en Tableros
 
 ## Autor
 
-ToniSistemas  
+ToniSistemas
 https://github.com/ToniSistemas/odoo_custom
 
 ## Licencia
