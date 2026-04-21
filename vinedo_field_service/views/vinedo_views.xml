@@ -519,7 +519,7 @@
     </record>
 
     <menuitem id="menu_vinedo_fitosanitarios" name="Fitosanitarios (MAPA)"
-        parent="menu_vinedo_root" action="action_fitosanitario" sequence="5"/>
+        parent="menu_vinedo_config" action="action_fitosanitario" sequence="10"/>
 
     <menuitem id="menu_vinedo_descargar_catalogo" name="Descargar catálogo MAPA"
         parent="menu_vinedo_config" action="action_server_importar_catalogo_mapa" sequence="50"/>
