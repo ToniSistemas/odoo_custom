@@ -839,40 +839,6 @@
         </field>
     </record>
 
-    <record id="view_estadistica_gasto_search" model="ir.ui.view">
-        <field name="name">vinedo.estadistica.gasto.search</field>
-        <field name="model">vinedo.estadistica.gasto</field>
-        <field name="arch" type="xml">
-            <search string="Buscar estadísticas">
-                <field name="finca_id"/>
-                <field name="empleado_id"/>
-                <field name="tipo_trabajo_id"/>
-                <field name="producto_id"/>
-                <separator/>
-                <filter string="Tratamientos" name="filter_tratamiento"
-                    domain="[('tipo','=','tratamiento')]"/>
-                <filter string="Aportaciones" name="filter_aportacion"
-                    domain="[('tipo','=','aportacion')]"/>
-                <filter string="Trabajos" name="filter_trabajo"
-                    domain="[('tipo','=','trabajo')]"/>
-                <group expand="1" string="Agrupar por">
-                    <filter string="Finca" name="group_finca"
-                        context="{'group_by':'finca_id'}"/>
-                    <filter string="Tipo" name="group_tipo"
-                        context="{'group_by':'tipo'}"/>
-                    <filter string="Año" name="group_anio"
-                        context="{'group_by':'fecha:year'}"/>
-                    <filter string="Mes" name="group_mes"
-                        context="{'group_by':'fecha:month'}"/>
-                    <filter string="Empleado" name="group_empleado"
-                        context="{'group_by':'empleado_id'}"/>
-                    <filter string="Tipo de trabajo" name="group_tipo_trabajo"
-                        context="{'group_by':'tipo_trabajo_id'}"/>
-                </group>
-            </search>
-        </field>
-    </record>
-
     <record id="action_estadistica_gasto" model="ir.actions.act_window">
         <field name="name">Estadística de gasto</field>
         <field name="res_model">vinedo.estadistica.gasto</field>
