@@ -17,3 +17,4 @@ access_vinedo_fitosanitario_wizard,vinedo.fitosanitario.wizard,model_vinedo_fito
 access_vinedo_fitosanitario_wizard_linea,vinedo.fitosanitario.wizard.linea,model_vinedo_fitosanitario_wizard_linea,base.group_user,1,1,1,1
 access_vinedo_fitosanitario_import_wizard,vinedo.fitosanitario.import.wizard,model_vinedo_fitosanitario_import_wizard,base.group_user,1,1,1,1
 access_vinedo_maquinaria,vinedo.maquinaria,model_vinedo_maquinaria,base.group_user,1,1,1,1
+access_vinedo_estadistica_gasto,vinedo.estadistica.gasto,model_vinedo_estadistica_gasto,base.group_user,1,0,0,0

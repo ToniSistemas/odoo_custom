@@ -1,4 +1,4 @@
-from odoo import models, fields, api, _
+from odoo import models, fields, api, tools, _
 from odoo.exceptions import ValidationError, UserError
 import json
 import logging
@@ -1203,3 +1203,76 @@ class FitosanitarioImportWizard(models.TransientModel):
             'view_mode': 'form',
             'target': 'new',
         }
+
+
+class EstadisticaGasto(models.Model):
+    """Vista SQL unificada de costes (tratamientos, aportaciones) y horas (trabajos) por finca."""
+    _name = 'vinedo.estadistica.gasto'
+    _description = 'Estadística de gastos y horas por finca'
+    _auto = False
+    _rec_name = 'tipo'
+    _order = 'fecha desc'
+
+    finca_id = fields.Many2one('vinedo.finca', string='Finca', readonly=True)
+    fecha = fields.Date(string='Fecha', readonly=True)
+    tipo = fields.Selection([
+        ('tratamiento', 'Tratamiento'),
+        ('aportacion', 'Aportación'),
+        ('trabajo', 'Trabajo'),
+    ], string='Tipo', readonly=True)
+    empleado_id = fields.Many2one('hr.employee', string='Empleado', readonly=True)
+    producto_id = fields.Many2one('product.product', string='Producto', readonly=True)
+    tipo_trabajo_id = fields.Many2one('vinedo.tipo.trabajo', string='Tipo de trabajo', readonly=True)
+    coste = fields.Float(string='Coste (€)', digits=(10, 2), readonly=True)
+    horas = fields.Float(string='Horas', digits=(5, 2), readonly=True)
+
+    def init(self):
+        tools.drop_view_if_exists(self.env.cr, self._table)
+        self.env.cr.execute("""
+            CREATE VIEW vinedo_estadistica_gasto AS (
+                SELECT
+                    ROW_NUMBER() OVER (ORDER BY sub.fecha DESC, sub.finca_id) AS id,
+                    sub.finca_id,
+                    sub.fecha,
+                    sub.tipo,
+                    sub.empleado_id,
+                    sub.producto_id,
+                    sub.tipo_trabajo_id,
+                    sub.coste,
+                    sub.horas
+                FROM (
+                    SELECT
+                        t.finca_id,
+                        t.fecha,
+                        'tratamiento'::varchar AS tipo,
+                        t.empleado_id,
+                        t.producto_id,
+                        NULL::integer AS tipo_trabajo_id,
+                        t.coste,
+                        0.0::double precision AS horas
+                    FROM vinedo_tratamiento t
+                    UNION ALL
+                    SELECT
+                        a.finca_id,
+                        a.fecha,
+                        'aportacion'::varchar AS tipo,
+                        NULL::integer AS empleado_id,
+                        a.producto_id,
+                        NULL::integer AS tipo_trabajo_id,
+                        a.coste,
+                        0.0::double precision AS horas
+                    FROM vinedo_aportacion a
+                    UNION ALL
+                    SELECT
+                        tr.finca_id,
+                        tr.fecha,
+                        'trabajo'::varchar AS tipo,
+                        tr.empleado_id,
+                        NULL::integer AS producto_id,
+                        tr.tipo_trabajo AS tipo_trabajo_id,
+                        0.0::double precision AS coste,
+                        tr.horas
+                    FROM vinedo_trabajo tr
+                ) sub
+            )
+        """)
