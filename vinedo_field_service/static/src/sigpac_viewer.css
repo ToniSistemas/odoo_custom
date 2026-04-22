@@ -93,3 +93,80 @@ html, body {
     display: none;
     white-space: nowrap;
 }
+
+/* ── Modo dibujo de zona ── */
+#panel.draw {
+    background: #fff3cd;
+    border-top-color: #e67e00;
+    min-height: 60px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    padding-top: 8px;
+}
+
+.zona-list {
+    font-size: 11px;
+    margin: 3px 0 5px 14px;
+    padding: 0;
+    width: 100%;
+    max-height: 56px;
+    overflow-y: auto;
+}
+
+/* Botón "Dibujar zona" sobre el mapa */
+.sigpac-draw-zona-btn {
+    display: block;
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+    font-weight: bold;
+    color: #004085 !important;
+    background: #fff;
+    text-decoration: none !important;
+    white-space: nowrap;
+    line-height: 1.5 !important;
+}
+.sigpac-draw-zona-btn:hover { background: #e8f4fd !important; }
+
+/* Botones de acción de zona en el panel */
+#btn-zona-reemplazar {
+    padding: 3px 12px;
+    background: #28a745;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+#btn-zona-reemplazar:hover { background: #218838; }
+
+.btn-agregar {
+    padding: 3px 12px;
+    background: #17a2b8;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+.btn-cancelar {
+    padding: 3px 8px;
+    background: #6c757d;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+#btn-cerrar-zona, #btn-cancelar-zona {
+    padding: 3px 8px;
+    border: 1px solid #aaa;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    background: #fff;
+}
+#btn-cerrar-zona:disabled { color: #aaa; cursor: default; }

@@ -230,7 +230,235 @@
         });
     });
 
-    /* ── 9. Helpers de consulta ── */
+    /* ── 9. Dibujo de zona (polígono libre) para capturar múltiples parcelas ── */
+
+    var _drawMode   = false;
+    var _drawVerts  = [];      /* array de L.LatLng */
+    var _drawLine   = null;    /* L.Polyline de preview */
+    var _drawPoly   = null;    /* L.Polygon pintado al cerrar */
+    var _zonaResult = null;    /* último resultado de detección */
+
+    /* Botón "Dibujar zona" como control Leaflet (top-right, encima de zoom) */
+    var _DrawZonaControl = L.Control.extend({
+        options: { position: 'topright' },
+        onAdd: function () {
+            var div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+            var btn = L.DomUtil.create('a', 'sigpac-draw-zona-btn', div);
+            btn.href  = '#';
+            btn.title = 'Dibujar zona para capturar todos sus recintos SIGPAC';
+            btn.innerHTML = '&#9651;&nbsp;Zona';
+            btn.setAttribute('role', 'button');
+            L.DomEvent.disableClickPropagation(div);
+            L.DomEvent.on(btn, 'click', function (e) {
+                L.DomEvent.stop(e);
+                _enterDrawMode();
+            });
+            return div;
+        }
+    });
+    new _DrawZonaControl().addTo(map);
+
+    function _enterDrawMode() {
+        _drawMode  = true;
+        _drawVerts = [];
+        clearPreview();
+        _clearDrawLayers();
+        map.getContainer().style.cursor = 'crosshair';
+        panel.className = 'draw';
+        panel.innerHTML =
+            '<strong>&#9999; Modo dibujo de zona</strong>'
+            + ' &mdash; Haz clic para a&ntilde;adir v&eacute;rtices.'
+            + ' <strong>Doble&nbsp;clic</strong> para cerrar.'
+            + ' <span id="draw-count" class="hint">(0 v&eacute;rtices)</span>'
+            + ' &nbsp;<button id="btn-cerrar-zona" disabled>Cerrar pol&iacute;gono</button>'
+            + ' &nbsp;<button id="btn-cancelar-zona">Cancelar</button>';
+        document.getElementById('btn-cerrar-zona').addEventListener('click', _finishDraw);
+        document.getElementById('btn-cancelar-zona').addEventListener('click', _cancelDraw);
+    }
+
+    function _cancelDraw() {
+        _drawMode  = false;
+        _drawVerts = [];
+        _clearDrawLayers();
+        _zonaResult = null;
+        map.getContainer().style.cursor = '';
+        panel.className = '';
+        panel.innerHTML = 'Haz clic en una parcela del mapa para seleccionarla.'
+            + ' <span class="hint">(zoom &ge;&nbsp;14 para ver los l&iacute;mites)</span>';
+    }
+
+    function _clearDrawLayers() {
+        if (_drawLine) { map.removeLayer(_drawLine); _drawLine = null; }
+        if (_drawPoly) { map.removeLayer(_drawPoly); _drawPoly = null; }
+    }
+
+    function _addDrawVertex(latlng) {
+        _drawVerts.push(latlng);
+        var n = _drawVerts.length;
+        if (_drawLine) { map.removeLayer(_drawLine); }
+        if (n >= 2) {
+            var pts = _drawVerts.concat([_drawVerts[0]]);   /* cierra visualmente */
+            _drawLine = L.polyline(pts, { color: '#e67e00', weight: 2, dashArray: '5,5' }).addTo(map);
+        }
+        var countEl = document.getElementById('draw-count');
+        if (countEl) {
+            countEl.textContent = '(' + n + ' vértice' + (n !== 1 ? 's' : '') + ')';
+        }
+        var btnCerrar = document.getElementById('btn-cerrar-zona');
+        if (btnCerrar) { btnCerrar.disabled = n < 3; }
+    }
+
+    function _finishDraw() {
+        if (_drawVerts.length < 3) { return; }
+        _drawMode = false;
+        map.getContainer().style.cursor = '';
+
+        if (_drawLine) { map.removeLayer(_drawLine); _drawLine = null; }
+        _drawPoly = L.polygon(_drawVerts, {
+            color: '#e67e00', weight: 2,
+            fillColor: '#ffaa00', fillOpacity: 0.12
+        }).addTo(map);
+
+        /* Enviar polígono al servidor como array [[lon, lat], ...] */
+        var polyCoords = _drawVerts.map(function (ll) { return [ll.lng, ll.lat]; });
+        panel.className = 'loading';
+        panel.innerHTML = '&#8987; Analizando zona&hellip; consultando SIGPAC';
+        _detectarZona(polyCoords);
+    }
+
+    /* ── Detectar recintos dentro del polígono (llamada al servidor) ── */
+    function _detectarZona(polyCoords) {
+        fetch('/vinedo/sigpac_detectar_zona', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                jsonrpc: '2.0', method: 'call', id: 1,
+                params: { polygon: polyCoords }
+            })
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            var result = data.result;
+            if (!result || result.error) {
+                panel.className = 'err';
+                panel.innerHTML = '⚠ ' + ((result && result.error) || 'Error al analizar la zona')
+                    + ' &nbsp;<button id="btn-zona-retry">Reintentar</button>'
+                    + ' &nbsp;<button id="btn-zona-cancel2">Cancelar</button>';
+                document.getElementById('btn-zona-retry').addEventListener('click', function () {
+                    var pts = _drawVerts.map(function (ll) { return [ll.lng, ll.lat]; });
+                    panel.className = 'loading';
+                    panel.innerHTML = '&#8987; Reintentando&hellip;';
+                    _detectarZona(pts);
+                });
+                document.getElementById('btn-zona-cancel2').addEventListener('click', _cancelDraw);
+                return;
+            }
+            _zonaResult = result;
+            _showZonaResultado(result);
+        })
+        .catch(function (err) {
+            panel.className = 'err';
+            panel.innerHTML = '⚠ Error de red: ' + err.message
+                + ' &nbsp;<button id="btn-zona-cancel3">Cancelar</button>';
+            document.getElementById('btn-zona-cancel3').addEventListener('click', _cancelDraw);
+        });
+    }
+
+    function _showZonaResultado(result) {
+        var parcelas = result.parcelas || [];
+        var totalR   = result.total_recintos || 0;
+
+        if (!parcelas.length) {
+            panel.className = '';
+            panel.innerHTML = 'No se encontraron recintos SIGPAC en la zona dibujada.'
+                + ' Prueba a ampliarla o usa el visor de capas.'
+                + ' &nbsp;<button id="btn-zona-nuevo">Dibujar de nuevo</button>';
+            document.getElementById('btn-zona-nuevo').addEventListener('click', function () {
+                _clearDrawLayers();
+                _enterDrawMode();
+            });
+            return;
+        }
+
+        var listHtml = parcelas.map(function (p) {
+            var supTot = (p.recintos || []).reduce(function (s, r) {
+                return s + (parseFloat(r.superficie_ha) || 0);
+            }, 0);
+            return '<li><code>' + p.ref + '</code>: '
+                + p.recintos.length + ' recinto(s) &mdash; '
+                + supTot.toFixed(4) + '&nbsp;ha</li>';
+        }).join('');
+
+        panel.className = 'ok';
+        panel.innerHTML =
+            '<strong>✅ Zona analizada:</strong> '
+            + parcelas.length + ' parcela(s), ' + totalR + ' recinto(s) en total'
+            + '<ul class="zona-list">' + listHtml + '</ul>'
+            + '<button id="btn-zona-reemplazar">⬇ Importar (reemplaza)</button>'
+            + ' &nbsp;<button id="btn-zona-agregar" class="btn-agregar">&#43; A&ntilde;adir recintos</button>'
+            + ' &nbsp;<button id="btn-zona-cancelar" class="btn-cancelar">Cancelar</button>';
+
+        document.getElementById('btn-zona-reemplazar').addEventListener('click', function () {
+            if (!confirm('¿Reemplazar todos los recintos existentes con los '
+                    + totalR + ' recintos de la zona dibujada?')) { return; }
+            _importarZona('reemplazar');
+        });
+        document.getElementById('btn-zona-agregar').addEventListener('click', function () {
+            _importarZona('agregar');
+        });
+        document.getElementById('btn-zona-cancelar').addEventListener('click', _cancelDraw);
+    }
+
+    function _importarZona(modo) {
+        if (!_zonaResult) { return; }
+        panel.className = 'loading';
+        panel.innerHTML = '&#8987; Importando recintos&hellip;';
+        fetch('/vinedo/sigpac_importar_zona', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                jsonrpc: '2.0', method: 'call', id: 1,
+                params: { rec_id: REC_ID, parcelas: _zonaResult.parcelas, modo: modo }
+            })
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            var res = data.result;
+            if (res && res.ok) {
+                _clearDrawLayers();
+                panel.className = 'done';
+                panel.innerHTML =
+                    '✅ Importadas: ' + res.n_parcelas + ' parcela(s), '
+                    + res.n_recintos + ' recinto(s)'
+                    + ' &nbsp;<button id="btn-zona-reload"'
+                    + ' style="padding:3px 10px;background:#6c757d;color:#fff;border:none;'
+                    + 'border-radius:4px;cursor:pointer;font-size:12px;">'
+                    + 'Recargar página</button>';
+                document.getElementById('btn-zona-reload').addEventListener('click', function () {
+                    window.parent.location.reload();
+                });
+            } else {
+                panel.className = 'err';
+                panel.innerHTML = '⚠ ' + ((res && res.error) || 'Error al importar')
+                    + ' &nbsp;<button id="btn-zona-cancel4">Cancelar</button>';
+                document.getElementById('btn-zona-cancel4').addEventListener('click', _cancelDraw);
+            }
+        })
+        .catch(function (err) {
+            panel.className = 'err';
+            panel.innerHTML = '⚠ Error de red: ' + err.message;
+        });
+    }
+
+    /* Doble clic en mapa: cierra polígono si estamos en draw mode */
+    map.on('dblclick', function (e) {
+        if (_drawMode && _drawVerts.length >= 3) {
+            L.DomEvent.stop(e);
+            _finishDraw();
+        }
+    });
+
+    /* ── 10. Helpers de consulta ── */
     function buildHubcloudUrl(latlng) {
         return (
             'https://sigpac-hubcloud.es/servicioconsultassigpac'
@@ -300,8 +528,13 @@
         });
     }
 
-    /* ── 10. Clic en el mapa ── */
+    /* ── 11. Clic en el mapa ── */
     map.on('click', function (e) {
+        /* En modo dibujo, añadir vértice en lugar de consultar SIGPAC */
+        if (_drawMode) {
+            _addDrawVertex(e.latlng);
+            return;
+        }
         var lat = e.latlng.lat.toFixed(7);
         var lon = e.latlng.lng.toFixed(7);
         panel.className = 'loading';
@@ -345,7 +578,7 @@
             });
     });
 
-    /* ── 11. Importar parcela (reemplaza todos los recintos existentes) ── */
+    /* ── 12. Importar parcela por clic (reemplaza todos los recintos existentes) ── */
     function doImport() {
         if (!selection) { return; }
         var btnIm = document.getElementById('btn-import');
@@ -392,7 +625,7 @@
         });
     }
 
-    /* ── 12. Añadir recintos de otra parcela (no borra los existentes) ── */
+    /* ── 13. Añadir recintos de otra parcela por clic (no borra los existentes) ── */
     function doAgregarParcela() {
         if (!selection) { return; }
         var btnAg = document.getElementById('btn-agregar');

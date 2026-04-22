@@ -3,8 +3,80 @@ from odoo import http
 from odoo.http import request
 from odoo.exceptions import UserError
 import logging
+import json as _json
+import gzip as _gzip
+import urllib.request as _ureq
 
 _logger = logging.getLogger(__name__)
+
+_SIGPAC_HEADERS = {'User-Agent': 'OdooSIGPAC/1.8', 'Accept-Encoding': 'gzip'}
+
+
+# ─── Helpers de muestreo geoespacial ──────────────────────────────────────────
+
+def _point_in_poly(x, y, polygon):
+    """Ray-casting point-in-polygon test. polygon = [[lon, lat], ...]"""
+    n = len(polygon)
+    inside = False
+    j = n - 1
+    for i in range(n):
+        xi, yi = polygon[i][0], polygon[i][1]
+        xj, yj = polygon[j][0], polygon[j][1]
+        if ((yi > y) != (yj > y)) and (x < (xj - xi) * (y - yi) / (yj - yi) + xi):
+            inside = not inside
+        j = i
+    return inside
+
+
+def _grid_points_in_poly(polygon, max_points=180):
+    """Returns a list of (lon, lat) grid points inside the polygon.
+
+    Uses an adaptive step so the result never exceeds max_points.
+    """
+    lons = [p[0] for p in polygon]
+    lats = [p[1] for p in polygon]
+    min_lon, max_lon = min(lons), max(lons)
+    min_lat, max_lat = min(lats), max(lats)
+    bbox_w = max_lon - min_lon
+    bbox_h = max_lat - min_lat
+    if bbox_w <= 0 or bbox_h <= 0:
+        return []
+
+    # Start with ~80m step (0.0008°); enlarge if bbox would produce too many points
+    step = 0.0008
+    estimated = (bbox_w / step) * (bbox_h / step)
+    if estimated > max_points * 2:
+        step = ((bbox_w * bbox_h) / max_points) ** 0.5
+
+    points = []
+    lat = min_lat + step / 2
+    while lat <= max_lat:
+        lon = min_lon + step / 2
+        while lon <= max_lon:
+            if _point_in_poly(lon, lat, polygon):
+                points.append((round(lon, 7), round(lat, 7)))
+            lon += step
+        lat += step
+
+    # Subsample evenly if still over limit
+    if len(points) > max_points:
+        step_i = max(1, len(points) // max_points)
+        points = points[::step_i][:max_points]
+    return points
+
+
+def _sigpac_fetch(url, timeout=9):
+    """HTTP GET to SIGPAC, handles gzip. Returns parsed JSON or None."""
+    try:
+        req = _ureq.Request(url, headers=_SIGPAC_HEADERS)
+        with _ureq.urlopen(req, timeout=timeout) as resp:
+            raw = resp.read()
+            if raw[:2] == b'\x1f\x8b':
+                raw = _gzip.decompress(raw)
+            return _json.loads(raw.decode('utf-8', errors='ignore'))
+    except Exception as exc:
+        _logger.debug('SIGPAC fetch %s: %s', url, exc)
+        return None
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Visor SIGPAC  –  HTML embebido en el formulario de Finca
@@ -37,16 +109,18 @@ _VIEWER_HTML = (
     '<title>Visor SIGPAC</title>'
     # CSS externo - mismo origen - pasa CSP style-src 'self'
     '<link rel="stylesheet"'
-    '  href="/vinedo_field_service/static/src/lib/leaflet/leaflet.css?v=2.0.9"/>'
+    '  href="/vinedo_field_service/static/src/lib/leaflet/leaflet.css?v=2.2.0"/>'
     '<link rel="stylesheet"'
-    '  href="/vinedo_field_service/static/src/sigpac_viewer.css?v=2.0.9"/>'
+    '  href="/vinedo_field_service/static/src/sigpac_viewer.css?v=2.2.0"/>'
     '</head>'
     '<body>'
     '<div id="descripcion">'
-    '  <strong>Visor SIGPAC</strong> &mdash; Haz clic sobre una parcela en el mapa para obtener su referencia SIGPAC, superficie y coordenadas.'
-    '  Una vez seleccionada, pulsa <strong>Importar a Odoo</strong> para guardar los datos en la finca.'
-    '  Usa la capa <em>Recintos SIGPAC</em> para identificar los l&iacute;mites de las parcelas.'
-    '  El checkbox controla si se importa la superficie total de la parcela (suma de todos sus recintos) o solo la del recinto clicado.'
+    '  <strong>Visor SIGPAC</strong> &mdash;'
+    '  <strong>Clic</strong> en una parcela para importarla.'
+    '  &nbsp;|&nbsp; Bot&oacute;n <strong>&#9651;&nbsp;Zona</strong> (arriba derecha) para dibujar un pol&iacute;gono'
+    '  y capturar autom&aacute;ticamente todos los recintos del &aacute;rea: haz clic para a&ntilde;adir v&eacute;rtices'
+    '  y <strong>doble&nbsp;clic</strong> para cerrar.'
+    '  &nbsp;|&nbsp; Activa la capa <em>Recintos&nbsp;SIGPAC</em> para ver los l&iacute;mites.'
     '</div>'
     '<div id="map">'
     '  <div id="zoom-hint">'
@@ -58,8 +132,8 @@ _VIEWER_HTML = (
     '  <span class="hint">(zoom &ge;&nbsp;14 para ver los l&iacute;mites)</span>'
     '</div>'
     # Scripts externos - mismo origen - pasan CSP script-src 'self'
-    '<script src="/vinedo_field_service/static/src/lib/leaflet/leaflet.js?v=2.0.9"></script>'
-        '<script src="/vinedo_field_service/static/src/sigpac_viewer.js?v=2.0.9"></script>'
+    '<script src="/vinedo_field_service/static/src/lib/leaflet/leaflet.js?v=2.2.0"></script>'
+    '<script src="/vinedo_field_service/static/src/sigpac_viewer.js?v=2.2.0"></script>'
     '</body>'
     '</html>'
 )
@@ -291,4 +365,163 @@ class SigpacController(http.Controller):
         n_rec = len(recinto_vals)
         return {'ok': True, 'ref_sigpac2': ref2, 'n_recintos': n_rec, 'total_m2': round(total_m2, 0)}
 
+    # ── Nuevas rutas: dibujo de zona ──────────────────────────────────────────
+
+    @http.route('/vinedo/sigpac_detectar_zona', type='jsonrpc', auth='user', csrf=False)
+    def sigpac_detectar_zona(self, polygon, **kwargs):
+        """Detecta todos los recintos SIGPAC dentro de un polígono dibujado por el usuario.
+
+        polygon: lista de [lon, lat] representando los vértices del polígono.
+        Devuelve: {parcelas: [{ref, recintos: [{recinto_num, uso_sigpac, superficie_ha}]}],
+                   total_recintos: N}
+        No escribe nada en la base de datos.
+        """
+        import concurrent.futures
+
+        if not polygon or len(polygon) < 3:
+            return {'error': 'El polígono debe tener al menos 3 vértices.'}
+
+        # 1. Generar cuadrícula de puntos dentro del polígono
+        points = _grid_points_in_poly(polygon, max_points=180)
+        if not points:
+            return {'error': 'No se pudieron generar puntos de muestreo en la zona dibujada.'}
+
+        # 2. Consultar SIGPAC en paralelo para cada punto → recoger parcelas únicas
+        parcela_map = {}   # ref → primer dict de datos devuelto por SIGPAC
+
+        def _query_point(lonlat):
+            lon, lat = lonlat
+            url = (
+                'https://sigpac-hubcloud.es/servicioconsultassigpac'
+                f'/query/recinfobypoint/4326/{lon:.7f}/{lat:.7f}.json'
+            )
+            arr = _sigpac_fetch(url, timeout=9)
+            if isinstance(arr, list) and arr:
+                p = arr[0]
+                agr = str(p.get('agregado', 0) or 0)
+                zon = str(p.get('zona',     0) or 0)
+                ref = (f"{p.get('provincia','')}:{p.get('municipio','')}:"
+                       f"{agr}:{zon}:{p.get('poligono','')}:{p.get('parcela','')}")
+                return ref, p
+            return None, None
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=14) as ex:
+            futures = [ex.submit(_query_point, pt) for pt in points]
+            for fut in concurrent.futures.as_completed(futures):
+                ref, data = fut.result()
+                if ref and ref not in parcela_map:
+                    parcela_map[ref] = data
+
+        if not parcela_map:
+            return {'parcelas': [], 'total_recintos': 0}
+
+        # 3. Para cada parcela única, obtener todos sus recintos en paralelo
+        def _fetch_recintos(ref_data):
+            ref, p = ref_data
+            prov = str(p.get('provincia', ''))
+            mun  = str(p.get('municipio', ''))
+            agr  = str(p.get('agregado', 0) or 0)
+            zon  = str(p.get('zona',     0) or 0)
+            pol  = str(p.get('poligono', ''))
+            par  = str(p.get('parcela',  ''))
+            url  = (
+                'https://sigpac-hubcloud.es/servicioconsultassigpac'
+                f'/query/recinfoparc/{prov}/{mun}/{agr}/{zon}/{pol}/{par}.json'
+            )
+            arr = _sigpac_fetch(url, timeout=12)
+            if isinstance(arr, list) and arr:
+                recintos = [
+                    {
+                        'recinto_num':  int(r.get('recinto', 0)),
+                        'uso_sigpac':   r.get('uso_sigpac', '?'),
+                        'superficie_ha': round(float(r.get('superficie', 0) or 0), 4),
+                    }
+                    for r in arr if r.get('recinto')
+                ]
+            else:
+                # Fallback: usar el único recinto del punto de muestreo
+                recintos = [{
+                    'recinto_num':  int(p.get('recinto', 0)),
+                    'uso_sigpac':   p.get('uso_sigpac', '?'),
+                    'superficie_ha': round(float(p.get('superficie', 0) or 0), 4),
+                }]
+            return {'ref': ref, 'recintos': recintos}
+
+        parcelas_result = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as ex:
+            futures = [ex.submit(_fetch_recintos, item) for item in parcela_map.items()]
+            for fut in concurrent.futures.as_completed(futures):
+                parcelas_result.append(fut.result())
+
+        total_recintos = sum(len(p['recintos']) for p in parcelas_result)
+        return {'parcelas': parcelas_result, 'total_recintos': total_recintos}
+
+    @http.route('/vinedo/sigpac_importar_zona', type='jsonrpc', auth='user', csrf=False)
+    def sigpac_importar_zona(self, rec_id, parcelas, modo='agregar', **kwargs):
+        """Importa los recintos detectados por sigpac_detectar_zona a la finca.
+
+        parcelas: lista de {ref, recintos: [{recinto_num, uso_sigpac, superficie_ha}]}
+        modo: 'reemplazar' elimina todos los recintos existentes primero;
+              'agregar'    añade los nuevos con offset para no colisionar.
+        """
+        record = request.env['vinedo.finca'].browse(int(rec_id))
+        if not record.exists():
+            return {'error': 'Finca no encontrada'}
+        if not parcelas:
+            return {'error': 'No se recibieron parcelas para importar.'}
+
+        try:
+            recinto_vals = []
+
+            if modo == 'reemplazar':
+                recinto_vals.append((5, 0, 0))   # borrar todos los existentes
+                # Parcela 0 → sin offset; parcelas 1..N → offsets 1000, 2000, ...
+                offsets = [i * 1000 for i in range(len(parcelas))]
+            else:
+                # Calcular offset base desde los recintos existentes
+                existing_nums = record.recinto_ids.mapped('recinto_num')
+                base = (max(existing_nums) // 1000 + 1) * 1000 if existing_nums else 1000
+                offsets = [base + i * 1000 for i in range(len(parcelas))]
+
+            total_recintos = 0
+            refs_nuevas = []
+
+            for i, parcela in enumerate(parcelas):
+                offset = offsets[i]
+                ref = parcela.get('ref', '')
+                for r in parcela.get('recintos', []):
+                    rnum = int(r.get('recinto_num', 0))
+                    if not rnum:
+                        continue
+                    recinto_vals.append((0, 0, {
+                        'recinto_num':  offset + rnum,
+                        'uso_sigpac':   r.get('uso_sigpac', '?'),
+                        'superficie_ha': round(float(r.get('superficie_ha', 0)), 4),
+                        'activo': True,
+                    }))
+                    total_recintos += 1
+                if ref:
+                    refs_nuevas.append(ref)
+
+            if not total_recintos:
+                return {'error': 'No hay recintos válidos para importar.'}
+
+            write_vals = {'recinto_ids': recinto_vals}
+
+            if modo == 'reemplazar':
+                write_vals['ref_sigpac'] = refs_nuevas[0] if refs_nuevas else ''
+                extra = refs_nuevas[1:] if len(refs_nuevas) > 1 else []
+                write_vals['refs_sigpac_extra'] = '\n'.join(extra) or False
+            else:
+                existing_extra = record.refs_sigpac_extra or ''
+                extra_lines = [l.strip() for l in existing_extra.splitlines() if l.strip()]
+                extra_lines.extend(refs_nuevas)
+                write_vals['refs_sigpac_extra'] = '\n'.join(extra_lines) or False
+
+            record.write(write_vals)
+            return {'ok': True, 'n_parcelas': len(parcelas), 'n_recintos': total_recintos}
+
+        except Exception as exc:
+            _logger.exception('sigpac_importar_zona rec_id=%s', rec_id)
+            return {'error': str(exc)}
 
