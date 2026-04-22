@@ -845,6 +845,11 @@ class Recinto(models.Model):
     _order = 'recinto_num'
     _rec_name = 'name'
 
+    _sql_constraints = [
+        ('finca_recinto_num_uniq', 'unique(finca_id, recinto_num)',
+         'Ya existe un recinto con ese número en esta finca.'),
+    ]
+
     name = fields.Char(string='Nº Recinto', compute='_compute_name', store=True)
     finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True, ondelete='cascade', index=True)
     recinto_num = fields.Integer(string='Recinto', required=True)
@@ -1155,18 +1160,28 @@ class FitosanitarioImportWizard(models.TransientModel):
         }
 
     def action_importar(self):
-        """Phase 2: Write fetched products to DB using per-record savepoints
-        so a concurrent-update error on one row never kills the whole import."""
+        """Phase 2: Write fetched products to DB.
+
+        New products are created in a single batch call; existing ones are updated
+        per-record with savepoints so a concurrent-update error never kills the import.
+        """
         self.ensure_one()
         productos = json.loads(self.productos_json or '[]')
         Fito = self.env['vinedo.fitosanitario']
         creados = actualizados = errores = 0
 
+        # Index existing records by id_mapa for O(1) lookup instead of N queries
+        ids_mapa = [p['id_mapa'] for p in productos if p.get('id_mapa')]
+        existentes = {r.id_mapa: r for r in Fito.search([('id_mapa', 'in', ids_mapa)])}
+
+        nuevos = []
         for p in productos:
-            try:
-                with self.env.cr.savepoint():
-                    existing = Fito.search([('id_mapa', '=', p['id_mapa'])], limit=1)
-                    if existing:
+            if not p.get('id_mapa'):
+                continue
+            existing = existentes.get(p['id_mapa'])
+            if existing:
+                try:
+                    with self.env.cr.savepoint():
                         existing.write({
                             'num_registro': p['num_registro'],
                             'nombre': p['nombre'],
@@ -1177,17 +1192,34 @@ class FitosanitarioImportWizard(models.TransientModel):
                             'observaciones': p.get('observaciones', ''),
                             'fecha_caducidad': p.get('fecha_caducidad', False),
                         })
-                        actualizados += 1
-                    else:
-                        Fito.create(p)
-                        creados += 1
-                    self.env.flush_all()
+                    actualizados += 1
+                except Exception as exc:
+                    self.env.invalidate_all()
+                    _logger.warning(
+                        'MAPA import: skipping update "%s" (id_mapa=%s): %s',
+                        p.get('nombre', '?'), p.get('id_mapa'), exc)
+                    errores += 1
+            else:
+                nuevos.append(p)
+
+        # Batch-create all new records in one call
+        if nuevos:
+            try:
+                Fito.create(nuevos)
+                creados = len(nuevos)
             except Exception as exc:
-                self.env.invalidate_all()
-                _logger.warning(
-                    'MAPA import: skipping "%s" (id_mapa=%s): %s',
-                    p.get('nombre', '?'), p.get('id_mapa'), exc)
-                errores += 1
+                _logger.warning('MAPA import: batch create failed (%s), retrying one-by-one', exc)
+                for p in nuevos:
+                    try:
+                        with self.env.cr.savepoint():
+                            Fito.create(p)
+                        creados += 1
+                    except Exception as exc2:
+                        self.env.invalidate_all()
+                        _logger.warning(
+                            'MAPA import: skipping create "%s" (id_mapa=%s): %s',
+                            p.get('nombre', '?'), p.get('id_mapa'), exc2)
+                        errores += 1
 
         self.write({
             'fase': 'listo',

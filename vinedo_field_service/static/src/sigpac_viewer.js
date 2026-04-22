@@ -211,6 +211,7 @@
 
     /* ── 8. Sincronizar colores con los checkboxes de Odoo (postMessage) ── */
     window.addEventListener('message', function (e) {
+        if (e.origin !== window.location.origin) { return; }
         if (!e.data || e.data.type !== 'recinto_update') { return; }
         var activos = e.data.activos || [];
         Object.keys(recintoLayers).forEach(function (key) {
@@ -269,7 +270,10 @@
             + ' &nbsp;<button id="btn-agregar"'
             + ' style="padding:3px 12px;background:#17a2b8;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;font-weight:bold;white-space:nowrap;">'
             + '&#43; A\u00f1adir recintos</button>';
-        document.getElementById('btn-import').addEventListener('click', doImport);
+        document.getElementById('btn-import').addEventListener('click', function () {
+            if (!confirm('¿Importar esta parcela? Se eliminarán todos los recintos existentes y se sustituirán por los nuevos.')) { return; }
+            doImport();
+        });
         document.getElementById('btn-agregar').addEventListener('click', doAgregarParcela);
     }
 
@@ -288,6 +292,10 @@
         document.getElementById('btn-ref-ok').addEventListener('click', function () {
             var ref = ((document.getElementById('ref-input') || {}).value || '').trim().replace(/-/g, ':');
             if (!ref) { return; }
+            if (!/^\d+:\d+:\d+:\d+:\d+:\d+$/.test(ref)) {
+                alert('Formato incorrecto. Usa: prov:mun:agr:zona:pol:par (ej: 27:16:0:0:79:1047)');
+                return;
+            }
             showParcelPanel({ ref: ref, uso: '?', m2: 0 }, lat, lon);
         });
     }
