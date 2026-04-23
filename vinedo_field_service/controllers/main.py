@@ -31,7 +31,10 @@ def _point_in_poly(x, y, polygon):
 def _grid_points_in_poly(polygon, max_points=180):
     """Returns a list of (lon, lat) grid points inside the polygon.
 
-    Uses an adaptive step so the result never exceeds max_points.
+    Step is derived from the shorter bbox dimension so that small parcels
+    (even < 1 ha) always get several sample points.  Falls back to the
+    polygon centroid when the polygon is so narrow that no grid point lands
+    inside it.
     """
     lons = [p[0] for p in polygon]
     lats = [p[1] for p in polygon]
@@ -42,8 +45,13 @@ def _grid_points_in_poly(polygon, max_points=180):
     if bbox_w <= 0 or bbox_h <= 0:
         return []
 
-    # Start with ~80m step (0.0008°); enlarge if bbox would produce too many points
-    step = 0.0008
+    # Target ~8 grid cells across the shorter dimension → guarantees points
+    # even in small parcels (~50 m wide ≈ 0.00045°).
+    step = min(bbox_w, bbox_h) / 8.0
+    step = max(step, 0.00005)   # never below ~5 m
+    step = min(step, 0.002)     # never above ~200 m
+
+    # Shrink further if bbox would still exceed the point budget
     estimated = (bbox_w / step) * (bbox_h / step)
     if estimated > max_points * 2:
         step = ((bbox_w * bbox_h) / max_points) ** 0.5
@@ -62,6 +70,13 @@ def _grid_points_in_poly(polygon, max_points=180):
     if len(points) > max_points:
         step_i = max(1, len(points) // max_points)
         points = points[::step_i][:max_points]
+
+    # Fallback for very thin/tiny polygons: use the centroid
+    if not points:
+        cx = round(sum(lons) / len(lons), 7)
+        cy = round(sum(lats) / len(lats), 7)
+        points = [(cx, cy)]   # centroid is always a valid sample even if outside
+
     return points
 
 
