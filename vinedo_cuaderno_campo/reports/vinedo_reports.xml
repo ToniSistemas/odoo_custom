@@ -19,7 +19,7 @@
             <t t-name="vinedo_cuaderno_campo.report_cuaderno_campo">
                 <t t-call="web.external_layout">
                     <t t-set="finca" t-value="doc"/>
-                    <t t-set="anio" t-value="context_today().year"/>
+                    <t t-set="anio" t-value="time.strftime('%Y')"/>
                     <div class="page">
                         <!-- Título -->
                         <h2 style="text-align:center; margin-bottom:20px;">
@@ -304,7 +304,7 @@
                         </table>
 
                         <p style="text-align:center; margin-top:40px; color:#999; font-size:11px;">
-                            Generado el <t t-esc="context_today()"/> —
+                            Generado el <t t-esc="time.strftime('%Y-%m-%d')"/> —
                             Cuaderno de Campo Digital · vinedo_cuaderno_campo
                         </p>
                     </div>
