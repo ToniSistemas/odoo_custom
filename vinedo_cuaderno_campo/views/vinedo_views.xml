@@ -198,6 +198,26 @@
         </field>
     </record>
 
+    <record id="view_finca_search" model="ir.ui.view">
+        <field name="name">vinedo.finca.search</field>
+        <field name="model">vinedo.finca</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" string="Nombre"/>
+                <field name="territory_id" string="Territorio"/>
+                <field name="ref_sigpac" string="Ref. SIGPAC"/>
+                <filter string="Con GPS" name="con_gps"
+                        domain="[('latitude', '!=', 0), ('longitude', '!=', 0)]"/>
+                <filter string="Con SIGPAC" name="con_sigpac"
+                        domain="[('ref_sigpac', '!=', False)]"/>
+                <group expand="1" string="Agrupar por">
+                    <filter string="Territorio" name="group_territorio"
+                            context="{'group_by': 'territory_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="action_finca" model="ir.actions.act_window">
         <field name="name">Fincas</field>
         <field name="res_model">vinedo.finca</field>
@@ -339,6 +359,32 @@
         </field>
     </record>
 
+    <record id="view_anada_search" model="ir.ui.view">
+        <field name="name">vinedo.anada.search</field>
+        <field name="model">vinedo.anada</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" string="Nombre"/>
+                <field name="finca_id" string="Finca"/>
+                <field name="variedad_id" string="Variedad"/>
+                <field name="anio" string="Año"/>
+                <filter string="Este año" name="anio_actual"
+                        domain="[('anio', '=', context_today().year)]"/>
+                <separator/>
+                <filter string="Bodega" name="destino_bodega"
+                        domain="[('destino', '=', 'bodega')]"/>
+                <filter string="Venta directa" name="destino_venta"
+                        domain="[('destino', '=', 'venta_directa')]"/>
+                <group expand="0" string="Agrupar por">
+                    <filter string="Año" name="group_anio" context="{'group_by': 'anio'}"/>
+                    <filter string="Finca" name="group_finca" context="{'group_by': 'finca_id'}"/>
+                    <filter string="Variedad" name="group_variedad" context="{'group_by': 'variedad_id'}"/>
+                    <filter string="Destino" name="group_destino" context="{'group_by': 'destino'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="action_anada" model="ir.actions.act_window">
         <field name="name">Añadas</field>
         <field name="res_model">vinedo.anada</field>
@@ -388,6 +434,7 @@
                        decoration-success="estado == 'Vigente'"
                        decoration-muted="estado != 'Vigente'"/>
                 <field name="fecha_caducidad"/>
+                <field name="phi_dias" optional="show"/>
                 <field name="fecha_consulta" optional="hide"/>
             </list>
         </field>
@@ -421,6 +468,7 @@
                                    decoration-success="estado == 'Vigente'"
                                    decoration-danger="estado != 'Vigente' and estado != False"/>
                             <field name="fecha_caducidad"/>
+                            <field name="phi_dias"/>
                             <field name="fecha_consulta" readonly="1"/>
                         </group>
                         <group string="Composición">
@@ -508,6 +556,30 @@
         <field name="code">action = env['vinedo.fitosanitario.import.wizard'].action_open()</field>
     </record>
 
+    <record id="view_fitosanitario_search" model="ir.ui.view">
+        <field name="name">vinedo.fitosanitario.search</field>
+        <field name="model">vinedo.fitosanitario</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="nombre" string="Nombre comercial"/>
+                <field name="num_registro" string="Nº Registro"/>
+                <field name="materia_activa" string="Materia activa"/>
+                <field name="funcion" string="Función"/>
+                <field name="titular" string="Titular"/>
+                <filter string="Vigentes" name="vigentes"
+                        domain="[('estado', '=', 'Vigente')]"/>
+                <filter string="No vigentes" name="no_vigentes"
+                        domain="[('estado', '!=', 'Vigente'), ('estado', '!=', False)]"/>
+                <filter string="Con PHI definido" name="con_phi"
+                        domain="[('phi_dias', '>', 0)]"/>
+                <group expand="0" string="Agrupar por">
+                    <filter string="Función" name="group_funcion" context="{'group_by': 'funcion'}"/>
+                    <filter string="Estado" name="group_estado" context="{'group_by': 'estado'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="action_fitosanitario" model="ir.actions.act_window">
         <field name="name">Productos Fitosanitarios</field>
         <field name="res_model">vinedo.fitosanitario</field>
@@ -562,6 +634,10 @@
                 <field name="funcion_info" optional="show" readonly="1"/>
                 <field name="estado_registro_info" optional="hide" readonly="1"/>
                 <field name="fecha_caducidad_reg" optional="hide" readonly="1"/>
+                <field name="phi_info" optional="show" readonly="1"
+                       decoration-danger="phi_vencimiento and phi_vencimiento &gt;= context_today()"/>
+                <field name="phi_vencimiento" optional="show" readonly="1"
+                       decoration-danger="phi_vencimiento and phi_vencimiento &gt;= context_today()"/>
                 <field name="dosis" optional="hide"/>
                 <field name="empleado_id"/>
             </list>
@@ -610,6 +686,9 @@
                             <field name="materia_activa_info" readonly="1"/>
                             <field name="estado_registro_info" readonly="1"/>
                             <field name="fecha_caducidad_reg" readonly="1"/>
+                            <field name="phi_info" readonly="1"/>
+                            <field name="phi_vencimiento" readonly="1"
+                                   decoration-danger="phi_vencimiento and phi_vencimiento &gt;= context_today()"/>
                         </group>
                     </group>
                     <group string="Observaciones / Condiciones de Uso"
@@ -644,6 +723,36 @@
                 <field name="tipo" type="col"/>
                 <field name="litros" type="measure"/>
             </graph>
+        </field>
+    </record>
+
+    <record id="view_tratamiento_search" model="ir.ui.view">
+        <field name="name">vinedo.tratamiento.search</field>
+        <field name="model">vinedo.tratamiento</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="finca_id" string="Finca"/>
+                <field name="producto" string="Producto"/>
+                <field name="fitosanitario_id" string="Ficha MAPA"/>
+                <field name="empleado_id" string="Empleado"/>
+                <field name="maquinaria_id" string="Maquinaria"/>
+                <filter string="Fitosanitarios" name="tipo_fito"
+                        domain="[('tipo', '=', 'fitosanitario')]"/>
+                <filter string="Otros tratamientos" name="tipo_otro"
+                        domain="[('tipo', '=', 'otro')]"/>
+                <separator/>
+                <filter string="Este año" name="anio_actual"
+                        domain="[('fecha', '>=', (context_today() + relativedelta(month=1, day=1)).strftime('%Y-%m-%d')),
+                                  ('fecha', '<=', (context_today() + relativedelta(month=12, day=31)).strftime('%Y-%m-%d'))]"/>
+                <filter string="Con PHI activo" name="phi_activo"
+                        domain="[('phi_vencimiento', '>=', context_today().strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="Agrupar por">
+                    <filter string="Finca" name="group_finca" context="{'group_by': 'finca_id'}"/>
+                    <filter string="Tipo" name="group_tipo" context="{'group_by': 'tipo'}"/>
+                    <filter string="Empleado" name="group_empleado" context="{'group_by': 'empleado_id'}"/>
+                    <filter string="Mes" name="group_mes" context="{'group_by': 'fecha:month'}"/>
+                </group>
+            </search>
         </field>
     </record>
 
@@ -724,6 +833,31 @@
         </field>
     </record>
 
+    <record id="view_aportacion_search" model="ir.ui.view">
+        <field name="name">vinedo.aportacion.search</field>
+        <field name="model">vinedo.aportacion</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="finca_id" string="Finca"/>
+                <field name="producto_id" string="Producto"/>
+                <filter string="Mineral" name="tipo_mineral"
+                        domain="[('tipo_producto', '=', 'mineral')]"/>
+                <filter string="Orgánico" name="tipo_organico"
+                        domain="[('tipo_producto', '=', 'organico')]"/>
+                <separator/>
+                <filter string="Este año" name="anio_actual"
+                        domain="[('fecha', '>=', (context_today() + relativedelta(month=1, day=1)).strftime('%Y-%m-%d')),
+                                  ('fecha', '&lt;=', (context_today() + relativedelta(month=12, day=31)).strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="Agrupar por">
+                    <filter string="Finca" name="group_finca" context="{'group_by': 'finca_id'}"/>
+                    <filter string="Producto" name="group_producto" context="{'group_by': 'producto_id'}"/>
+                    <filter string="Tipo" name="group_tipo" context="{'group_by': 'tipo_producto'}"/>
+                    <filter string="Mes" name="group_mes" context="{'group_by': 'fecha:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="action_aportacion" model="ir.actions.act_window">
         <field name="name">Aportaciones</field>
         <field name="res_model">vinedo.aportacion</field>
@@ -792,6 +926,27 @@
                 <field name="tipo_trabajo" type="col"/>
                 <field name="horas" type="measure"/>
             </graph>
+        </field>
+    </record>
+
+    <record id="view_trabajo_search" model="ir.ui.view">
+        <field name="name">vinedo.trabajo.search</field>
+        <field name="model">vinedo.trabajo</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="finca_id" string="Finca"/>
+                <field name="empleado_id" string="Empleado"/>
+                <field name="tipo_trabajo" string="Tipo de trabajo"/>
+                <filter string="Este año" name="anio_actual"
+                        domain="[('fecha', '>=', (context_today() + relativedelta(month=1, day=1)).strftime('%Y-%m-%d')),
+                                  ('fecha', '&lt;=', (context_today() + relativedelta(month=12, day=31)).strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="Agrupar por">
+                    <filter string="Finca" name="group_finca" context="{'group_by': 'finca_id'}"/>
+                    <filter string="Tipo de trabajo" name="group_tipo" context="{'group_by': 'tipo_trabajo'}"/>
+                    <filter string="Empleado" name="group_empleado" context="{'group_by': 'empleado_id'}"/>
+                    <filter string="Mes" name="group_mes" context="{'group_by': 'fecha:month'}"/>
+                </group>
+            </search>
         </field>
     </record>
 
@@ -960,6 +1115,24 @@
         </field>
     </record>
 
+    <record id="view_maquinaria_search" model="ir.ui.view">
+        <field name="name">vinedo.maquinaria.search</field>
+        <field name="model">vinedo.maquinaria</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" string="Nombre"/>
+                <field name="titular_id" string="Titular"/>
+                <field name="registro" string="Matrícula"/>
+                <filter string="Tractores" name="tractor" domain="[('tipo', '=', 'tractor')]"/>
+                <filter string="Atomizadores" name="atomizador" domain="[('tipo', '=', 'atomizador')]"/>
+                <group expand="0" string="Agrupar por">
+                    <filter string="Tipo" name="group_tipo" context="{'group_by': 'tipo'}"/>
+                    <filter string="Titular" name="group_titular" context="{'group_by': 'titular_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="action_maquinaria" model="ir.actions.act_window">
         <field name="name">Maquinaria</field>
         <field name="res_model">vinedo.maquinaria</field>
@@ -1105,6 +1278,29 @@
         </field>
     </record>
 
+    <record id="view_registro_clima_search" model="ir.ui.view">
+        <field name="name">vinedo.registro.clima.search</field>
+        <field name="model">vinedo.registro.clima</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="finca_id" string="Finca"/>
+                <filter string="Helada" name="riesgo_helada" domain="[('riesgo', '=', 'helada')]"/>
+                <filter string="Pedrisco" name="riesgo_pedrisco" domain="[('riesgo', '=', 'pedrisco')]"/>
+                <filter string="Viento fuerte" name="riesgo_viento" domain="[('riesgo', '=', 'viento')]"/>
+                <filter string="Con riesgo" name="con_riesgo" domain="[('riesgo', '!=', 'none')]"/>
+                <separator/>
+                <filter string="Este año" name="anio_actual"
+                        domain="[('fecha', '>=', (context_today() + relativedelta(month=1, day=1)).strftime('%Y-%m-%d')),
+                                  ('fecha', '&lt;=', (context_today() + relativedelta(month=12, day=31)).strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="Agrupar por">
+                    <filter string="Finca" name="group_finca" context="{'group_by': 'finca_id'}"/>
+                    <filter string="Riesgo" name="group_riesgo" context="{'group_by': 'riesgo'}"/>
+                    <filter string="Mes" name="group_mes" context="{'group_by': 'fecha:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="action_registro_clima" model="ir.actions.act_window">
         <field name="name">Registro Meteorológico</field>
         <field name="res_model">vinedo.registro.clima</field>
@@ -1173,6 +1369,31 @@
                 <field name="codigo_bbch" type="col"/>
                 <field name="fecha" type="measure"/>
             </pivot>
+        </field>
+    </record>
+
+    <record id="view_seguimiento_fenologico_search" model="ir.ui.view">
+        <field name="name">vinedo.seguimiento.fenologico.search</field>
+        <field name="model">vinedo.seguimiento.fenologico</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="finca_id" string="Finca"/>
+                <field name="codigo_bbch" string="Código BBCH"/>
+                <filter string="Brotación" name="brotacion"
+                        domain="[('codigo_bbch', 'in', ['01','03','07','09','11'])]"/>
+                <filter string="Floración" name="floracion"
+                        domain="[('codigo_bbch', 'in', ['53','55','57','61','65','68'])]"/>
+                <filter string="Maduración" name="maduracion"
+                        domain="[('codigo_bbch', 'in', ['71','73','75','77','79','81','83','85','89'])]"/>
+                <separator/>
+                <filter string="Este año" name="anio_actual"
+                        domain="[('fecha', '>=', (context_today() + relativedelta(month=1, day=1)).strftime('%Y-%m-%d')),
+                                  ('fecha', '&lt;=', (context_today() + relativedelta(month=12, day=31)).strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="Agrupar por">
+                    <filter string="Finca" name="group_finca" context="{'group_by': 'finca_id'}"/>
+                    <filter string="Estado BBCH" name="group_bbch" context="{'group_by': 'codigo_bbch'}"/>
+                </group>
+            </search>
         </field>
     </record>
 
@@ -1247,6 +1468,29 @@
         </field>
     </record>
 
+    <record id="view_lote_cosecha_search" model="ir.ui.view">
+        <field name="name">vinedo.lote.cosecha.search</field>
+        <field name="model">vinedo.lote.cosecha</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" string="Lote"/>
+                <field name="finca_id" string="Finca"/>
+                <field name="variedad_id" string="Variedad"/>
+                <field name="anio" string="Año"/>
+                <filter string="Este año" name="anio_actual"
+                        domain="[('anio', '=', context_today().year)]"/>
+                <filter string="Bodega" name="bodega" domain="[('destino', '=', 'bodega')]"/>
+                <filter string="Venta directa" name="venta" domain="[('destino', '=', 'venta_directa')]"/>
+                <group expand="0" string="Agrupar por">
+                    <filter string="Año" name="group_anio" context="{'group_by': 'anio'}"/>
+                    <filter string="Finca" name="group_finca" context="{'group_by': 'finca_id'}"/>
+                    <filter string="Variedad" name="group_variedad" context="{'group_by': 'variedad_id'}"/>
+                    <filter string="Destino" name="group_destino" context="{'group_by': 'destino'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="action_lote_cosecha" model="ir.actions.act_window">
         <field name="name">Lotes de Cosecha</field>
         <field name="res_model">vinedo.lote.cosecha</field>
@@ -1288,6 +1532,28 @@
                     </group>
                 </sheet>
             </form>
+        </field>
+    </record>
+
+    <record id="view_poda_search" model="ir.ui.view">
+        <field name="name">vinedo.poda.search</field>
+        <field name="model">vinedo.poda</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="finca_id" string="Finca"/>
+                <field name="empleado_id" string="Empleado"/>
+                <filter string="Poda de invierno" name="invierno" domain="[('tipo_poda', '=', 'invierno')]"/>
+                <filter string="Poda en verde" name="verde" domain="[('tipo_poda', '=', 'verde')]"/>
+                <separator/>
+                <filter string="Este año" name="anio_actual"
+                        domain="[('fecha', '>=', (context_today() + relativedelta(month=1, day=1)).strftime('%Y-%m-%d')),
+                                  ('fecha', '&lt;=', (context_today() + relativedelta(month=12, day=31)).strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="Agrupar por">
+                    <filter string="Finca" name="group_finca" context="{'group_by': 'finca_id'}"/>
+                    <filter string="Tipo" name="group_tipo" context="{'group_by': 'tipo_poda'}"/>
+                    <filter string="Empleado" name="group_empleado" context="{'group_by': 'empleado_id'}"/>
+                </group>
+            </search>
         </field>
     </record>
 

@@ -302,6 +302,9 @@ class Finca(models.Model):
     recinto_variedad_ids = fields.One2many('vinedo.recinto.variedad', 'finca_id', string='Variedades por recinto')
     plantacion_registro_ids = fields.One2many('vinedo.plantacion.registro', 'finca_id', string='Plantaciones')
     anada_ids = fields.One2many('vinedo.anada', 'finca_id', string='Añadas')
+    registro_clima_ids = fields.One2many('vinedo.registro.clima', 'finca_id', string='Climatología')
+    seguimiento_fenologico_ids = fields.One2many('vinedo.seguimiento.fenologico', 'finca_id', string='Fenología')
+    poda_ids = fields.One2many('vinedo.poda', 'finca_id', string='Podas')
 
     @api.constrains('latitude', 'longitude')
     def _check_coordinates(self):
@@ -683,11 +686,26 @@ class Tratamiento(models.Model):
     observaciones_registro = fields.Text(
         related='fitosanitario_id.observaciones',
         string='Observaciones / Condiciones de Uso', readonly=True)
+    phi_info = fields.Integer(
+        related='fitosanitario_id.phi_dias', string='PHI (días)', readonly=True)
+    phi_vencimiento = fields.Date(
+        string='Cosecha no antes de', compute='_compute_phi_vencimiento', store=True,
+        help='Fecha más temprana de cosecha permitida tras este tratamiento (fecha aplicación + PHI)')
 
     @api.depends('litros', 'precio_litro')
     def _compute_coste(self):
         for rec in self:
             rec.coste = round((rec.litros or 0) * (rec.precio_litro or 0), 2)
+
+    @api.depends('fecha', 'fitosanitario_id.phi_dias')
+    def _compute_phi_vencimiento(self):
+        from datetime import timedelta
+        for rec in self:
+            phi = rec.fitosanitario_id.phi_dias if rec.fitosanitario_id else 0
+            if rec.fecha and phi:
+                rec.phi_vencimiento = rec.fecha + timedelta(days=phi)
+            else:
+                rec.phi_vencimiento = False
 
     @api.onchange('fitosanitario_id')
     def _onchange_fitosanitario_id(self):
@@ -1058,6 +1076,9 @@ class Fitosanitario(models.Model):
     estado = fields.Char(string='Estado')
     fecha_caducidad = fields.Date(string='Caducidad Registro')
     observaciones = fields.Text(string='Observaciones / Condiciones de Uso')
+    phi_dias = fields.Integer(
+        string='Plazo de Seguridad / PHI (días)',
+        help='Número mínimo de días entre la última aplicación del producto y la cosecha (Pre-Harvest Interval)')
     fecha_consulta = fields.Datetime(string='Última consulta MAPA', readonly=True)
 
     def action_actualizar_mapa(self):

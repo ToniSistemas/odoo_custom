@@ -86,16 +86,16 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <t t-set="climas" t-value="finca.env['vinedo.registro.clima'].search([('finca_id','=',finca.id)], order='fecha desc', limit=50)"/>
-                                <t t-foreach="climas" t-as="c">
+                                <t t-set="climas" t-value="finca.env['vinedo.registro.clima'].search([('finca_id','=',finca.id),('fecha','&gt;=',str(anio)+'-01-01'),('fecha','&lt;=',str(anio)+'-12-31')], order='fecha desc')"/>
+                                <t t-foreach="climas" t-as="cl">
                                     <tr>
-                                        <td t-esc="c.fecha"/>
-                                        <td t-esc="c.temperatura_max or ''"/>
-                                        <td t-esc="c.temperatura_min or ''"/>
-                                        <td t-esc="c.temperatura_media or ''"/>
-                                        <td t-esc="c.precipitacion or ''"/>
-                                        <td t-esc="c.humedad_relativa or ''"/>
-                                        <td t-esc="dict(c._fields['riesgo'].selection).get(c.riesgo,'')"/>
+                                        <td t-esc="cl.fecha"/>
+                                        <td t-esc="cl.temperatura_max or ''"/>
+                                        <td t-esc="cl.temperatura_min or ''"/>
+                                        <td t-esc="cl.temperatura_media or ''"/>
+                                        <td t-esc="cl.precipitacion or ''"/>
+                                        <td t-esc="cl.humedad_relativa or ''"/>
+                                        <td t-esc="dict(cl._fields['riesgo'].selection).get(cl.riesgo,'')"/>
                                     </tr>
                                 </t>
                             </tbody>
@@ -112,12 +112,12 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <t t-set="fenos" t-value="finca.env['vinedo.seguimiento.fenologico'].search([('finca_id','=',finca.id)], order='fecha desc', limit=50)"/>
-                                <t t-foreach="fenos" t-as="f">
+                                <t t-set="fenos" t-value="finca.env['vinedo.seguimiento.fenologico'].search([('finca_id','=',finca.id),('fecha','&gt;=',str(anio)+'-01-01'),('fecha','&lt;=',str(anio)+'-12-31')], order='fecha desc')"/>
+                                <t t-foreach="fenos" t-as="fen">
                                     <tr>
-                                        <td t-esc="f.fecha"/>
-                                        <td t-esc="f.codigo_bbch"/>
-                                        <td t-esc="f.descripcion"/>
+                                        <td t-esc="fen.fecha"/>
+                                        <td t-esc="fen.codigo_bbch"/>
+                                        <td t-esc="fen.descripcion"/>
                                     </tr>
                                 </t>
                             </tbody>
@@ -133,17 +133,21 @@
                                     <th>Litros</th>
                                     <th>Coste (€)</th>
                                     <th>Materia Activa</th>
+                                    <th>PHI (días)</th>
+                                    <th>Cosecha no antes de</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <t t-set="trats" t-value="finca.env['vinedo.tratamiento'].search([('finca_id','=',finca.id)], order='fecha desc', limit=100)"/>
-                                <t t-foreach="trats" t-as="t">
+                                <t t-set="trats" t-value="finca.env['vinedo.tratamiento'].search([('finca_id','=',finca.id),('fecha','&gt;=',str(anio)+'-01-01'),('fecha','&lt;=',str(anio)+'-12-31')], order='fecha desc')"/>
+                                <t t-foreach="trats" t-as="trat">
                                     <tr>
-                                        <td t-esc="t.fecha"/>
-                                        <td t-esc="t.producto or t.producto_id.name or ''"/>
-                                        <td t-esc="t.litros or ''"/>
-                                        <td t-esc="t.coste or ''"/>
-                                        <td t-esc="t.materia_activa_info or ''"/>
+                                        <td t-esc="trat.fecha"/>
+                                        <td t-esc="trat.producto or trat.producto_id.name or ''"/>
+                                        <td t-esc="trat.litros or ''"/>
+                                        <td t-esc="trat.coste or ''"/>
+                                        <td t-esc="trat.materia_activa_info or ''"/>
+                                        <td t-esc="trat.phi_info or ''"/>
+                                        <td t-esc="trat.phi_vencimiento or ''"/>
                                     </tr>
                                 </t>
                             </tbody>
@@ -161,13 +165,13 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <t t-set="aports" t-value="finca.env['vinedo.aportacion'].search([('finca_id','=',finca.id)], order='fecha desc', limit=100)"/>
-                                <t t-foreach="aports" t-as="a">
+                                <t t-set="aports" t-value="finca.env['vinedo.aportacion'].search([('finca_id','=',finca.id),('fecha','&gt;=',str(anio)+'-01-01'),('fecha','&lt;=',str(anio)+'-12-31')], order='fecha desc')"/>
+                                <t t-foreach="aports" t-as="ap">
                                     <tr>
-                                        <td t-esc="a.fecha"/>
-                                        <td t-esc="a.producto_id.name"/>
-                                        <td t-esc="a.cantidad or ''"/>
-                                        <td t-esc="a.coste or ''"/>
+                                        <td t-esc="ap.fecha"/>
+                                        <td t-esc="ap.producto_id.name"/>
+                                        <td t-esc="ap.cantidad or ''"/>
+                                        <td t-esc="ap.coste or ''"/>
                                     </tr>
                                 </t>
                             </tbody>
@@ -185,13 +189,37 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <t t-set="trabajos" t-value="finca.env['vinedo.trabajo'].search([('finca_id','=',finca.id)], order='fecha desc', limit=100)"/>
-                                <t t-foreach="trabajos" t-as="t">
+                                <t t-set="trabajos" t-value="finca.env['vinedo.trabajo'].search([('finca_id','=',finca.id),('fecha','&gt;=',str(anio)+'-01-01'),('fecha','&lt;=',str(anio)+'-12-31')], order='fecha desc')"/>
+                                <t t-foreach="trabajos" t-as="trb">
                                     <tr>
-                                        <td t-esc="t.fecha"/>
-                                        <td t-esc="t.tipo_trabajo.name"/>
-                                        <td t-esc="t.empleado_id.name or ''"/>
-                                        <td t-esc="t.horas or ''"/>
+                                        <td t-esc="trb.fecha"/>
+                                        <td t-esc="trb.tipo_trabajo.name"/>
+                                        <td t-esc="trb.empleado_id.name or ''"/>
+                                        <td t-esc="trb.horas or ''"/>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+
+                        <!-- Podas -->
+                        <h3>Podas</h3>
+                        <table class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Tipo de poda</th>
+                                    <th>Empleado</th>
+                                    <th>Descripción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-set="podas" t-value="finca.env['vinedo.poda'].search([('finca_id','=',finca.id),('fecha','&gt;=',str(anio)+'-01-01'),('fecha','&lt;=',str(anio)+'-12-31')], order='fecha desc')"/>
+                                <t t-foreach="podas" t-as="pod">
+                                    <tr>
+                                        <td t-esc="pod.fecha"/>
+                                        <td t-esc="dict(pod._fields['tipo_poda'].selection).get(pod.tipo_poda,'') if pod.tipo_poda else ''"/>
+                                        <td t-esc="pod.empleado_id.name or ''"/>
+                                        <td t-esc="pod.descripcion or ''"/>
                                     </tr>
                                 </t>
                             </tbody>
@@ -211,24 +239,52 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <t t-foreach="finca.anada_ids" t-as="a">
+                                <t t-foreach="finca.anada_ids.filtered(lambda a: a.anio == anio)" t-as="an">
                                     <tr>
-                                        <td t-esc="a.anio"/>
-                                        <td t-esc="a.variedad_id.name"/>
-                                        <td t-esc="a.cantidad or ''"/>
-                                        <td t-esc="a.graduacion or ''"/>
-                                        <td t-esc="a.ph or ''"/>
-                                        <td t-esc="a.acidez_total or ''"/>
+                                        <td t-esc="an.anio"/>
+                                        <td t-esc="an.variedad_id.name"/>
+                                        <td t-esc="an.cantidad or ''"/>
+                                        <td t-esc="an.graduacion or ''"/>
+                                        <td t-esc="an.ph or ''"/>
+                                        <td t-esc="an.acidez_total or ''"/>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+
+                        <!-- Lotes de cosecha -->
+                        <h3>Lotes de Cosecha</h3>
+                        <table class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Lote</th>
+                                    <th>Fecha</th>
+                                    <th>Variedad</th>
+                                    <th>Cantidad (kg)</th>
+                                    <th>Destino</th>
+                                    <th>Bodega / Comprador</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-set="lotes" t-value="finca.env['vinedo.lote.cosecha'].search([('finca_id','=',finca.id),('anio','=',anio)], order='fecha_creacion desc')"/>
+                                <t t-foreach="lotes" t-as="lot">
+                                    <tr>
+                                        <td t-esc="lot.name"/>
+                                        <td t-esc="lot.fecha_creacion"/>
+                                        <td t-esc="lot.variedad_id.name or ''"/>
+                                        <td t-esc="lot.cantidad_kg or ''"/>
+                                        <td t-esc="dict(lot._fields['destino'].selection).get(lot.destino,'')"/>
+                                        <td t-esc="lot.bodega_destino or ''"/>
                                     </tr>
                                 </t>
                             </tbody>
                         </table>
 
                         <!-- Indicadores de gestión -->
-                        <t t-set="coste_trat" t-value="sum(t.coste for t in trats if t.coste) or 0.0"/>
-                        <t t-set="coste_aport" t-value="sum(a.coste for a in aports if a.coste) or 0.0"/>
-                        <t t-set="horas_total" t-value="sum(t.horas for t in trabajos if t.horas) or 0.0"/>
-                        <t t-set="kg_total" t-value="sum(a.cantidad for a in finca.anada_ids if a.cantidad) or 0.0"/>
+                        <t t-set="coste_trat" t-value="sum(tr.coste for tr in trats if tr.coste) or 0.0"/>
+                        <t t-set="coste_aport" t-value="sum(ap.coste for ap in aports if ap.coste) or 0.0"/>
+                        <t t-set="horas_total" t-value="sum(trb.horas for trb in trabajos if trb.horas) or 0.0"/>
+                        <t t-set="kg_total" t-value="sum(lot.cantidad_kg for lot in lotes if lot.cantidad_kg) or 0.0"/>
 
                         <h3>Resumen del Año</h3>
                         <table class="table table-sm">
