@@ -1,0 +1,1303 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============================================================ -->
+    <!-- Finca Views                                                  -->
+    <!-- ============================================================ -->
+    <record id="view_finca_tree" model="ir.ui.view">
+        <field name="name">vinedo.finca.tree</field>
+        <field name="model">vinedo.finca</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="territory_id"/>
+                <field name="area" sum="Total Extensión (ha)"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_finca_form" model="ir.ui.view">
+        <field name="name">vinedo.finca.form</field>
+        <field name="model">vinedo.finca</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="territory_id"/>
+                            <field name="area"/>
+                            <field name="area_m2" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="latitude" string="Latitud"/>
+                            <field name="longitude" string="Longitud"/>
+                            <field name="ref_sigpac"/>
+                            <field name="refs_sigpac_extra" readonly="1"
+                                invisible="not refs_sigpac_extra"/>
+                        </group>
+                    </group>
+                    <div style="margin:4px 0 12px 0;">
+                        <button name="action_abrir_sigpac_visor" type="object"
+                            string="Abrir en SIGPAC (nueva pestaña)" icon="fa-external-link"
+                            class="btn btn-link" style="padding-left:0;"/>
+                    </div>
+                    <notebook>
+                        <page string="Variedades">
+                            <field name="variedad_ids">
+                                <list editable="bottom">
+                                    <field name="variedad_id"/>
+                                    <field name="superficie" sum="Total (ha)" readonly="1"
+                                           help="Calculado automáticamente desde los recintos"/>
+                                    <field name="superficie_m2" readonly="1" sum="Total (m²)"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Variedades por recinto">
+                            <field name="recinto_variedad_ids" readonly="1">
+                                <list>
+                                    <field name="recinto_id"/>
+                                    <field name="variedad_id"/>
+                                    <field name="porcentaje"/>
+                                    <field name="superficie_ha" sum="Total (ha)"/>
+                                    <field name="superficie_m2" sum="Total (m²)"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Tratamientos">
+                            <field name="tratamiento_ids">
+                                <list editable="bottom">
+                                    <field name="fecha"/>
+                                    <field name="tipo"/>
+                                    <field name="producto_id" invisible="tipo != 'fitosanitario'"
+                                           options="{'no_quick_create': True}"/>
+                                    <field name="producto" invisible="tipo == 'fitosanitario'"/>
+                                    <field name="litros" optional="show"/>
+                                    <field name="precio_litro" optional="hide"/>
+                                    <field name="coste" optional="show" readonly="1"/>
+                                    <field name="maquinaria_id" optional="show"/>
+                                    <field name="fitosanitario_id" optional="show"/>
+                                    <field name="materia_activa_info" optional="show" readonly="1"/>
+                                    <field name="estado_registro_info" optional="hide" readonly="1"/>
+                                    <field name="fecha_caducidad_reg" optional="hide" readonly="1"/>
+                                    <field name="dosis" optional="hide"/>
+                                    <field name="empleado_id"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Trabajos">
+                            <field name="trabajo_ids">
+                                <list editable="bottom">
+                                    <field name="fecha"/>
+                                    <field name="tipo_trabajo"/>
+                                    <field name="empleado_id"/>
+                                    <field name="horas" sum="Total Horas"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Añadas">
+                            <field name="anada_ids">
+                                <list editable="bottom">
+                                    <field name="anio"/>
+                                    <field name="variedad_id"/>
+                                    <field name="cantidad" sum="Total kg"/>
+                                    <field name="graduacion"/>
+                                    <field name="sulfuroso_total" optional="show"/>
+                                    <field name="ph" optional="show"/>
+                                    <field name="densidad" optional="hide"/>
+                                    <field name="acidez_total" optional="show"/>
+                                    <field name="acidez_volatil" optional="hide"/>
+                                    <field name="malico" optional="hide"/>
+                                    <button name="action_open_attachments" type="object"
+                                        icon="fa-paperclip"
+                                        attrs="{'invisible': [('id', '=', False)]}"
+                                        string="" class="btn btn-sm btn-link"
+                                        help="Adjuntar analíticas PDF"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Aportaciones">
+                            <field name="aportacion_ids">
+                                <list editable="bottom">
+                                    <field name="fecha"/>
+                                    <field name="producto_id"/>
+                                    <field name="tipo_producto" optional="show"/>
+                                    <field name="cantidad" sum="Total kg"/>
+                                    <field name="precio_kg" optional="show"/>
+                                    <field name="coste" optional="show" readonly="1" sum="Total €"/>
+                                    <field name="descripcion"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Plantaciones">
+                            <field name="plantacion_registro_ids">
+                                <list editable="bottom">
+                                    <field name="fecha"/>
+                                    <field name="num_plantas" sum="Total plantas"/>
+                                    <field name="tipo"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                    <div style="display:flex;gap:16px;margin-top:16px;align-items:flex-start;">
+                        <div style="flex:1 1 0;min-width:0;">
+                            <h4 style="margin-bottom:6px;color:#5c5c5c;font-size:14px;font-weight:600;">
+                                <i class="fa fa-map"/> Visor SIGPAC
+                            </h4>
+                            <widget name="sigpac_viewer"/>
+                        </div>
+                        <div style="flex:1 1 0;min-width:0;">
+                            <h4 style="margin-bottom:6px;color:#5c5c5c;font-size:14px;font-weight:600;">
+                                <i class="fa fa-list"/> Recintos SIGPAC
+                            </h4>
+                            <field name="recinto_ids">
+                                <list>
+                                    <field name="recinto_num" readonly="1"/>
+                                    <field name="uso_sigpac" readonly="1"/>
+                                    <field name="superficie_m2" readonly="1" sum="Total (m²)"/>
+                                    <field name="variedad_resumen" readonly="1"/>
+                                    <field name="activo" column_invisible="1"/>
+                                    <button name="action_toggle_activo" type="object"
+                                        invisible="not activo"
+                                        icon="fa-toggle-on" title="Incluido — pulse para excluir"
+                                        class="text-success"/>
+                                    <button name="action_toggle_activo" type="object"
+                                        invisible="activo"
+                                        icon="fa-toggle-off" title="Excluido — pulse para incluir"
+                                        class="text-muted"/>
+                                </list>
+                                <form string="Recinto SIGPAC">
+                                    <group>
+                                        <group>
+                                            <field name="recinto_num" readonly="1"/>
+                                            <field name="uso_sigpac" readonly="1"/>
+                                            <field name="activo"/>
+                                        </group>
+                                        <group>
+                                            <field name="superficie_ha" readonly="1"/>
+                                            <field name="superficie_m2" readonly="1"/>
+                                        </group>
+                                    </group>
+                                    <separator string="Variedades plantadas en este recinto"/>
+                                    <field name="variedad_ids">
+                                        <list editable="bottom">
+                                            <field name="variedad_id"/>
+                                            <field name="porcentaje"/>
+                                            <field name="superficie_ha" readonly="1" sum="Total (ha)"/>
+                                            <field name="superficie_m2" readonly="1" sum="Total (m²)"/>
+                                        </list>
+                                    </field>
+                                    <div style="margin-top:8px;padding:8px;background:#f8f8f8;border-radius:4px;font-size:12px;color:#666;">
+                                        <i class="fa fa-info-circle"/> Superficie = superficie recinto × <strong>porcentaje / 100</strong>. Los totales de la pestaña <em>Variedades</em> se actualizan al guardar.
+                                    </div>
+                                </form>
+                            </field>
+                        </div>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_finca" model="ir.actions.act_window">
+        <field name="name">Fincas</field>
+        <field name="res_model">vinedo.finca</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_vinedo_root" name="Cuaderno de Campo" sequence="10"
+        web_icon="vinedo_cuaderno_campo,static/description/icon.png"/>
+    <menuitem id="menu_vinedo_fincas" name="Fincas" parent="menu_vinedo_root" action="action_finca" sequence="1"/>
+
+    <!-- ============================================================ -->
+    <!-- Variedad Views                                               -->
+    <!-- ============================================================ -->
+    <record id="view_variedad_tree" model="ir.ui.view">
+        <field name="name">vinedo.variedad.tree</field>
+        <field name="model">vinedo.variedad</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="descripcion"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_variedad_form" model="ir.ui.view">
+        <field name="name">vinedo.variedad.form</field>
+        <field name="model">vinedo.variedad</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="descripcion"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_variedad" model="ir.actions.act_window">
+        <field name="name">Variedades</field>
+        <field name="res_model">vinedo.variedad</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_vinedo_variedades" name="Variedades" parent="menu_vinedo_root" action="action_variedad" sequence="2"/>
+
+    <!-- ============================================================ -->
+    <!-- Añada Views                                                  -->
+    <!-- ============================================================ -->
+    <record id="view_anada_tree" model="ir.ui.view">
+        <field name="name">vinedo.anada.tree</field>
+        <field name="model">vinedo.anada</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="anio"/>
+                <field name="finca_id"/>
+                <field name="variedad_id"/>
+                <field name="cantidad" sum="Total kg"/>
+                <field name="graduacion" avg="Graduación Media"/>
+                <field name="acidez_total" avg="Acidez Total Media"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_anada_form" model="ir.ui.view">
+        <field name="name">vinedo.anada.form</field>
+        <field name="model">vinedo.anada</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="finca_id"/>
+                            <field name="variedad_disponible_ids" invisible="1"/>
+                            <field name="variedad_id"
+                                domain="[('id', 'in', variedad_disponible_ids)]"/>
+                            <field name="anio"/>
+                        </group>
+                        <group>
+                            <field name="graduacion"/>
+                            <field name="cantidad"/>
+                            <field name="fecha_vendimia"/>
+                            <field name="cuadrilla"/>
+                            <field name="rendimiento_kg_ha" readonly="1"/>
+                            <field name="destino"/>
+                            <field name="bodega_destino"/>
+                            <field name="lote_id"/>
+                        </group>
+                        <group string="Análisis">
+                            <field name="sulfuroso_total"/>
+                            <field name="ph"/>
+                            <field name="densidad"/>
+                            <field name="acidez_total"/>
+                            <field name="acidez_volatil"/>
+                            <field name="malico"/>
+                            <field name="attachment_count" invisible="1"/>
+                            <button name="action_open_attachments" type="object"
+                                string="Adjuntar analíticas" icon="fa-paperclip"
+                                attrs="{'invisible': [('id', '=', False)]}"
+                                help="Adjuntar archivos PDF de analíticas"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_anada_pivot" model="ir.ui.view">
+        <field name="name">vinedo.anada.pivot</field>
+        <field name="model">vinedo.anada</field>
+        <field name="arch" type="xml">
+            <pivot string="Añadas" sample="1">
+                <field name="anio" type="row"/>
+                <field name="finca_id" type="row"/>
+                <field name="variedad_id" type="col"/>
+                <field name="cantidad" type="measure"/>
+                <field name="graduacion" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_anada_graph" model="ir.ui.view">
+        <field name="name">vinedo.anada.graph</field>
+        <field name="model">vinedo.anada</field>
+        <field name="arch" type="xml">
+            <graph string="Añadas" type="bar" sample="1">
+                <field name="finca_id" type="row"/>
+                <field name="variedad_id" type="col"/>
+                <field name="cantidad" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_anada" model="ir.actions.act_window">
+        <field name="name">Añadas</field>
+        <field name="res_model">vinedo.anada</field>
+        <field name="view_mode">list,form,pivot,graph</field>
+    </record>
+
+    <menuitem id="menu_vinedo_anadas" name="Añadas" parent="menu_vinedo_root" action="action_anada" sequence="3"/>
+
+    <!-- ============================================================ -->
+    <!-- Territorio Views (Configuración)                            -->
+    <!-- ============================================================ -->
+    <record id="view_territorio_tree" model="ir.ui.view">
+        <field name="name">vinedo.territorio.tree</field>
+        <field name="model">vinedo.territorio</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="name"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_territorio" model="ir.actions.act_window">
+        <field name="name">Territorios</field>
+        <field name="res_model">vinedo.territorio</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <menuitem id="menu_vinedo_config" name="Configuración" parent="menu_vinedo_root" sequence="100"/>
+    <menuitem id="menu_vinedo_territorios" name="Territorios" parent="menu_vinedo_config" action="action_territorio" sequence="1"/>
+
+    <!-- ============================================================ -->
+    <!-- Fitosanitario (Productos Reg. MAPA) Views                    -->
+    <!-- ============================================================ -->
+
+    <record id="view_fitosanitario_list" model="ir.ui.view">
+        <field name="name">vinedo.fitosanitario.list</field>
+        <field name="model">vinedo.fitosanitario</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="num_registro"/>
+                <field name="nombre"/>
+                <field name="funcion"/>
+                <field name="materia_activa"/>
+                <field name="titular" optional="hide"/>
+                <field name="formulado" optional="hide"/>
+                <field name="estado"
+                       decoration-success="estado == 'Vigente'"
+                       decoration-muted="estado != 'Vigente'"/>
+                <field name="fecha_caducidad"/>
+                <field name="fecha_consulta" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_fitosanitario_form" model="ir.ui.view">
+        <field name="name">vinedo.fitosanitario.form</field>
+        <field name="model">vinedo.fitosanitario</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_actualizar_mapa" type="object"
+                        string="Actualizar desde MAPA" icon="fa-refresh"
+                        class="btn-primary"
+                        invisible="not id_mapa"
+                        help="Recarga los datos de este producto desde el Registro de Productos Fitosanitarios del MAPA"/>
+                    <button name="action_abrir_ficha_mapa" type="object"
+                        string="Ver ficha en MAPA" icon="fa-external-link"
+                        invisible="not num_registro"
+                        help="Abre la ficha oficial en el portal del Ministerio"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="nombre" placeholder="Nombre Comercial"/></h1>
+                    </div>
+                    <group>
+                        <group string="Registro">
+                            <field name="num_registro"/>
+                            <field name="id_mapa" readonly="1"/>
+                            <field name="estado"
+                                   decoration-success="estado == 'Vigente'"
+                                   decoration-danger="estado != 'Vigente' and estado != False"/>
+                            <field name="fecha_caducidad"/>
+                            <field name="fecha_consulta" readonly="1"/>
+                        </group>
+                        <group string="Composición">
+                            <field name="funcion"/>
+                            <field name="materia_activa"/>
+                            <field name="formulado"/>
+                            <field name="titular"/>
+                        </group>
+                    </group>
+                    <group string="Observaciones / Condiciones de Uso" invisible="not observaciones">
+                        <field name="observaciones" nolabel="1" colspan="2"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Import wizard -->
+    <record id="view_fitosanitario_import_wizard_form" model="ir.ui.view">
+        <field name="name">vinedo.fitosanitario.import.wizard.form</field>
+        <field name="model">vinedo.fitosanitario.import.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Descargar catálogo MAPA">
+                <sheet>
+                    <field name="fase" invisible="1"/>
+                    <group invisible="fase != 'inicio'">
+                        <div colspan="2">
+                            <p>Pulsa <strong>«Buscar en MAPA»</strong> para conectar con el
+                               Registro Oficial de Productos Fitosanitarios y obtener el
+                               catálogo completo.</p>
+                            <p style="color:#6c757d;font-size:12px;">
+                                El proceso puede tardar 1–3 minutos según la velocidad
+                                del servidor del MAPA.
+                            </p>
+                        </div>
+                    </group>
+                    <group string="Confirmar importación" invisible="fase != 'confirmar'">
+                        <field name="total_mapa" readonly="1"/>
+                        <div colspan="2">
+                            <p>Pulsa <strong>«Importar»</strong> para guardar los productos
+                               en la base de datos local.</p>
+                        </div>
+                    </group>
+                    <group string="Importación completada" invisible="fase != 'listo'">
+                        <field name="total_creados" readonly="1"/>
+                        <field name="total_actualizados" readonly="1"/>
+                        <field name="total_errores" readonly="1"
+                               invisible="total_errores == 0"/>
+                        <div colspan="2">
+                            <p>Ya puedes buscar cualquier producto desde el campo
+                               <strong>«Ficha Reg. MAPA»</strong> en los tratamientos,
+                               o enlazarlo automáticamente desde el campo <strong>«Producto»</strong>
+                               usando la Referencia Interna = Nº de Registro.</p>
+                        </div>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_buscar" type="object"
+                        string="Buscar en MAPA" class="btn-primary"
+                        invisible="fase != 'inicio'"/>
+                    <button name="action_importar" type="object"
+                        string="Importar a la base de datos" class="btn-primary"
+                        invisible="fase != 'confirmar'"/>
+                    <button string="Cerrar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_server_completar_funciones" model="ir.actions.server">
+        <field name="name">Completar funciones desde MAPA</field>
+        <field name="model_id" ref="model_vinedo_fitosanitario"/>
+        <field name="binding_model_id" ref="model_vinedo_fitosanitario"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_completar_funciones()</field>
+    </record>
+
+    <record id="action_server_importar_catalogo_mapa" model="ir.actions.server">
+        <field name="name">Descargar catálogo completo MAPA</field>
+        <field name="model_id" ref="model_vinedo_fitosanitario"/>
+        <field name="binding_model_id" ref="model_vinedo_fitosanitario"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">action = env['vinedo.fitosanitario.import.wizard'].action_open()</field>
+    </record>
+
+    <record id="action_fitosanitario" model="ir.actions.act_window">
+        <field name="name">Productos Fitosanitarios</field>
+        <field name="res_model">vinedo.fitosanitario</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Catálogo vacío de productos fitosanitarios
+            </p>
+            <p>
+                Pulsa <strong>«Descargar catálogo completo MAPA»</strong> (en cualquier ficha)
+                o usa el menú <strong>Acción → Descargar catálogo completo MAPA</strong>
+                para importar todos los productos del Registro MAPA a la base de datos local.
+            </p>
+            <p>
+                Una vez importados, puedes buscarlos directamente desde el campo
+                <em>«Ficha Reg. MAPA»</em> en los tratamientos, sin necesidad de
+                consultar MAPA en tiempo real.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_vinedo_fitosanitarios" name="Fitosanitarios (MAPA)"
+        parent="menu_vinedo_config" action="action_fitosanitario" sequence="10"/>
+
+    <menuitem id="menu_vinedo_descargar_catalogo" name="Descargar catálogo MAPA"
+        parent="menu_vinedo_config" action="action_server_importar_catalogo_mapa" sequence="50"/>
+
+    <!-- ============================================================ -->
+    <!-- Wizard Búsqueda Fitosanitarios                               -->
+    <!-- ============================================================ -->
+
+    <!-- ============================================================ -->
+    <!-- Tratamiento standalone Views                                 -->
+    <!-- ============================================================ -->
+
+    <record id="view_tratamiento_list" model="ir.ui.view">
+        <field name="name">vinedo.tratamiento.list</field>
+        <field name="model">vinedo.tratamiento</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="fecha"/>
+                <field name="finca_id"/>
+                <field name="tipo"/>
+                <field name="producto_id" invisible="tipo != 'fitosanitario'"
+                       options="{'no_quick_create': True}"/>
+                <field name="producto" invisible="tipo == 'fitosanitario'"/>
+                <field name="litros" optional="show"/>
+                <field name="precio_litro" optional="hide"/>
+                <field name="coste" optional="show" readonly="1"/>
+                <field name="maquinaria_id" optional="show"/>
+                <field name="materia_activa_info" optional="show" readonly="1"/>
+                <field name="funcion_info" optional="show" readonly="1"/>
+                <field name="estado_registro_info" optional="hide" readonly="1"/>
+                <field name="fecha_caducidad_reg" optional="hide" readonly="1"/>
+                <field name="dosis" optional="hide"/>
+                <field name="empleado_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_tratamiento_form" model="ir.ui.view">
+        <field name="name">vinedo.tratamiento.form</field>
+        <field name="model">vinedo.tratamiento</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_buscar_fitosanitario" type="object"
+                        string="Consultar Registro MAPA" icon="fa-search"
+                        class="btn-primary"
+                        invisible="tipo != 'fitosanitario'"
+                        help="Busca el producto en el Registro de Productos Fitosanitarios y rellena los datos automáticamente"/>
+                    <button name="action_ver_ficha_mapa" type="object"
+                        string="Ver ficha en MAPA" icon="fa-file-pdf-o"
+                        invisible="not fitosanitario_id"
+                        help="Abre la ficha oficial del producto en el portal del Ministerio (MAPA)"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group string="Datos del tratamiento">
+                            <field name="finca_id"/>
+                            <field name="fecha"/>
+                            <field name="tipo"/>
+                            <field name="producto_id"
+                                   invisible="tipo != 'fitosanitario'"
+                                   options="{'no_quick_create': True}"/>
+                            <field name="producto" invisible="tipo == 'fitosanitario'"/>
+                            <field name="litros"/>
+                            <field name="precio_litro"/>
+                            <field name="coste" readonly="1"/>
+                            <field name="maquinaria_id"/>
+                            <field name="dosis"/>
+                            <field name="empleado_id"/>
+                        </group>
+                        <group string="Ficha Registro MAPA"
+                               invisible="tipo != 'fitosanitario'">
+                            <field name="fitosanitario_id"
+                                   options="{'no_quick_create': True}"
+                                   domain="[('nombre', 'ilike', producto or '')]"/>
+                            <field name="funcion_info" readonly="1"/>
+                            <field name="materia_activa_info" readonly="1"/>
+                            <field name="estado_registro_info" readonly="1"/>
+                            <field name="fecha_caducidad_reg" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Observaciones / Condiciones de Uso"
+                           invisible="not observaciones_registro">
+                        <field name="observaciones_registro" nolabel="1" colspan="2"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_tratamiento_pivot" model="ir.ui.view">
+        <field name="name">vinedo.tratamiento.pivot</field>
+        <field name="model">vinedo.tratamiento</field>
+        <field name="arch" type="xml">
+            <pivot string="Tratamientos" sample="1">
+                <field name="finca_id" type="row"/>
+                <field name="tipo" type="col"/>
+                <field name="litros" type="measure"/>
+                <field name="precio_litro" type="measure"/>
+                <field name="coste" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_tratamiento_graph" model="ir.ui.view">
+        <field name="name">vinedo.tratamiento.graph</field>
+        <field name="model">vinedo.tratamiento</field>
+        <field name="arch" type="xml">
+            <graph string="Tratamientos" type="bar" sample="1">
+                <field name="finca_id" type="row"/>
+                <field name="tipo" type="col"/>
+                <field name="litros" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_tratamiento" model="ir.actions.act_window">
+        <field name="name">Tratamientos</field>
+        <field name="res_model">vinedo.tratamiento</field>
+        <field name="view_mode">list,form,pivot,graph</field>
+    </record>
+
+    <menuitem id="menu_vinedo_tratamientos" name="Tratamientos"
+        parent="menu_vinedo_root" action="action_tratamiento" sequence="4"/>
+
+    <!-- ============================================================ -->
+    <!-- Aportaciones — standalone con pivot                        -->
+    <!-- ============================================================ -->
+
+    <record id="view_aportacion_list" model="ir.ui.view">
+        <field name="name">vinedo.aportacion.list</field>
+        <field name="model">vinedo.aportacion</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="fecha"/>
+                <field name="finca_id"/>
+                <field name="producto_id"/>
+                <field name="tipo_producto" optional="show"/>
+                <field name="cantidad" sum="Total kg"/>
+                <field name="precio_kg" optional="hide"/>
+                <field name="coste" optional="show" sum="Total €"/>
+                <field name="descripcion" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_aportacion_form" model="ir.ui.view">
+        <field name="name">vinedo.aportacion.form</field>
+        <field name="model">vinedo.aportacion</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="finca_id"/>
+                        <field name="fecha"/>
+                        <field name="producto_id" options="{'no_quick_create': True}"/>
+                        <field name="tipo_producto"/>
+                        <field name="cantidad"/>
+                        <field name="precio_kg"/>
+                        <field name="coste" readonly="1"/>
+                        <field name="descripcion"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_aportacion_pivot" model="ir.ui.view">
+        <field name="name">vinedo.aportacion.pivot</field>
+        <field name="model">vinedo.aportacion</field>
+        <field name="arch" type="xml">
+            <pivot string="Aportaciones" sample="1">
+                <field name="finca_id" type="row"/>
+                <field name="producto_id" type="col"/>
+                <field name="cantidad" type="measure"/>
+                <field name="precio_kg" type="measure"/>
+                <field name="coste" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_aportacion_graph" model="ir.ui.view">
+        <field name="name">vinedo.aportacion.graph</field>
+        <field name="model">vinedo.aportacion</field>
+        <field name="arch" type="xml">
+            <graph string="Aportaciones" type="bar" sample="1">
+                <field name="finca_id" type="row"/>
+                <field name="producto_id" type="col"/>
+                <field name="cantidad" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_aportacion" model="ir.actions.act_window">
+        <field name="name">Aportaciones</field>
+        <field name="res_model">vinedo.aportacion</field>
+        <field name="view_mode">list,form,pivot,graph</field>
+    </record>
+
+    <menuitem id="menu_vinedo_aportaciones" name="Aportaciones"
+        parent="menu_vinedo_root" action="action_aportacion" sequence="6"/>
+
+    <!-- ============================================================ -->
+    <!-- Trabajos — standalone con pivot                             -->
+    <!-- ============================================================ -->
+
+    <record id="view_trabajo_list" model="ir.ui.view">
+        <field name="name">vinedo.trabajo.list</field>
+        <field name="model">vinedo.trabajo</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="fecha"/>
+                <field name="finca_id"/>
+                <field name="tipo_trabajo"/>
+                <field name="empleado_id"/>
+                <field name="horas" sum="Total Horas"/>
+                <field name="observaciones" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_trabajo_form" model="ir.ui.view">
+        <field name="name">vinedo.trabajo.form</field>
+        <field name="model">vinedo.trabajo</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="finca_id"/>
+                        <field name="fecha"/>
+                        <field name="tipo_trabajo"/>
+                        <field name="empleado_id"/>
+                        <field name="horas"/>
+                        <field name="observaciones"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_trabajo_pivot" model="ir.ui.view">
+        <field name="name">vinedo.trabajo.pivot</field>
+        <field name="model">vinedo.trabajo</field>
+        <field name="arch" type="xml">
+            <pivot string="Trabajos" sample="1">
+                <field name="finca_id" type="row"/>
+                <field name="tipo_trabajo" type="col"/>
+                <field name="horas" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_trabajo_graph" model="ir.ui.view">
+        <field name="name">vinedo.trabajo.graph</field>
+        <field name="model">vinedo.trabajo</field>
+        <field name="arch" type="xml">
+            <graph string="Trabajos" type="bar" sample="1">
+                <field name="finca_id" type="row"/>
+                <field name="tipo_trabajo" type="col"/>
+                <field name="horas" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_trabajo" model="ir.actions.act_window">
+        <field name="name">Trabajos</field>
+        <field name="res_model">vinedo.trabajo</field>
+        <field name="view_mode">list,form,pivot,graph</field>
+    </record>
+
+    <menuitem id="menu_vinedo_trabajos" name="Trabajos"
+        parent="menu_vinedo_root" action="action_trabajo" sequence="7"/>
+
+    <!-- ============================================================ -->
+    <!-- Estadística de Gasto Views                                  -->
+    <!-- ============================================================ -->
+
+    <record id="view_estadistica_gasto_list" model="ir.ui.view">
+        <field name="name">vinedo.estadistica.gasto.list</field>
+        <field name="model">vinedo.estadistica.gasto</field>
+        <field name="arch" type="xml">
+            <list string="Estadística de gasto" create="false" delete="false">
+                <field name="fecha"/>
+                <field name="finca_id" optional="show"/>
+                <field name="tipo"/>
+                <field name="empleado_id" optional="show"/>
+                <field name="producto_id" optional="show"/>
+                <field name="tipo_trabajo_id" optional="show"/>
+                <field name="coste" sum="Total gastos (€)"/>
+                <field name="horas" sum="Total horas"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_estadistica_gasto_pivot" model="ir.ui.view">
+        <field name="name">vinedo.estadistica.gasto.pivot</field>
+        <field name="model">vinedo.estadistica.gasto</field>
+        <field name="arch" type="xml">
+            <pivot string="Estadística de gasto">
+                <field name="finca_id" type="row"/>
+                <field name="tipo" type="col"/>
+                <field name="coste" type="measure"/>
+                <field name="horas" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_estadistica_gasto_graph" model="ir.ui.view">
+        <field name="name">vinedo.estadistica.gasto.graph</field>
+        <field name="model">vinedo.estadistica.gasto</field>
+        <field name="arch" type="xml">
+            <graph string="Estadística de gasto" type="bar" stacked="1">
+                <field name="finca_id" type="row"/>
+                <field name="tipo" type="row"/>
+                <field name="coste" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_estadistica_gasto" model="ir.actions.act_window">
+        <field name="name">Estadística de gasto</field>
+        <field name="res_model">vinedo.estadistica.gasto</field>
+        <field name="view_mode">pivot,graph,list</field>
+        <field name="context">{'search_default_group_finca': 1}</field>
+    </record>
+
+    <menuitem id="menu_vinedo_estadistica" name="Estadística"
+        parent="menu_vinedo_root" sequence="8"/>
+
+    <menuitem id="menu_vinedo_estadistica_gasto" name="Gastos detallados"
+        parent="menu_vinedo_estadistica" action="action_estadistica_gasto" sequence="1"/>
+
+    <menuitem id="menu_vinedo_resumen_anada" name="Coste por añada"
+        parent="menu_vinedo_estadistica" action="action_resumen_anada" sequence="2"/>
+
+    <!-- ============================================================ -->
+    <!-- Resumen por Añada Views                                     -->
+    <!-- ============================================================ -->
+
+    <record id="view_resumen_anada_list" model="ir.ui.view">
+        <field name="name">vinedo.resumen.anada.list</field>
+        <field name="model">vinedo.resumen.anada</field>
+        <field name="arch" type="xml">
+            <list string="Coste por añada" create="false" delete="false">
+                <field name="anio"/>
+                <field name="finca_id"/>
+                <field name="coste_tratamientos" sum="Total"/>
+                <field name="coste_aportaciones" sum="Total"/>
+                <field name="coste_total" sum="Total"/>
+                <field name="horas_total" sum="Total"/>
+                <field name="cantidad_kg" sum="Total kg"/>
+                <field name="coste_por_kg"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_resumen_anada_pivot" model="ir.ui.view">
+        <field name="name">vinedo.resumen.anada.pivot</field>
+        <field name="model">vinedo.resumen.anada</field>
+        <field name="arch" type="xml">
+            <pivot string="Coste por añada">
+                <field name="anio" type="col"/>
+                <field name="finca_id" type="row"/>
+                <field name="coste_total" type="measure"/>
+                <field name="coste_por_kg" type="measure"/>
+                <field name="cantidad_kg" type="measure"/>
+                <field name="horas_total" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_resumen_anada_graph" model="ir.ui.view">
+        <field name="name">vinedo.resumen.anada.graph</field>
+        <field name="model">vinedo.resumen.anada</field>
+        <field name="arch" type="xml">
+            <graph string="Coste por añada" type="bar" stacked="1">
+                <field name="finca_id" type="row"/>
+                <field name="anio" type="row"/>
+                <field name="coste_total" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_resumen_anada" model="ir.actions.act_window">
+        <field name="name">Coste por añada</field>
+        <field name="res_model">vinedo.resumen.anada</field>
+        <field name="view_mode">pivot,graph,list</field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- Maquinaria Views                                            -->
+    <!-- ============================================================ -->
+
+    <record id="view_maquinaria_list" model="ir.ui.view">
+        <field name="name">vinedo.maquinaria.list</field>
+        <field name="model">vinedo.maquinaria</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="titular_id"/>
+                <field name="tipo"/>
+                <field name="registro"/>
+                <field name="fecha_compra" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_maquinaria_form" model="ir.ui.view">
+        <field name="name">vinedo.maquinaria.form</field>
+        <field name="model">vinedo.maquinaria</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="tipo"/>
+                        </group>
+                        <group>
+                            <field name="titular_id"/>
+                            <field name="registro"/>
+                            <field name="fecha_compra"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_maquinaria" model="ir.actions.act_window">
+        <field name="name">Maquinaria</field>
+        <field name="res_model">vinedo.maquinaria</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_vinedo_maquinaria" name="Maquinaria"
+        parent="menu_vinedo_root" action="action_maquinaria" sequence="5"/>
+
+    <!-- ============================================================ -->
+    <!-- Wizard: Buscar Fitosanitario en MAPA                        -->
+    <!-- ============================================================ -->
+
+    <record id="view_fitosanitario_wizard_form" model="ir.ui.view">
+        <field name="name">vinedo.fitosanitario.wizard.form</field>
+        <field name="model">vinedo.fitosanitario.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Buscar en Registro MAPA">
+                <group>
+                    <field name="nombre_busqueda"
+                           placeholder="Ej: ALIETTE, mancozeb, fosetil…"/>
+                </group>
+                <group invisible="not linea_ids" string="Resultados">
+                    <field name="linea_ids" nolabel="1">
+                        <list>
+                            <field name="num_registro"/>
+                            <field name="nombre"/>
+                            <field name="formulado"/>
+                            <field name="estado"
+                                   decoration-success="estado == 'Vigente'"
+                                   decoration-muted="estado != 'Vigente'"/>
+                            <button name="action_seleccionar" type="object"
+                                string="Seleccionar" icon="fa-check"
+                                class="btn-primary btn-sm"/>
+                        </list>
+                    </field>
+                </group>
+                <footer>
+                    <button name="action_buscar" type="object"
+                        string="Buscar" class="btn-primary" icon="fa-search"/>
+                    <button special="cancel" string="Cancelar"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    <!-- ============================================================ -->
+    <!-- Grupo Tableros: VIÑEDO                                      -->
+    <!-- Los dashboards individuales se crean desde la UI de Tableros -->
+    <!-- ============================================================ -->
+
+    <record id="spreadsheet_dashboard_group_vinedo" model="spreadsheet.dashboard.group">
+        <field name="name">Viñedo</field>
+        <field name="sequence">50</field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- RegistroClima (Meteorología) Views                          -->
+    <!-- ============================================================ -->
+    <record id="view_registro_clima_tree" model="ir.ui.view">
+        <field name="name">vinedo.registro.clima.tree</field>
+        <field name="model">vinedo.registro.clima</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="fecha"/>
+                <field name="finca_id"/>
+                <field name="temperatura_max"/>
+                <field name="temperatura_min"/>
+                <field name="temperatura_media"/>
+                <field name="precipitacion"/>
+                <field name="humedad_relativa" optional="show"/>
+                <field name="riesgo" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_registro_clima_form" model="ir.ui.view">
+        <field name="name">vinedo.registro.clima.form</field>
+        <field name="model">vinedo.registro.clima</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="finca_id"/>
+                            <field name="fecha"/>
+                        </group>
+                        <group string="Temperaturas">
+                            <field name="temperatura_max"/>
+                            <field name="temperatura_min"/>
+                            <field name="temperatura_media"/>
+                        </group>
+                        <group string="Condiciones">
+                            <field name="precipitacion"/>
+                            <field name="humedad_relativa"/>
+                            <field name="viento_velocidad"/>
+                            <field name="viento_direccion"/>
+                        </group>
+                        <group string="Riesgos">
+                            <field name="riesgo"/>
+                        </group>
+                    </group>
+                    <field name="observaciones"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_registro_clima_calendar" model="ir.ui.view">
+        <field name="name">vinedo.registro.clima.calendar</field>
+        <field name="model">vinedo.registro.clima</field>
+        <field name="arch" type="xml">
+            <calendar string="Registro Meteorológico" date_start="fecha" color="finca_id">
+                <field name="finca_id"/>
+                <field name="riesgo"/>
+            </calendar>
+        </field>
+    </record>
+
+    <record id="view_registro_clima_pivot" model="ir.ui.view">
+        <field name="name">vinedo.registro.clima.pivot</field>
+        <field name="model">vinedo.registro.clima</field>
+        <field name="arch" type="xml">
+            <pivot string="Registro Meteorológico" sample="1">
+                <field name="finca_id" type="row"/>
+                <field name="fecha" type="col"/>
+                <field name="temperatura_max" type="measure"/>
+                <field name="temperatura_min" type="measure"/>
+                <field name="precipitacion" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_registro_clima_graph" model="ir.ui.view">
+        <field name="name">vinedo.registro.clima.graph</field>
+        <field name="model">vinedo.registro.clima</field>
+        <field name="arch" type="xml">
+            <graph string="Registro Meteorológico" type="bar" sample="1">
+                <field name="finca_id" type="row"/>
+                <field name="temperatura_max" type="measure"/>
+                <field name="temperatura_min" type="measure"/>
+                <field name="precipitacion" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_registro_clima" model="ir.actions.act_window">
+        <field name="name">Registro Meteorológico</field>
+        <field name="res_model">vinedo.registro.clima</field>
+        <field name="view_mode">list,form,calendar,pivot,graph</field>
+    </record>
+
+    <menuitem id="menu_vinedo_clima" name="Climatología"
+        parent="menu_vinedo_root" action="action_registro_clima" sequence="11"/>
+
+    <!-- ============================================================ -->
+    <!-- SeguimientoFenologico (BBCH) Views                          -->
+    <!-- ============================================================ -->
+    <record id="view_seguimiento_fenologico_tree" model="ir.ui.view">
+        <field name="name">vinedo.seguimiento.fenologico.tree</field>
+        <field name="model">vinedo.seguimiento.fenologico</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="fecha"/>
+                <field name="finca_id"/>
+                <field name="codigo_bbch"/>
+                <field name="descripcion"/>
+                <field name="observaciones" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_seguimiento_fenologico_form" model="ir.ui.view">
+        <field name="name">vinedo.seguimiento.fenologico.form</field>
+        <field name="model">vinedo.seguimiento.fenologico</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="finca_id"/>
+                            <field name="fecha"/>
+                        </group>
+                        <group>
+                            <field name="codigo_bbch"/>
+                            <field name="descripcion" readonly="1"/>
+                        </group>
+                    </group>
+                    <field name="observaciones"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_seguimiento_fenologico_calendar" model="ir.ui.view">
+        <field name="name">vinedo.seguimiento.fenologico.calendar</field>
+        <field name="model">vinedo.seguimiento.fenologico</field>
+        <field name="arch" type="xml">
+            <calendar string="Seguimiento Fenológico" date_start="fecha" color="finca_id">
+                <field name="finca_id"/>
+                <field name="codigo_bbch"/>
+            </calendar>
+        </field>
+    </record>
+
+    <record id="view_seguimiento_fenologico_pivot" model="ir.ui.view">
+        <field name="name">vinedo.seguimiento.fenologico.pivot</field>
+        <field name="model">vinedo.seguimiento.fenologico</field>
+        <field name="arch" type="xml">
+            <pivot string="Seguimiento Fenológico" sample="1">
+                <field name="finca_id" type="row"/>
+                <field name="codigo_bbch" type="col"/>
+                <field name="fecha" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_seguimiento_fenologico" model="ir.actions.act_window">
+        <field name="name">Seguimiento Fenológico</field>
+        <field name="res_model">vinedo.seguimiento.fenologico</field>
+        <field name="view_mode">list,form,calendar,pivot</field>
+    </record>
+
+    <menuitem id="menu_vinedo_fenologia" name="Fenología"
+        parent="menu_vinedo_root" action="action_seguimiento_fenologico" sequence="12"/>
+
+    <!-- ============================================================ -->
+    <!-- Lote de Cosecha Views                                       -->
+    <!-- ============================================================ -->
+    <record id="view_lote_cosecha_tree" model="ir.ui.view">
+        <field name="name">vinedo.lote.cosecha.tree</field>
+        <field name="model">vinedo.lote.cosecha</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="fecha_creacion"/>
+                <field name="finca_id"/>
+                <field name="variedad_id"/>
+                <field name="anio"/>
+                <field name="cantidad_kg" sum="Total kg"/>
+                <field name="destino"/>
+                <field name="bodega_destino" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_lote_cosecha_form" model="ir.ui.view">
+        <field name="name">vinedo.lote.cosecha.form</field>
+        <field name="model">vinedo.lote.cosecha</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Nombre del lote"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="fecha_creacion"/>
+                            <field name="finca_id"/>
+                            <field name="variedad_id"/>
+                            <field name="anio"/>
+                        </group>
+                        <group>
+                            <field name="cantidad_kg"/>
+                            <field name="destino"/>
+                            <field name="bodega_destino"/>
+                        </group>
+                    </group>
+                    <field name="observaciones"/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_lote_cosecha_pivot" model="ir.ui.view">
+        <field name="name">vinedo.lote.cosecha.pivot</field>
+        <field name="model">vinedo.lote.cosecha</field>
+        <field name="arch" type="xml">
+            <pivot string="Lotes de Cosecha" sample="1">
+                <field name="anio" type="col"/>
+                <field name="finca_id" type="row"/>
+                <field name="variedad_id" type="row"/>
+                <field name="cantidad_kg" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_lote_cosecha" model="ir.actions.act_window">
+        <field name="name">Lotes de Cosecha</field>
+        <field name="res_model">vinedo.lote.cosecha</field>
+        <field name="view_mode">list,form,pivot</field>
+    </record>
+
+    <menuitem id="menu_vinedo_lotes_cosecha" name="Lotes de Cosecha"
+        parent="menu_vinedo_root" action="action_lote_cosecha" sequence="13"/>
+
+    <!-- ============================================================ -->
+    <!-- Poda Views                                                  -->
+    <!-- ============================================================ -->
+    <record id="view_poda_list" model="ir.ui.view">
+        <field name="name">vinedo.poda.list</field>
+        <field name="model">vinedo.poda</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="fecha"/>
+                <field name="finca_id"/>
+                <field name="tipo_poda"/>
+                <field name="empleado_id"/>
+                <field name="descripcion" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_poda_form" model="ir.ui.view">
+        <field name="name">vinedo.poda.form</field>
+        <field name="model">vinedo.poda</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="finca_id"/>
+                        <field name="fecha"/>
+                        <field name="tipo_poda"/>
+                        <field name="empleado_id"/>
+                        <field name="descripcion"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_poda" model="ir.actions.act_window">
+        <field name="name">Podas</field>
+        <field name="res_model">vinedo.poda</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_vinedo_podas" name="Podas"
+        parent="menu_vinedo_root" action="action_poda" sequence="14"/>
+
+</odoo>

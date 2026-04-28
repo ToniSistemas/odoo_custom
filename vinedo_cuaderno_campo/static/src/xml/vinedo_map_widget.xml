@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="vinedo_field_service.VinedoMapWidget">
+        <div class="o_field_vinedo_map" style="position: relative; width: 100%; min-height: 400px;">
+            <div t-ref="mapDiv" class="vinedo-map-container" style="width: 100%; height: 380px; border: 1px solid #ddd; border-radius: 4px;"></div>
+        </div>
+    </t>
+</templates>

@@ -1,0 +1,172 @@
+/* sigpac_viewer.css – estilos para el visor SIGPAC embebido en Odoo
+   Archivo externo para cumplir con la CSP de Odoo 19 (no inline styles) */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+}
+
+/* Barra de descripción superior */
+#descripcion {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    padding: 6px 12px;
+    background: #e8f4fd;
+    border-bottom: 1px solid #b8daff;
+    font-size: 12px;
+    color: #004085;
+    line-height: 1.4;
+    z-index: 1000;
+}
+
+/* El mapa ocupa todo menos la barra superior y la inferior (52px) */
+#map {
+    position: absolute;
+    top: 54px; left: 0; right: 0; bottom: 52px;
+    background: #d0e8f5;
+}
+
+/* Barra de información inferior */
+#panel {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    min-height: 52px;
+    padding: 6px 12px;
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    overflow: hidden;
+}
+
+#panel.loading { color: #6c757d; }
+#panel.ok   { background: #d4edda; border-top-color: #28a745; }
+#panel.err  { background: #f8d7da; border-top-color: #dc3545; }
+#panel.done { background: #cce5ff; border-top-color: #004085; }
+
+.hint { color: #6c757d; font-size: 11px; }
+
+.tag {
+    display: inline-block;
+    background: #495057;
+    color: #fff;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+#btn-import {
+    padding: 3px 12px;
+    background: #28a745;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+#btn-import:hover    { background: #218838; }
+#btn-import:disabled { background: #6c757d; cursor: default; }
+
+/* Aviso de zoom */
+#zoom-hint {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, .6);
+    color: #fff;
+    padding: 5px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 1000;
+    display: none;
+    white-space: nowrap;
+}
+
+/* ── Modo dibujo de zona ── */
+#panel.draw {
+    background: #fff3cd;
+    border-top-color: #e67e00;
+    min-height: 60px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    padding-top: 8px;
+}
+
+.zona-list {
+    font-size: 11px;
+    margin: 3px 0 5px 14px;
+    padding: 0;
+    width: 100%;
+    max-height: 56px;
+    overflow-y: auto;
+}
+
+/* Botón "Dibujar zona" sobre el mapa */
+.sigpac-draw-zona-btn {
+    display: block;
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+    font-weight: bold;
+    color: #004085 !important;
+    background: #fff;
+    text-decoration: none !important;
+    white-space: nowrap;
+    line-height: 1.5 !important;
+}
+.sigpac-draw-zona-btn:hover { background: #e8f4fd !important; }
+
+/* Botones de acción de zona en el panel */
+#btn-zona-reemplazar {
+    padding: 3px 12px;
+    background: #28a745;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+#btn-zona-reemplazar:hover { background: #218838; }
+
+.btn-agregar {
+    padding: 3px 12px;
+    background: #17a2b8;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+.btn-cancelar {
+    padding: 3px 8px;
+    background: #6c757d;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+#btn-cerrar-zona, #btn-cancelar-zona {
+    padding: 3px 8px;
+    border: 1px solid #aaa;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    background: #fff;
+}
+#btn-cerrar-zona:disabled { color: #aaa; cursor: default; }

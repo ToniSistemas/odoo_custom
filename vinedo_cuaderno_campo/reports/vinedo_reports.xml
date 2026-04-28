@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="report_cuaderno_campo" model="ir.actions.report">
+        <field name="name">Cuaderno de Campo</field>
+        <field name="model">vinedo.finca</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">vinedo_cuaderno_campo.report_cuaderno_campo</field>
+        <field name="report_file">vinedo_cuaderno_campo.report_cuaderno_campo</field>
+        <field name="binding_model_id" ref="model_vinedo_finca"/>
+        <field name="binding_view_types">form</field>
+        <field name="paperformat_id" ref="base.paperformat_euro"/>
+    </record>
+
+    <record id="report_cuaderno_campo_template" model="ir.ui.view">
+        <field name="name">vinedo.finca.report_cuaderno_campo</field>
+        <field name="model">vinedo.finca</field>
+        <field name="arch" type="xml">
+            <t t-name="vinedo_cuaderno_campo.report_cuaderno_campo">
+                <t t-call="web.external_layout">
+                    <t t-set="finca" t-value="doc"/>
+                    <t t-set="anio" t-value="context_timestamp and fields.Date.context_timestamp(context_timestamp).year or fields.Date.today().year"/>
+                    <div class="page">
+                        <!-- Título -->
+                        <h2 style="text-align:center; margin-bottom:20px;">
+                            Cuaderno de Campo — <t t-esc="finca.name"/>
+                            <br/>
+                            <small>Año <t t-esc="anio"/></small>
+                        </h2>
+
+                        <!-- Datos de la finca -->
+                        <h3>Datos de la Finca</h3>
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>Nombre:</strong></td>
+                                <td t-esc="finca.name"/>
+                                <td><strong>Territorio:</strong></td>
+                                <td t-esc="finca.territory_id.name or ''"/>
+                            </tr>
+                            <tr>
+                                <td><strong>Extensión (ha):</strong></td>
+                                <td t-esc="finca.area"/>
+                                <td><strong>Ref. SIGPAC:</strong></td>
+                                <td t-esc="finca.ref_sigpac or ''"/>
+                            </tr>
+                            <tr>
+                                <td><strong>Latitud:</strong></td>
+                                <td t-esc="finca.latitude or ''"/>
+                                <td><strong>Longitud:</strong></td>
+                                <td t-esc="finca.longitude or ''"/>
+                            </tr>
+                        </table>
+
+                        <!-- Variedades plantadas -->
+                        <h3>Variedades Plantadas</h3>
+                        <table class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Variedad</th>
+                                    <th>Superficie (ha)</th>
+                                    <th>Superficie (m²)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="finca.variedad_ids" t-as="v">
+                                    <tr>
+                                        <td t-esc="v.variedad_id.name"/>
+                                        <td t-esc="v.superficie"/>
+                                        <td t-esc="v.superficie_m2"/>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+
+                        <!-- Registro meteorológico -->
+                        <h3>Registro Meteorológico</h3>
+                        <table class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>T. Máx (°C)</th>
+                                    <th>T. Mín (°C)</th>
+                                    <th>T. Media (°C)</th>
+                                    <th>Precip. (mm)</th>
+                                    <th>Humedad (%)</th>
+                                    <th>Riesgo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-set="climas" t-value="finca.env['vinedo.registro.clima'].search([('finca_id','=',finca.id)], order='fecha desc', limit=50)"/>
+                                <t t-foreach="climas" t-as="c">
+                                    <tr>
+                                        <td t-esc="c.fecha"/>
+                                        <td t-esc="c.temperatura_max or ''"/>
+                                        <td t-esc="c.temperatura_min or ''"/>
+                                        <td t-esc="c.temperatura_media or ''"/>
+                                        <td t-esc="c.precipitacion or ''"/>
+                                        <td t-esc="c.humedad_relativa or ''"/>
+                                        <td t-esc="dict(c._fields['riesgo'].selection).get(c.riesgo,'')"/>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+
+                        <!-- Seguimiento fenológico -->
+                        <h3>Seguimiento Fenológico (BBCH)</h3>
+                        <table class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Código BBCH</th>
+                                    <th>Descripción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-set="fenos" t-value="finca.env['vinedo.seguimiento.fenologico'].search([('finca_id','=',finca.id)], order='fecha desc', limit=50)"/>
+                                <t t-foreach="fenos" t-as="f">
+                                    <tr>
+                                        <td t-esc="f.fecha"/>
+                                        <td t-esc="f.codigo_bbch"/>
+                                        <td t-esc="f.descripcion"/>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+
+                        <!-- Tratamientos -->
+                        <h3>Tratamientos Fitosanitarios</h3>
+                        <table class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Producto</th>
+                                    <th>Litros</th>
+                                    <th>Coste (€)</th>
+                                    <th>Materia Activa</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-set="trats" t-value="finca.env['vinedo.tratamiento'].search([('finca_id','=',finca.id)], order='fecha desc', limit=100)"/>
+                                <t t-foreach="trats" t-as="t">
+                                    <tr>
+                                        <td t-esc="t.fecha"/>
+                                        <td t-esc="t.producto or t.producto_id.name or ''"/>
+                                        <td t-esc="t.litros or ''"/>
+                                        <td t-esc="t.coste or ''"/>
+                                        <td t-esc="t.materia_activa_info or ''"/>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+
+                        <!-- Aportaciones -->
+                        <h3>Aportaciones de Minerales/Abonos</h3>
+                        <table class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Producto</th>
+                                    <th>Cantidad (kg)</th>
+                                    <th>Coste (€)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-set="aports" t-value="finca.env['vinedo.aportacion'].search([('finca_id','=',finca.id)], order='fecha desc', limit=100)"/>
+                                <t t-foreach="aports" t-as="a">
+                                    <tr>
+                                        <td t-esc="a.fecha"/>
+                                        <td t-esc="a.producto_id.name"/>
+                                        <td t-esc="a.cantidad or ''"/>
+                                        <td t-esc="a.coste or ''"/>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+
+                        <!-- Trabajos -->
+                        <h3>Trabajos</h3>
+                        <table class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Trabajo</th>
+                                    <th>Empleado</th>
+                                    <th>Horas</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-set="trabajos" t-value="finca.env['vinedo.trabajo'].search([('finca_id','=',finca.id)], order='fecha desc', limit=100)"/>
+                                <t t-foreach="trabajos" t-as="t">
+                                    <tr>
+                                        <td t-esc="t.fecha"/>
+                                        <td t-esc="t.tipo_trabajo.name"/>
+                                        <td t-esc="t.empleado_id.name or ''"/>
+                                        <td t-esc="t.horas or ''"/>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+
+                        <!-- Añadas -->
+                        <h3>Añadas / Cosechas</h3>
+                        <table class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Año</th>
+                                    <th>Variedad</th>
+                                    <th>Kg</th>
+                                    <th>% vol</th>
+                                    <th>pH</th>
+                                    <th>Acidez (g/L)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="finca.anada_ids" t-as="a">
+                                    <tr>
+                                        <td t-esc="a.anio"/>
+                                        <td t-esc="a.variedad_id.name"/>
+                                        <td t-esc="a.cantidad or ''"/>
+                                        <td t-esc="a.graduacion or ''"/>
+                                        <td t-esc="a.ph or ''"/>
+                                        <td t-esc="a.acidez_total or ''"/>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+
+                        <!-- Indicadores de gestión -->
+                        <t t-set="coste_trat" t-value="sum(t.coste for t in trats if t.coste) or 0.0"/>
+                        <t t-set="coste_aport" t-value="sum(a.coste for a in aports if a.coste) or 0.0"/>
+                        <t t-set="horas_total" t-value="sum(t.horas for t in trabajos if t.horas) or 0.0"/>
+                        <t t-set="kg_total" t-value="sum(a.cantidad for a in finca.anada_ids if a.cantidad) or 0.0"/>
+
+                        <h3>Resumen del Año</h3>
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>Coste tratamientos (€):</strong></td>
+                                <td t-esc="'%.2f' % coste_trat"/>
+                                <td><strong>Coste aportaciones (€):</strong></td>
+                                <td t-esc="'%.2f' % coste_aport"/>
+                            </tr>
+                            <tr>
+                                <td><strong>Horas trabajadas:</strong></td>
+                                <td t-esc="'%.2f' % horas_total"/>
+                                <td><strong>Kg cosechados:</strong></td>
+                                <td t-esc="'%.2f' % kg_total"/>
+                            </tr>
+                        </table>
+
+                        <p style="text-align:center; margin-top:40px; color:#999; font-size:11px;">
+                            Generado el <t t-esc="fields.Date.today()"/> —
+                            Cuaderno de Campo Digital · vinedo_cuaderno_campo
+                        </p>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+</odoo>
