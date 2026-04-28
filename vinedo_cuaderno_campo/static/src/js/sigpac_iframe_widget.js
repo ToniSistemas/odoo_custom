@@ -100,4 +100,6 @@ class SigpacViewerWidget extends Component {
 
 // Registered as 'view_widgets', NOT 'fields'.
 // XML usage: <widget name="sigpac_viewer"/>
-registry.category("view_widgets").add("sigpac_viewer", { component: SigpacViewerWidget });
+if (!registry.category("view_widgets").contains("sigpac_viewer")) {
+    registry.category("view_widgets").add("sigpac_viewer", { component: SigpacViewerWidget });
+}
