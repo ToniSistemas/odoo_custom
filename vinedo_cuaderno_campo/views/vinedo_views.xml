@@ -210,10 +210,9 @@
                         domain="[('latitude', '!=', 0), ('longitude', '!=', 0)]"/>
                 <filter string="Con SIGPAC" name="con_sigpac"
                         domain="[('ref_sigpac', '!=', False)]"/>
-                <group string="Agrupar por">
-                    <filter string="Territorio" name="group_territorio"
-                            context="{'group_by': 'territory_id'}"/>
-                </group>
+                <separator/>
+                <filter string="Territorio" name="group_territorio"
+                        context="{'group_by': 'territory_id'}"/>
             </search>
         </field>
     </record>
