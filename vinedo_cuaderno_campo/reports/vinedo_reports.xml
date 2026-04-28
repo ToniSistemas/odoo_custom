@@ -13,7 +13,7 @@
 
     <record id="report_cuaderno_campo_template" model="ir.ui.view">
         <field name="name">vinedo.finca.report_cuaderno_campo</field>
-        <field name="model">vinedo.finca</field>
+        <field name="type">qweb</field>
         <field name="arch" type="xml">
             <t t-name="vinedo_cuaderno_campo.report_cuaderno_campo">
                 <t t-call="web.external_layout">
