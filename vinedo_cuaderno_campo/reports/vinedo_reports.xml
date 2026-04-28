@@ -146,8 +146,8 @@
                                         <td t-esc="trat.litros or ''"/>
                                         <td t-esc="trat.coste or ''"/>
                                         <td t-esc="trat.materia_activa_info or ''"/>
-                                        <td t-esc="trat.phi_info or ''"/>
-                                        <td t-esc="trat.phi_vencimiento or ''"/>
+                                        <td t-esc="trat.phi_info if hasattr(trat, 'phi_info') else ''"/>
+                                        <td t-esc="trat.phi_vencimiento if hasattr(trat, 'phi_vencimiento') else ''"/>
                                     </tr>
                                 </t>
                             </tbody>
