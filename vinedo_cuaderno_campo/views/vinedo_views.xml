@@ -1205,6 +1205,57 @@
     <menuitem id="menu_vinedo_clima" name="Climatología" parent="menu_vinedo_root" action="action_registro_clima" sequence="11"/>
 
     <!-- ============================================================ -->
+    <!-- ClimaImportWizard - Importar datos Open-Meteo               -->
+    <!-- ============================================================ -->
+    <record id="view_clima_import_wizard_form" model="ir.ui.view">
+        <field name="name">vinedo.clima.import.wizard.form</field>
+        <field name="model">vinedo.clima.import.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Importar datos meteorológicos">
+                <sheet>
+                    <div class="alert alert-info" role="alert" invisible="resultado != False and resultado != ''">
+                        <p>Descarga automáticamente los datos meteorológicos diarios desde
+                           <strong>Open-Meteo</strong> (open-meteo.com) usando las coordenadas GPS
+                           de la finca seleccionada.</p>
+                        <p style="color:#6c757d;font-size:12px;">
+                            Se importan: temperatura máx/mín/media, precipitación,
+                            viento (velocidad y dirección), humedad relativa y riesgo detectado.
+                            Datos históricos disponibles hasta hace ~7 días vía API de archivo;
+                            los últimos 7 días se obtienen de la API de predicción.
+                        </p>
+                    </div>
+                    <div class="alert alert-success" role="alert" invisible="not resultado">
+                        <strong><field name="resultado" readonly="1"/></strong>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="finca_id"/>
+                            <field name="sobrescribir"/>
+                        </group>
+                        <group>
+                            <field name="fecha_inicio"/>
+                            <field name="fecha_fin"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_importar" type="object" string="Importar" class="btn-primary" invisible="resultado != False and resultado != ''"/>
+                    <button string="Cerrar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_server_importar_clima_openmeteo" model="ir.actions.server">
+        <field name="name">Importar desde Open-Meteo</field>
+        <field name="model_id" ref="model_vinedo_registro_clima"/>
+        <field name="binding_model_id" ref="model_vinedo_registro_clima"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">action = env['vinedo.clima.import.wizard'].action_open()</field>
+    </record>
+
+    <!-- ============================================================ -->
     <!-- SeguimientoFenologico (BBCH) Views                          -->
     <!-- ============================================================ -->
     <record id="view_seguimiento_fenologico_tree" model="ir.ui.view">

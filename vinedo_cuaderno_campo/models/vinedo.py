@@ -12,6 +12,28 @@ _logger = logging.getLogger(__name__)
 _MAPA_BASE = 'https://servicio.mapa.gob.es/regfiweb'
 _MAPA_HEADERS = {'User-Agent': 'Mozilla/5.0 (compatible; OdooViñedo/1.6)'}
 
+_OPEN_METEO_ARCHIVE = 'https://archive-api.open-meteo.com/v1/archive'
+_OPEN_METEO_FORECAST = 'https://api.open-meteo.com/v1/forecast'
+
+
+def _grados_a_brujula(deg):
+    """Convierte grados (0-360) a punto cardinal de 8 direcciones."""
+    if deg is None:
+        return False
+    dirs = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO']
+    return dirs[round(float(deg) / 45) % 8]
+
+
+def _riesgo_automatico(temp_min, viento_max, precipitacion):
+    """Determina el riesgo principal a partir de los datos del día."""
+    if temp_min is not None and temp_min < 0:
+        return 'helada'
+    if precipitacion is not None and precipitacion > 20:
+        return 'lluvia'
+    if viento_max is not None and viento_max > 50:
+        return 'viento'
+    return 'none'
+
 
 def _parse_productos_tbody(tbody_html):
     """Parse product rows from a ProductosGrid <tbody> HTML fragment.
@@ -1514,3 +1536,168 @@ class ResumenAnada(models.Model):
                 ) kg ON kg.finca_id = sub.finca_id AND kg.anio = sub.anio
             )
         """)
+
+
+class ClimaImportWizard(models.TransientModel):
+    """Wizard para importar datos meteorologicos diarios desde Open-Meteo API."""
+    _name = 'vinedo.clima.import.wizard'
+    _description = 'Importar datos Open-Meteo'
+
+    finca_id = fields.Many2one(
+        'vinedo.finca', string='Finca', required=True,
+        help='La finca debe tener coordenadas GPS (latitud y longitud).')
+    fecha_inicio = fields.Date(
+        string='Fecha inicio', required=True,
+        default=lambda self: fields.Date.today().replace(month=1, day=1))
+    fecha_fin = fields.Date(
+        string='Fecha fin', required=True,
+        default=fields.Date.today)
+    sobrescribir = fields.Boolean(
+        string='Sobrescribir registros existentes', default=False,
+        help='Si esta marcado, los registros ya existentes se actualizan con los nuevos datos.')
+    resultado = fields.Char(string='Resultado', readonly=True)
+
+    @api.model
+    def action_open(self):
+        """Crea una instancia nueva del wizard y la abre."""
+        wiz = self.create({})
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Importar datos meteorologicos'),
+            'res_model': self._name,
+            'res_id': wiz.id,
+            'view_mode': 'form',
+            'target': 'new',
+        }
+
+    def action_importar(self):
+        """Descarga datos de Open-Meteo y crea/actualiza registros de clima."""
+        import datetime
+        self.ensure_one()
+        finca = self.finca_id
+        if not finca.latitude or not finca.longitude:
+            raise UserError(_(
+                'La finca "%s" no tiene coordenadas GPS.\n'
+                'Introduce la latitud y longitud en la ficha de la finca antes de importar.'
+            ) % finca.name)
+
+        today = datetime.date.today()
+        archive_cutoff = today - datetime.timedelta(days=7)
+        weather = {}
+
+        if self.fecha_inicio <= archive_cutoff:
+            end_arch = min(self.fecha_fin, archive_cutoff)
+            weather.update(self._llamar_open_meteo(
+                finca.latitude, finca.longitude,
+                str(self.fecha_inicio), str(end_arch),
+                _OPEN_METEO_ARCHIVE))
+
+        if self.fecha_fin > archive_cutoff:
+            start_fc = max(self.fecha_inicio, archive_cutoff + datetime.timedelta(days=1))
+            weather.update(self._llamar_open_meteo(
+                finca.latitude, finca.longitude,
+                str(start_fc), str(self.fecha_fin),
+                _OPEN_METEO_FORECAST))
+
+        if not weather:
+            raise UserError(_(
+                'Open-Meteo no devolvio datos para el periodo solicitado. '
+                'Verifica las fechas y las coordenadas de la finca.'))
+
+        Clima = self.env['vinedo.registro.clima']
+        creados = actualizados = 0
+
+        for fecha_str, vals in sorted(weather.items()):
+            vals['finca_id'] = finca.id
+            vals['fecha'] = fecha_str
+            existing = Clima.search([
+                ('finca_id', '=', finca.id),
+                ('fecha', '=', fecha_str),
+            ], limit=1)
+            if existing:
+                if self.sobrescribir:
+                    existing.write(vals)
+                    actualizados += 1
+            else:
+                Clima.create(vals)
+                creados += 1
+
+        msg = _('Importacion completada: %d registros creados, %d actualizados.') % (
+            creados, actualizados)
+        self.write({'resultado': msg})
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'new',
+        }
+
+    def _llamar_open_meteo(self, lat, lon, fecha_ini, fecha_fin_str, base_url):
+        """Llama al endpoint de Open-Meteo y devuelve dict {fecha_str: vals_dict}."""
+        params = urllib.parse.urlencode({
+            'latitude': lat,
+            'longitude': lon,
+            'start_date': fecha_ini,
+            'end_date': fecha_fin_str,
+            'daily': ','.join([
+                'temperature_2m_max',
+                'temperature_2m_min',
+                'temperature_2m_mean',
+                'precipitation_sum',
+                'wind_speed_10m_max',
+                'wind_direction_10m_dominant',
+            ]),
+            'hourly': 'relative_humidity_2m',
+            'timezone': 'Europe/Madrid',
+            'wind_speed_unit': 'kmh',
+        })
+        url = '%s?%s' % (base_url, params)
+        _logger.info('Open-Meteo request: %s', url)
+        try:
+            req = urllib.request.Request(
+                url, headers={'User-Agent': 'OdooVinedoCuadernoCampo/2.0'})
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                data = json.loads(resp.read().decode('utf-8'))
+        except Exception as exc:
+            raise UserError(_('Error al conectar con Open-Meteo: %s') % str(exc))
+
+        if data.get('error'):
+            raise UserError(_('Open-Meteo: %s') % data.get('reason', 'Error desconocido'))
+
+        # Calcular humedad media diaria desde datos horarios
+        humidity_daily = {}
+        if 'hourly' in data:
+            times_h = data['hourly'].get('time', [])
+            hums = data['hourly'].get('relative_humidity_2m', [])
+            acc = {}
+            for t, h in zip(times_h, hums):
+                day = t[:10]
+                if h is not None:
+                    acc.setdefault(day, []).append(h)
+            for day, vals_list in acc.items():
+                humidity_daily[day] = round(sum(vals_list) / len(vals_list), 1)
+
+        daily = data.get('daily', {})
+        dates = daily.get('time', [])
+
+        def _v(key, idx):
+            lst = daily.get(key, [])
+            return lst[idx] if idx < len(lst) else None
+
+        results = {}
+        for i, fecha_str in enumerate(dates):
+            temp_min = _v('temperature_2m_min', i)
+            viento_max = _v('wind_speed_10m_max', i)
+            precip = _v('precipitation_sum', i)
+            results[fecha_str] = {
+                'temperatura_max': _v('temperature_2m_max', i) or 0.0,
+                'temperatura_min': temp_min or 0.0,
+                'temperatura_media': _v('temperature_2m_mean', i) or 0.0,
+                'precipitacion': precip or 0.0,
+                'viento_velocidad': viento_max or 0.0,
+                'viento_direccion': _grados_a_brujula(_v('wind_direction_10m_dominant', i)),
+                'humedad_relativa': humidity_daily.get(fecha_str, 0.0),
+                'riesgo': _riesgo_automatico(temp_min, viento_max, precip),
+            }
+        return results
