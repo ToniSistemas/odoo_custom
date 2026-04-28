@@ -17,9 +17,9 @@
         <field name="key">vinedo_cuaderno_campo.report_cuaderno_campo</field>
         <field name="arch" type="xml">
             <t t-name="vinedo_cuaderno_campo.report_cuaderno_campo">
+                <t t-set="finca" t-value="doc"/>
+                <t t-set="anio" t-value="time.strftime('%Y')"/>
                 <t t-call="web.external_layout">
-                    <t t-set="finca" t-value="doc"/>
-                    <t t-set="anio" t-value="time.strftime('%Y')"/>
                     <div class="page">
                         <!-- Título -->
                         <h2 style="text-align:center; margin-bottom:20px;">
