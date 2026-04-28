@@ -17,16 +17,15 @@
         <field name="key">vinedo_cuaderno_campo.report_cuaderno_campo</field>
         <field name="arch" type="xml">
             <t t-name="vinedo_cuaderno_campo.report_cuaderno_campo">
-                <t t-set="finca" t-value="doc"/>
+                <t t-set="finca" t-value="docs[0]"/>
                 <t t-set="anio" t-value="time.strftime('%Y')"/>
-                <t t-call="web.external_layout">
-                    <div class="page">
-                        <!-- Título -->
-                        <h2 style="text-align:center; margin-bottom:20px;">
-                            Cuaderno de Campo — <t t-esc="finca.name"/>
-                            <br/>
-                            <small>Año <t t-esc="anio"/></small>
-                        </h2>
+                <div class="page">
+                    <!-- Título -->
+                    <h2 style="text-align:center; margin-bottom:20px;">
+                        Cuaderno de Campo — <t t-esc="finca.name"/>
+                        <br/>
+                        <small>Año <t t-esc="anio"/></small>
+                    </h2>
 
                         <!-- Datos de la finca -->
                         <h3>Datos de la Finca</h3>
@@ -306,9 +305,8 @@
                         <p style="text-align:center; margin-top:40px; color:#999; font-size:11px;">
                             Generado el <t t-esc="time.strftime('%Y-%m-%d')"/> —
                             Cuaderno de Campo Digital · vinedo_cuaderno_campo
-                        </p>
-                    </div>
-                </t>
+                    </p>
+                </div>
             </t>
         </field>
     </record>
