@@ -18,7 +18,7 @@
             <t t-name="vinedo_cuaderno_campo.report_cuaderno_campo">
                 <t t-call="web.external_layout">
                     <t t-set="finca" t-value="doc"/>
-                    <t t-set="anio" t-value="context_timestamp and fields.Date.context_timestamp(context_timestamp).year or fields.Date.today().year"/>
+                    <t t-set="anio" t-value="fields.Date.today().year"/>
                     <div class="page">
                         <!-- Título -->
                         <h2 style="text-align:center; margin-bottom:20px;">

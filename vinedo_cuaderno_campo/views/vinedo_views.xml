@@ -109,7 +109,7 @@
                                     <field name="malico" optional="hide"/>
                                     <button name="action_open_attachments" type="object"
                                         icon="fa-paperclip"
-                                        attrs="{'invisible': [('id', '=', False)]}"
+                                        invisible="not id"
                                         string="" class="btn btn-sm btn-link"
                                         help="Adjuntar analíticas PDF"/>
                                 </list>
@@ -303,7 +303,7 @@
                             <field name="attachment_count" invisible="1"/>
                             <button name="action_open_attachments" type="object"
                                 string="Adjuntar analíticas" icon="fa-paperclip"
-                                attrs="{'invisible': [('id', '=', False)]}"
+                                invisible="not id"
                                 help="Adjuntar archivos PDF de analíticas"/>
                         </group>
                     </group>

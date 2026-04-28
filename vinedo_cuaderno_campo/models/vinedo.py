@@ -971,18 +971,6 @@ class RegistroClima(models.Model):
     ], string='Riesgo detectado', default='none')
     observaciones = fields.Text(string='Observaciones')
 
-    @api.constrains('finca_id', 'fecha')
-    def _check_unique_finca_fecha(self):
-        for rec in self:
-            if rec.finca_id and rec.fecha:
-                existing = self.search([
-                    ('finca_id', '=', rec.finca_id.id),
-                    ('fecha', '=', rec.fecha),
-                    ('id', '!=', rec.id)
-                ], limit=1)
-                if existing:
-                    raise ValidationError(_('Ya existe un registro climático para esta fecha en esta finca.'))
-
     _sql_constraints = [
         ('finca_fecha_uniq', 'unique(finca_id, fecha)',
          'Ya existe un registro climático para esta fecha en esta finca.'),
