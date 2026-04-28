@@ -863,9 +863,6 @@
     <menuitem id="menu_vinedo_estadistica_gasto" name="Gastos detallados"
         parent="menu_vinedo_estadistica" action="action_estadistica_gasto" sequence="1"/>
 
-    <menuitem id="menu_vinedo_resumen_anada" name="Coste por añada"
-        parent="menu_vinedo_estadistica" action="action_resumen_anada" sequence="2"/>
-
     <!-- ============================================================ -->
     <!-- Resumen por Añada Views                                     -->
     <!-- ============================================================ -->
@@ -919,6 +916,9 @@
         <field name="res_model">vinedo.resumen.anada</field>
         <field name="view_mode">pivot,graph,list</field>
     </record>
+
+    <menuitem id="menu_vinedo_resumen_anada" name="Coste por añada"
+        parent="menu_vinedo_estadistica" action="action_resumen_anada" sequence="2"/>
 
     <!-- ============================================================ -->
     <!-- Maquinaria Views                                            -->
