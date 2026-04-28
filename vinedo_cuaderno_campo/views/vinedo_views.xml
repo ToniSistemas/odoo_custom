@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='UTF-8'?>
 <odoo>
     <!-- ============================================================ -->
     <!-- Finca Views                                                  -->
@@ -32,22 +32,18 @@
                             <field name="latitude" string="Latitud"/>
                             <field name="longitude" string="Longitud"/>
                             <field name="ref_sigpac"/>
-                            <field name="refs_sigpac_extra" readonly="1"
-                                invisible="not refs_sigpac_extra"/>
+                            <field name="refs_sigpac_extra" readonly="1" invisible="not refs_sigpac_extra"/>
                         </group>
                     </group>
                     <div style="margin:4px 0 12px 0;">
-                        <button name="action_abrir_sigpac_visor" type="object"
-                            string="Abrir en SIGPAC (nueva pestaña)" icon="fa-external-link"
-                            class="btn btn-link" style="padding-left:0;"/>
+                        <button name="action_abrir_sigpac_visor" type="object" string="Abrir en SIGPAC (nueva pestaña)" icon="fa-external-link" class="btn btn-link" style="padding-left:0;"/>
                     </div>
                     <notebook>
                         <page string="Variedades">
                             <field name="variedad_ids">
                                 <list editable="bottom">
                                     <field name="variedad_id"/>
-                                    <field name="superficie" sum="Total (ha)" readonly="1"
-                                           help="Calculado automáticamente desde los recintos"/>
+                                    <field name="superficie" sum="Total (ha)" readonly="1" help="Calculado automáticamente desde los recintos"/>
                                     <field name="superficie_m2" readonly="1" sum="Total (m²)"/>
                                 </list>
                             </field>
@@ -68,8 +64,7 @@
                                 <list editable="bottom">
                                     <field name="fecha"/>
                                     <field name="tipo"/>
-                                    <field name="producto_id" invisible="tipo != 'fitosanitario'"
-                                           options="{'no_quick_create': True}"/>
+                                    <field name="producto_id" invisible="tipo != 'fitosanitario'" options="{'no_quick_create': True}"/>
                                     <field name="producto" invisible="tipo == 'fitosanitario'"/>
                                     <field name="litros" optional="show"/>
                                     <field name="precio_litro" optional="hide"/>
@@ -107,11 +102,7 @@
                                     <field name="acidez_total" optional="show"/>
                                     <field name="acidez_volatil" optional="hide"/>
                                     <field name="malico" optional="hide"/>
-                                    <button name="action_open_attachments" type="object"
-                                        icon="fa-paperclip"
-                                        invisible="not id"
-                                        string="" class="btn btn-sm btn-link"
-                                        help="Adjuntar analíticas PDF"/>
+                                    <button name="action_open_attachments" type="object" icon="fa-paperclip" invisible="not id" string="" class="btn btn-sm btn-link" help="Adjuntar analíticas PDF"/>
                                 </list>
                             </field>
                         </page>
@@ -156,14 +147,8 @@
                                     <field name="superficie_m2" readonly="1" sum="Total (m²)"/>
                                     <field name="variedad_resumen" readonly="1"/>
                                     <field name="activo" column_invisible="1"/>
-                                    <button name="action_toggle_activo" type="object"
-                                        invisible="not activo"
-                                        icon="fa-toggle-on" title="Incluido — pulse para excluir"
-                                        class="text-success"/>
-                                    <button name="action_toggle_activo" type="object"
-                                        invisible="activo"
-                                        icon="fa-toggle-off" title="Excluido — pulse para incluir"
-                                        class="text-muted"/>
+                                    <button name="action_toggle_activo" type="object" invisible="not activo" icon="fa-toggle-on" title="Incluido — pulse para excluir" class="text-success"/>
+                                    <button name="action_toggle_activo" type="object" invisible="activo" icon="fa-toggle-off" title="Excluido — pulse para incluir" class="text-muted"/>
                                 </list>
                                 <form string="Recinto SIGPAC">
                                     <group>
@@ -206,13 +191,10 @@
                 <field name="name" string="Nombre"/>
                 <field name="territory_id" string="Territorio"/>
                 <field name="ref_sigpac" string="Ref. SIGPAC"/>
-                <filter string="Con GPS" name="con_gps"
-                        domain="[('latitude', '!=', 0), ('longitude', '!=', 0)]"/>
-                <filter string="Con SIGPAC" name="con_sigpac"
-                        domain="[('ref_sigpac', '!=', False)]"/>
+                <filter string="Con GPS" name="con_gps" domain="[('latitude', '!=', 0), ('longitude', '!=', 0)]"/>
+                <filter string="Con SIGPAC" name="con_sigpac" domain="[('ref_sigpac', '!=', False)]"/>
                 <separator/>
-                <filter string="Territorio" name="group_territorio"
-                        context="{'group_by': 'territory_id'}"/>
+                <filter string="Territorio" name="group_territorio" context="{'group_by': 'territory_id'}"/>
             </search>
         </field>
     </record>
@@ -223,8 +205,7 @@
         <field name="view_mode">list,form</field>
     </record>
 
-    <menuitem id="menu_vinedo_root" name="Cuaderno de Campo" sequence="10"
-        web_icon="vinedo_cuaderno_campo,static/description/icon.png"/>
+    <menuitem id="menu_vinedo_root" name="Cuaderno de Campo" sequence="10" web_icon="vinedo_cuaderno_campo,static/description/icon.png"/>
     <menuitem id="menu_vinedo_fincas" name="Fincas" parent="menu_vinedo_root" action="action_finca" sequence="1"/>
 
     <!-- ============================================================ -->
@@ -298,8 +279,7 @@
                         <group>
                             <field name="finca_id"/>
                             <field name="variedad_disponible_ids" invisible="1"/>
-                            <field name="variedad_id"
-                                domain="[('id', 'in', variedad_disponible_ids)]"/>
+                            <field name="variedad_id" domain="[('id', 'in', variedad_disponible_ids)]"/>
                             <field name="anio"/>
                         </group>
                         <group>
@@ -320,10 +300,7 @@
                             <field name="acidez_volatil"/>
                             <field name="malico"/>
                             <field name="attachment_count" invisible="1"/>
-                            <button name="action_open_attachments" type="object"
-                                string="Adjuntar analíticas" icon="fa-paperclip"
-                                invisible="not id"
-                                help="Adjuntar archivos PDF de analíticas"/>
+                            <button name="action_open_attachments" type="object" string="Adjuntar analíticas" icon="fa-paperclip" invisible="not id" help="Adjuntar archivos PDF de analíticas"/>
                         </group>
                     </group>
                 </sheet>
@@ -367,20 +344,15 @@
                 <field name="finca_id" string="Finca"/>
                 <field name="variedad_id" string="Variedad"/>
                 <field name="anio" string="Año"/>
-                <filter string="Este año" name="anio_actual"
-                        domain="[('anio', '=', context_today().year)]"/>
+                <filter string="Este año" name="anio_actual" domain="[('anio', '=', context_today().year)]"/>
                 <separator/>
-                <filter string="Bodega" name="destino_bodega"
-                        domain="[('destino', '=', 'bodega')]"/>
-                <filter string="Venta directa" name="destino_venta"
-                        domain="[('destino', '=', 'venta_directa')]"/>
-                <group expand="0" string="Agrupar por">
-                    <filter string="Año" name="group_anio" context="{'group_by': 'anio'}"/>
+                <filter string="Bodega" name="destino_bodega" domain="[('destino', '=', 'bodega')]"/>
+                <filter string="Venta directa" name="destino_venta" domain="[('destino', '=', 'venta_directa')]"/>
+                <filter string="Año" name="group_anio" context="{'group_by': 'anio'}"/>
                     <filter string="Finca" name="group_finca" context="{'group_by': 'finca_id'}"/>
                     <filter string="Variedad" name="group_variedad" context="{'group_by': 'variedad_id'}"/>
                     <filter string="Destino" name="group_destino" context="{'group_by': 'destino'}"/>
-                </group>
-            </search>
+                </search>
         </field>
     </record>
 
@@ -429,9 +401,7 @@
                 <field name="materia_activa"/>
                 <field name="titular" optional="hide"/>
                 <field name="formulado" optional="hide"/>
-                <field name="estado"
-                       decoration-success="estado == 'Vigente'"
-                       decoration-muted="estado != 'Vigente'"/>
+                <field name="estado" decoration-success="estado == 'Vigente'" decoration-muted="estado != 'Vigente'"/>
                 <field name="fecha_caducidad"/>
                 <field name="phi_dias" optional="show"/>
                 <field name="fecha_consulta" optional="hide"/>
@@ -445,15 +415,8 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_actualizar_mapa" type="object"
-                        string="Actualizar desde MAPA" icon="fa-refresh"
-                        class="btn-primary"
-                        invisible="not id_mapa"
-                        help="Recarga los datos de este producto desde el Registro de Productos Fitosanitarios del MAPA"/>
-                    <button name="action_abrir_ficha_mapa" type="object"
-                        string="Ver ficha en MAPA" icon="fa-external-link"
-                        invisible="not num_registro"
-                        help="Abre la ficha oficial en el portal del Ministerio"/>
+                    <button name="action_actualizar_mapa" type="object" string="Actualizar desde MAPA" icon="fa-refresh" class="btn-primary" invisible="not id_mapa" help="Recarga los datos de este producto desde el Registro de Productos Fitosanitarios del MAPA"/>
+                    <button name="action_abrir_ficha_mapa" type="object" string="Ver ficha en MAPA" icon="fa-external-link" invisible="not num_registro" help="Abre la ficha oficial en el portal del Ministerio"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
@@ -463,9 +426,7 @@
                         <group string="Registro">
                             <field name="num_registro"/>
                             <field name="id_mapa" readonly="1"/>
-                            <field name="estado"
-                                   decoration-success="estado == 'Vigente'"
-                                   decoration-danger="estado != 'Vigente' and estado != False"/>
+                            <field name="estado" decoration-success="estado == 'Vigente'" decoration-danger="estado != 'Vigente' and estado != False"/>
                             <field name="fecha_caducidad"/>
                             <field name="phi_dias"/>
                             <field name="fecha_consulta" readonly="1"/>
@@ -514,8 +475,7 @@
                     <group string="Importación completada" invisible="fase != 'listo'">
                         <field name="total_creados" readonly="1"/>
                         <field name="total_actualizados" readonly="1"/>
-                        <field name="total_errores" readonly="1"
-                               invisible="total_errores == 0"/>
+                        <field name="total_errores" readonly="1" invisible="total_errores == 0"/>
                         <div colspan="2">
                             <p>Ya puedes buscar cualquier producto desde el campo
                                <strong>«Ficha Reg. MAPA»</strong> en los tratamientos,
@@ -525,12 +485,8 @@
                     </group>
                 </sheet>
                 <footer>
-                    <button name="action_buscar" type="object"
-                        string="Buscar en MAPA" class="btn-primary"
-                        invisible="fase != 'inicio'"/>
-                    <button name="action_importar" type="object"
-                        string="Importar a la base de datos" class="btn-primary"
-                        invisible="fase != 'confirmar'"/>
+                    <button name="action_buscar" type="object" string="Buscar en MAPA" class="btn-primary" invisible="fase != 'inicio'"/>
+                    <button name="action_importar" type="object" string="Importar a la base de datos" class="btn-primary" invisible="fase != 'confirmar'"/>
                     <button string="Cerrar" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>
@@ -565,17 +521,12 @@
                 <field name="materia_activa" string="Materia activa"/>
                 <field name="funcion" string="Función"/>
                 <field name="titular" string="Titular"/>
-                <filter string="Vigentes" name="vigentes"
-                        domain="[('estado', '=', 'Vigente')]"/>
-                <filter string="No vigentes" name="no_vigentes"
-                        domain="[('estado', '!=', 'Vigente'), ('estado', '!=', False)]"/>
-                <filter string="Con PHI definido" name="con_phi"
-                        domain="[('phi_dias', '>', 0)]"/>
-                <group expand="0" string="Agrupar por">
-                    <filter string="Función" name="group_funcion" context="{'group_by': 'funcion'}"/>
+                <filter string="Vigentes" name="vigentes" domain="[('estado', '=', 'Vigente')]"/>
+                <filter string="No vigentes" name="no_vigentes" domain="[('estado', '!=', 'Vigente'), ('estado', '!=', False)]"/>
+                <filter string="Con PHI definido" name="con_phi" domain="[('phi_dias', '&gt;', 0)]"/>
+                <filter string="Función" name="group_funcion" context="{'group_by': 'funcion'}"/>
                     <filter string="Estado" name="group_estado" context="{'group_by': 'estado'}"/>
-                </group>
-            </search>
+                </search>
         </field>
     </record>
 
@@ -600,11 +551,9 @@
         </field>
     </record>
 
-    <menuitem id="menu_vinedo_fitosanitarios" name="Fitosanitarios (MAPA)"
-        parent="menu_vinedo_config" action="action_fitosanitario" sequence="10"/>
+    <menuitem id="menu_vinedo_fitosanitarios" name="Fitosanitarios (MAPA)" parent="menu_vinedo_config" action="action_fitosanitario" sequence="10"/>
 
-    <menuitem id="menu_vinedo_descargar_catalogo" name="Descargar catálogo MAPA"
-        parent="menu_vinedo_config" action="action_server_importar_catalogo_mapa" sequence="50"/>
+    <menuitem id="menu_vinedo_descargar_catalogo" name="Descargar catálogo MAPA" parent="menu_vinedo_config" action="action_server_importar_catalogo_mapa" sequence="50"/>
 
     <!-- ============================================================ -->
     <!-- Wizard Búsqueda Fitosanitarios                               -->
@@ -622,8 +571,7 @@
                 <field name="fecha"/>
                 <field name="finca_id"/>
                 <field name="tipo"/>
-                <field name="producto_id" invisible="tipo != 'fitosanitario'"
-                       options="{'no_quick_create': True}"/>
+                <field name="producto_id" invisible="tipo != 'fitosanitario'" options="{'no_quick_create': True}"/>
                 <field name="producto" invisible="tipo == 'fitosanitario'"/>
                 <field name="litros" optional="show"/>
                 <field name="precio_litro" optional="hide"/>
@@ -633,10 +581,8 @@
                 <field name="funcion_info" optional="show" readonly="1"/>
                 <field name="estado_registro_info" optional="hide" readonly="1"/>
                 <field name="fecha_caducidad_reg" optional="hide" readonly="1"/>
-                <field name="phi_info" optional="show" readonly="1"
-                       decoration-danger="phi_vencimiento and phi_vencimiento &gt;= context_today()"/>
-                <field name="phi_vencimiento" optional="show" readonly="1"
-                       decoration-danger="phi_vencimiento and phi_vencimiento &gt;= context_today()"/>
+                <field name="phi_info" optional="show" readonly="1" decoration-danger="phi_vencimiento and phi_vencimiento &gt;= context_today()"/>
+                <field name="phi_vencimiento" optional="show" readonly="1" decoration-danger="phi_vencimiento and phi_vencimiento &gt;= context_today()"/>
                 <field name="dosis" optional="hide"/>
                 <field name="empleado_id"/>
             </list>
@@ -649,15 +595,8 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_buscar_fitosanitario" type="object"
-                        string="Consultar Registro MAPA" icon="fa-search"
-                        class="btn-primary"
-                        invisible="tipo != 'fitosanitario'"
-                        help="Busca el producto en el Registro de Productos Fitosanitarios y rellena los datos automáticamente"/>
-                    <button name="action_ver_ficha_mapa" type="object"
-                        string="Ver ficha en MAPA" icon="fa-file-pdf-o"
-                        invisible="not fitosanitario_id"
-                        help="Abre la ficha oficial del producto en el portal del Ministerio (MAPA)"/>
+                    <button name="action_buscar_fitosanitario" type="object" string="Consultar Registro MAPA" icon="fa-search" class="btn-primary" invisible="tipo != 'fitosanitario'" help="Busca el producto en el Registro de Productos Fitosanitarios y rellena los datos automáticamente"/>
+                    <button name="action_ver_ficha_mapa" type="object" string="Ver ficha en MAPA" icon="fa-file-pdf-o" invisible="not fitosanitario_id" help="Abre la ficha oficial del producto en el portal del Ministerio (MAPA)"/>
                 </header>
                 <sheet>
                     <group>
@@ -665,9 +604,7 @@
                             <field name="finca_id"/>
                             <field name="fecha"/>
                             <field name="tipo"/>
-                            <field name="producto_id"
-                                   invisible="tipo != 'fitosanitario'"
-                                   options="{'no_quick_create': True}"/>
+                            <field name="producto_id" invisible="tipo != 'fitosanitario'" options="{'no_quick_create': True}"/>
                             <field name="producto" invisible="tipo == 'fitosanitario'"/>
                             <field name="litros"/>
                             <field name="precio_litro"/>
@@ -676,22 +613,17 @@
                             <field name="dosis"/>
                             <field name="empleado_id"/>
                         </group>
-                        <group string="Ficha Registro MAPA"
-                               invisible="tipo != 'fitosanitario'">
-                            <field name="fitosanitario_id"
-                                   options="{'no_quick_create': True}"
-                                   domain="[('nombre', 'ilike', producto or '')]"/>
+                        <group string="Ficha Registro MAPA" invisible="tipo != 'fitosanitario'">
+                            <field name="fitosanitario_id" options="{'no_quick_create': True}" domain="[('nombre', 'ilike', producto or '')]"/>
                             <field name="funcion_info" readonly="1"/>
                             <field name="materia_activa_info" readonly="1"/>
                             <field name="estado_registro_info" readonly="1"/>
                             <field name="fecha_caducidad_reg" readonly="1"/>
                             <field name="phi_info" readonly="1"/>
-                            <field name="phi_vencimiento" readonly="1"
-                                   decoration-danger="phi_vencimiento and phi_vencimiento &gt;= context_today()"/>
+                            <field name="phi_vencimiento" readonly="1" decoration-danger="phi_vencimiento and phi_vencimiento &gt;= context_today()"/>
                         </group>
                     </group>
-                    <group string="Observaciones / Condiciones de Uso"
-                           invisible="not observaciones_registro">
+                    <group string="Observaciones / Condiciones de Uso" invisible="not observaciones_registro">
                         <field name="observaciones_registro" nolabel="1" colspan="2"/>
                     </group>
                 </sheet>
@@ -735,22 +667,16 @@
                 <field name="fitosanitario_id" string="Ficha MAPA"/>
                 <field name="empleado_id" string="Empleado"/>
                 <field name="maquinaria_id" string="Maquinaria"/>
-                <filter string="Fitosanitarios" name="tipo_fito"
-                        domain="[('tipo', '=', 'fitosanitario')]"/>
-                <filter string="Otros tratamientos" name="tipo_otro"
-                        domain="[('tipo', '=', 'otro')]"/>
+                <filter string="Fitosanitarios" name="tipo_fito" domain="[('tipo', '=', 'fitosanitario')]"/>
+                <filter string="Otros tratamientos" name="tipo_otro" domain="[('tipo', '=', 'otro')]"/>
                 <separator/>
-                <filter string="Este año" name="anio_actual"
-                        domain="[('fecha', '&gt;=', context_today().strftime('%Y-01-01')), ('fecha', '&lt;=', context_today().strftime('%Y-12-31'))]"/>
-                <filter string="Con PHI activo" name="phi_activo"
-                        domain="[('phi_vencimiento', '&gt;=', context_today().strftime('%Y-%m-%d'))]"/>
-                <group expand="0" string="Agrupar por">
-                    <filter string="Finca" name="group_finca" context="{'group_by': 'finca_id'}"/>
+                <filter string="Este año" name="anio_actual" domain="[('fecha', '&gt;=', context_today().strftime('%Y-01-01')), ('fecha', '&lt;=', context_today().strftime('%Y-12-31'))]"/>
+                <filter string="Con PHI activo" name="phi_activo" domain="[('phi_vencimiento', '&gt;=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter string="Finca" name="group_finca" context="{'group_by': 'finca_id'}"/>
                     <filter string="Tipo" name="group_tipo" context="{'group_by': 'tipo'}"/>
                     <filter string="Empleado" name="group_empleado" context="{'group_by': 'empleado_id'}"/>
                     <filter string="Mes" name="group_mes" context="{'group_by': 'fecha:month'}"/>
-                </group>
-            </search>
+                </search>
         </field>
     </record>
 
@@ -760,8 +686,7 @@
         <field name="view_mode">list,form,pivot,graph</field>
     </record>
 
-    <menuitem id="menu_vinedo_tratamientos" name="Tratamientos"
-        parent="menu_vinedo_root" action="action_tratamiento" sequence="4"/>
+    <menuitem id="menu_vinedo_tratamientos" name="Tratamientos" parent="menu_vinedo_root" action="action_tratamiento" sequence="4"/>
 
     <!-- ============================================================ -->
     <!-- Aportaciones — standalone con pivot                        -->
@@ -838,20 +763,15 @@
             <search>
                 <field name="finca_id" string="Finca"/>
                 <field name="producto_id" string="Producto"/>
-                <filter string="Mineral" name="tipo_mineral"
-                        domain="[('tipo_producto', '=', 'mineral')]"/>
-                <filter string="Orgánico" name="tipo_organico"
-                        domain="[('tipo_producto', '=', 'organico')]"/>
+                <filter string="Mineral" name="tipo_mineral" domain="[('tipo_producto', '=', 'mineral')]"/>
+                <filter string="Orgánico" name="tipo_organico" domain="[('tipo_producto', '=', 'organico')]"/>
                 <separator/>
-                <filter string="Este año" name="anio_actual"
-                        domain="[('fecha', '&gt;=', context_today().strftime('%Y-01-01')), ('fecha', '&lt;=', context_today().strftime('%Y-12-31'))]"/>
-                <group expand="0" string="Agrupar por">
-                    <filter string="Finca" name="group_finca" context="{'group_by': 'finca_id'}"/>
+                <filter string="Este año" name="anio_actual" domain="[('fecha', '&gt;=', context_today().strftime('%Y-01-01')), ('fecha', '&lt;=', context_today().strftime('%Y-12-31'))]"/>
+                <filter string="Finca" name="group_finca" context="{'group_by': 'finca_id'}"/>
                     <filter string="Producto" name="group_producto" context="{'group_by': 'producto_id'}"/>
                     <filter string="Tipo" name="group_tipo" context="{'group_by': 'tipo_producto'}"/>
                     <filter string="Mes" name="group_mes" context="{'group_by': 'fecha:month'}"/>
-                </group>
-            </search>
+                </search>
         </field>
     </record>
 
@@ -861,8 +781,7 @@
         <field name="view_mode">list,form,pivot,graph</field>
     </record>
 
-    <menuitem id="menu_vinedo_aportaciones" name="Aportaciones"
-        parent="menu_vinedo_root" action="action_aportacion" sequence="6"/>
+    <menuitem id="menu_vinedo_aportaciones" name="Aportaciones" parent="menu_vinedo_root" action="action_aportacion" sequence="6"/>
 
     <!-- ============================================================ -->
     <!-- Trabajos — standalone con pivot                             -->
@@ -934,15 +853,12 @@
                 <field name="finca_id" string="Finca"/>
                 <field name="empleado_id" string="Empleado"/>
                 <field name="tipo_trabajo" string="Tipo de trabajo"/>
-                <filter string="Este año" name="anio_actual"
-                        domain="[('fecha', '&gt;=', context_today().strftime('%Y-01-01')), ('fecha', '&lt;=', context_today().strftime('%Y-12-31'))]"/>
-                <group expand="0" string="Agrupar por">
-                    <filter string="Finca" name="group_finca" context="{'group_by': 'finca_id'}"/>
+                <filter string="Este año" name="anio_actual" domain="[('fecha', '&gt;=', context_today().strftime('%Y-01-01')), ('fecha', '&lt;=', context_today().strftime('%Y-12-31'))]"/>
+                <filter string="Finca" name="group_finca" context="{'group_by': 'finca_id'}"/>
                     <filter string="Tipo de trabajo" name="group_tipo" context="{'group_by': 'tipo_trabajo'}"/>
                     <filter string="Empleado" name="group_empleado" context="{'group_by': 'empleado_id'}"/>
                     <filter string="Mes" name="group_mes" context="{'group_by': 'fecha:month'}"/>
-                </group>
-            </search>
+                </search>
         </field>
     </record>
 
@@ -952,8 +868,7 @@
         <field name="view_mode">list,form,pivot,graph</field>
     </record>
 
-    <menuitem id="menu_vinedo_trabajos" name="Trabajos"
-        parent="menu_vinedo_root" action="action_trabajo" sequence="7"/>
+    <menuitem id="menu_vinedo_trabajos" name="Trabajos" parent="menu_vinedo_root" action="action_trabajo" sequence="7"/>
 
     <!-- ============================================================ -->
     <!-- Estadística de Gasto Views                                  -->
@@ -1008,11 +923,9 @@
         <field name="context">{'search_default_group_finca': 1}</field>
     </record>
 
-    <menuitem id="menu_vinedo_estadistica" name="Estadística"
-        parent="menu_vinedo_root" sequence="8"/>
+    <menuitem id="menu_vinedo_estadistica" name="Estadística" parent="menu_vinedo_root" sequence="8"/>
 
-    <menuitem id="menu_vinedo_estadistica_gasto" name="Gastos detallados"
-        parent="menu_vinedo_estadistica" action="action_estadistica_gasto" sequence="1"/>
+    <menuitem id="menu_vinedo_estadistica_gasto" name="Gastos detallados" parent="menu_vinedo_estadistica" action="action_estadistica_gasto" sequence="1"/>
 
     <!-- ============================================================ -->
     <!-- Resumen por Añada Views                                     -->
@@ -1068,8 +981,7 @@
         <field name="view_mode">pivot,graph,list</field>
     </record>
 
-    <menuitem id="menu_vinedo_resumen_anada" name="Coste por añada"
-        parent="menu_vinedo_estadistica" action="action_resumen_anada" sequence="2"/>
+    <menuitem id="menu_vinedo_resumen_anada" name="Coste por añada" parent="menu_vinedo_estadistica" action="action_resumen_anada" sequence="2"/>
 
     <!-- ============================================================ -->
     <!-- Maquinaria Views                                            -->
@@ -1121,11 +1033,9 @@
                 <field name="registro" string="Matrícula"/>
                 <filter string="Tractores" name="tractor" domain="[('tipo', '=', 'tractor')]"/>
                 <filter string="Atomizadores" name="atomizador" domain="[('tipo', '=', 'atomizador')]"/>
-                <group expand="0" string="Agrupar por">
-                    <filter string="Tipo" name="group_tipo" context="{'group_by': 'tipo'}"/>
+                <filter string="Tipo" name="group_tipo" context="{'group_by': 'tipo'}"/>
                     <filter string="Titular" name="group_titular" context="{'group_by': 'titular_id'}"/>
-                </group>
-            </search>
+                </search>
         </field>
     </record>
 
@@ -1135,8 +1045,7 @@
         <field name="view_mode">list,form</field>
     </record>
 
-    <menuitem id="menu_vinedo_maquinaria" name="Maquinaria"
-        parent="menu_vinedo_root" action="action_maquinaria" sequence="5"/>
+    <menuitem id="menu_vinedo_maquinaria" name="Maquinaria" parent="menu_vinedo_root" action="action_maquinaria" sequence="5"/>
 
     <!-- ============================================================ -->
     <!-- Wizard: Buscar Fitosanitario en MAPA                        -->
@@ -1148,8 +1057,7 @@
         <field name="arch" type="xml">
             <form string="Buscar en Registro MAPA">
                 <group>
-                    <field name="nombre_busqueda"
-                           placeholder="Ej: ALIETTE, mancozeb, fosetil…"/>
+                    <field name="nombre_busqueda" placeholder="Ej: ALIETTE, mancozeb, fosetil…"/>
                 </group>
                 <group invisible="not linea_ids" string="Resultados">
                     <field name="linea_ids" nolabel="1">
@@ -1157,18 +1065,13 @@
                             <field name="num_registro"/>
                             <field name="nombre"/>
                             <field name="formulado"/>
-                            <field name="estado"
-                                   decoration-success="estado == 'Vigente'"
-                                   decoration-muted="estado != 'Vigente'"/>
-                            <button name="action_seleccionar" type="object"
-                                string="Seleccionar" icon="fa-check"
-                                class="btn-primary btn-sm"/>
+                            <field name="estado" decoration-success="estado == 'Vigente'" decoration-muted="estado != 'Vigente'"/>
+                            <button name="action_seleccionar" type="object" string="Seleccionar" icon="fa-check" class="btn-primary btn-sm"/>
                         </list>
                     </field>
                 </group>
                 <footer>
-                    <button name="action_buscar" type="object"
-                        string="Buscar" class="btn-primary" icon="fa-search"/>
+                    <button name="action_buscar" type="object" string="Buscar" class="btn-primary" icon="fa-search"/>
                     <button special="cancel" string="Cancelar"/>
                 </footer>
             </form>
@@ -1285,14 +1188,11 @@
                 <filter string="Viento fuerte" name="riesgo_viento" domain="[('riesgo', '=', 'viento')]"/>
                 <filter string="Con riesgo" name="con_riesgo" domain="[('riesgo', '!=', 'none')]"/>
                 <separator/>
-                <filter string="Este año" name="anio_actual"
-                        domain="[('fecha', '&gt;=', context_today().strftime('%Y-01-01')), ('fecha', '&lt;=', context_today().strftime('%Y-12-31'))]"/>
-                <group expand="0" string="Agrupar por">
-                    <filter string="Finca" name="group_finca" context="{'group_by': 'finca_id'}"/>
+                <filter string="Este año" name="anio_actual" domain="[('fecha', '&gt;=', context_today().strftime('%Y-01-01')), ('fecha', '&lt;=', context_today().strftime('%Y-12-31'))]"/>
+                <filter string="Finca" name="group_finca" context="{'group_by': 'finca_id'}"/>
                     <filter string="Riesgo" name="group_riesgo" context="{'group_by': 'riesgo'}"/>
                     <filter string="Mes" name="group_mes" context="{'group_by': 'fecha:month'}"/>
-                </group>
-            </search>
+                </search>
         </field>
     </record>
 
@@ -1302,8 +1202,7 @@
         <field name="view_mode">list,form,calendar,pivot,graph</field>
     </record>
 
-    <menuitem id="menu_vinedo_clima" name="Climatología"
-        parent="menu_vinedo_root" action="action_registro_clima" sequence="11"/>
+    <menuitem id="menu_vinedo_clima" name="Climatología" parent="menu_vinedo_root" action="action_registro_clima" sequence="11"/>
 
     <!-- ============================================================ -->
     <!-- SeguimientoFenologico (BBCH) Views                          -->
@@ -1374,20 +1273,14 @@
             <search>
                 <field name="finca_id" string="Finca"/>
                 <field name="codigo_bbch" string="Código BBCH"/>
-                <filter string="Brotación" name="brotacion"
-                        domain="[('codigo_bbch', 'in', ['01','03','07','09','11'])]"/>
-                <filter string="Floración" name="floracion"
-                        domain="[('codigo_bbch', 'in', ['53','55','57','61','65','68'])]"/>
-                <filter string="Maduración" name="maduracion"
-                        domain="[('codigo_bbch', 'in', ['71','73','75','77','79','81','83','85','89'])]"/>
+                <filter string="Brotación" name="brotacion" domain="[('codigo_bbch', 'in', ['01','03','07','09','11'])]"/>
+                <filter string="Floración" name="floracion" domain="[('codigo_bbch', 'in', ['53','55','57','61','65','68'])]"/>
+                <filter string="Maduración" name="maduracion" domain="[('codigo_bbch', 'in', ['71','73','75','77','79','81','83','85','89'])]"/>
                 <separator/>
-                <filter string="Este año" name="anio_actual"
-                        domain="[('fecha', '&gt;=', context_today().strftime('%Y-01-01')), ('fecha', '&lt;=', context_today().strftime('%Y-12-31'))]"/>
-                <group expand="0" string="Agrupar por">
-                    <filter string="Finca" name="group_finca" context="{'group_by': 'finca_id'}"/>
+                <filter string="Este año" name="anio_actual" domain="[('fecha', '&gt;=', context_today().strftime('%Y-01-01')), ('fecha', '&lt;=', context_today().strftime('%Y-12-31'))]"/>
+                <filter string="Finca" name="group_finca" context="{'group_by': 'finca_id'}"/>
                     <filter string="Estado BBCH" name="group_bbch" context="{'group_by': 'codigo_bbch'}"/>
-                </group>
-            </search>
+                </search>
         </field>
     </record>
 
@@ -1397,8 +1290,7 @@
         <field name="view_mode">list,form,calendar,pivot</field>
     </record>
 
-    <menuitem id="menu_vinedo_fenologia" name="Fenología"
-        parent="menu_vinedo_root" action="action_seguimiento_fenologico" sequence="12"/>
+    <menuitem id="menu_vinedo_fenologia" name="Fenología" parent="menu_vinedo_root" action="action_seguimiento_fenologico" sequence="12"/>
 
     <!-- ============================================================ -->
     <!-- Lote de Cosecha Views                                       -->
@@ -1471,17 +1363,14 @@
                 <field name="finca_id" string="Finca"/>
                 <field name="variedad_id" string="Variedad"/>
                 <field name="anio" string="Año"/>
-                <filter string="Este año" name="anio_actual"
-                        domain="[('anio', '=', context_today().year)]"/>
+                <filter string="Este año" name="anio_actual" domain="[('anio', '=', context_today().year)]"/>
                 <filter string="Bodega" name="bodega" domain="[('destino', '=', 'bodega')]"/>
                 <filter string="Venta directa" name="venta" domain="[('destino', '=', 'venta_directa')]"/>
-                <group expand="0" string="Agrupar por">
-                    <filter string="Año" name="group_anio" context="{'group_by': 'anio'}"/>
+                <filter string="Año" name="group_anio" context="{'group_by': 'anio'}"/>
                     <filter string="Finca" name="group_finca" context="{'group_by': 'finca_id'}"/>
                     <filter string="Variedad" name="group_variedad" context="{'group_by': 'variedad_id'}"/>
                     <filter string="Destino" name="group_destino" context="{'group_by': 'destino'}"/>
-                </group>
-            </search>
+                </search>
         </field>
     </record>
 
@@ -1491,8 +1380,7 @@
         <field name="view_mode">list,form,pivot</field>
     </record>
 
-    <menuitem id="menu_vinedo_lotes_cosecha" name="Lotes de Cosecha"
-        parent="menu_vinedo_root" action="action_lote_cosecha" sequence="13"/>
+    <menuitem id="menu_vinedo_lotes_cosecha" name="Lotes de Cosecha" parent="menu_vinedo_root" action="action_lote_cosecha" sequence="13"/>
 
     <!-- ============================================================ -->
     <!-- Poda Views                                                  -->
@@ -1539,14 +1427,11 @@
                 <filter string="Poda de invierno" name="invierno" domain="[('tipo_poda', '=', 'invierno')]"/>
                 <filter string="Poda en verde" name="verde" domain="[('tipo_poda', '=', 'verde')]"/>
                 <separator/>
-                <filter string="Este año" name="anio_actual"
-                        domain="[('fecha', '&gt;=', context_today().strftime('%Y-01-01')), ('fecha', '&lt;=', context_today().strftime('%Y-12-31'))]"/>
-                <group expand="0" string="Agrupar por">
-                    <filter string="Finca" name="group_finca" context="{'group_by': 'finca_id'}"/>
+                <filter string="Este año" name="anio_actual" domain="[('fecha', '&gt;=', context_today().strftime('%Y-01-01')), ('fecha', '&lt;=', context_today().strftime('%Y-12-31'))]"/>
+                <filter string="Finca" name="group_finca" context="{'group_by': 'finca_id'}"/>
                     <filter string="Tipo" name="group_tipo" context="{'group_by': 'tipo_poda'}"/>
                     <filter string="Empleado" name="group_empleado" context="{'group_by': 'empleado_id'}"/>
-                </group>
-            </search>
+                </search>
         </field>
     </record>
 
@@ -1556,7 +1441,6 @@
         <field name="view_mode">list,form</field>
     </record>
 
-    <menuitem id="menu_vinedo_podas" name="Podas"
-        parent="menu_vinedo_root" action="action_poda" sequence="14"/>
+    <menuitem id="menu_vinedo_podas" name="Podas" parent="menu_vinedo_root" action="action_poda" sequence="14"/>
 
 </odoo>
