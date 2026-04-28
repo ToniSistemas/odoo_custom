@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!-- ============================================================ -->
     <!-- Finca Views                                                  -->
@@ -742,10 +742,9 @@
                         domain="[('tipo', '=', 'otro')]"/>
                 <separator/>
                 <filter string="Este año" name="anio_actual"
-                        domain="[('fecha', '>=', (context_today() + relativedelta(month=1, day=1)).strftime('%Y-%m-%d')),
-                                  ('fecha', '<=', (context_today() + relativedelta(month=12, day=31)).strftime('%Y-%m-%d'))]"/>
+                        domain="[('fecha', '&gt;=', context_today().strftime('%Y-01-01')), ('fecha', '&lt;=', context_today().strftime('%Y-12-31'))]"/>
                 <filter string="Con PHI activo" name="phi_activo"
-                        domain="[('phi_vencimiento', '>=', context_today().strftime('%Y-%m-%d'))]"/>
+                        domain="[('phi_vencimiento', '&gt;=', context_today().strftime('%Y-%m-%d'))]"/>
                 <group expand="0" string="Agrupar por">
                     <filter string="Finca" name="group_finca" context="{'group_by': 'finca_id'}"/>
                     <filter string="Tipo" name="group_tipo" context="{'group_by': 'tipo'}"/>
@@ -846,8 +845,7 @@
                         domain="[('tipo_producto', '=', 'organico')]"/>
                 <separator/>
                 <filter string="Este año" name="anio_actual"
-                        domain="[('fecha', '>=', (context_today() + relativedelta(month=1, day=1)).strftime('%Y-%m-%d')),
-                                  ('fecha', '&lt;=', (context_today() + relativedelta(month=12, day=31)).strftime('%Y-%m-%d'))]"/>
+                        domain="[('fecha', '&gt;=', context_today().strftime('%Y-01-01')), ('fecha', '&lt;=', context_today().strftime('%Y-12-31'))]"/>
                 <group expand="0" string="Agrupar por">
                     <filter string="Finca" name="group_finca" context="{'group_by': 'finca_id'}"/>
                     <filter string="Producto" name="group_producto" context="{'group_by': 'producto_id'}"/>
@@ -938,8 +936,7 @@
                 <field name="empleado_id" string="Empleado"/>
                 <field name="tipo_trabajo" string="Tipo de trabajo"/>
                 <filter string="Este año" name="anio_actual"
-                        domain="[('fecha', '>=', (context_today() + relativedelta(month=1, day=1)).strftime('%Y-%m-%d')),
-                                  ('fecha', '&lt;=', (context_today() + relativedelta(month=12, day=31)).strftime('%Y-%m-%d'))]"/>
+                        domain="[('fecha', '&gt;=', context_today().strftime('%Y-01-01')), ('fecha', '&lt;=', context_today().strftime('%Y-12-31'))]"/>
                 <group expand="0" string="Agrupar por">
                     <filter string="Finca" name="group_finca" context="{'group_by': 'finca_id'}"/>
                     <filter string="Tipo de trabajo" name="group_tipo" context="{'group_by': 'tipo_trabajo'}"/>
@@ -1290,8 +1287,7 @@
                 <filter string="Con riesgo" name="con_riesgo" domain="[('riesgo', '!=', 'none')]"/>
                 <separator/>
                 <filter string="Este año" name="anio_actual"
-                        domain="[('fecha', '>=', (context_today() + relativedelta(month=1, day=1)).strftime('%Y-%m-%d')),
-                                  ('fecha', '&lt;=', (context_today() + relativedelta(month=12, day=31)).strftime('%Y-%m-%d'))]"/>
+                        domain="[('fecha', '&gt;=', context_today().strftime('%Y-01-01')), ('fecha', '&lt;=', context_today().strftime('%Y-12-31'))]"/>
                 <group expand="0" string="Agrupar por">
                     <filter string="Finca" name="group_finca" context="{'group_by': 'finca_id'}"/>
                     <filter string="Riesgo" name="group_riesgo" context="{'group_by': 'riesgo'}"/>
@@ -1387,8 +1383,7 @@
                         domain="[('codigo_bbch', 'in', ['71','73','75','77','79','81','83','85','89'])]"/>
                 <separator/>
                 <filter string="Este año" name="anio_actual"
-                        domain="[('fecha', '>=', (context_today() + relativedelta(month=1, day=1)).strftime('%Y-%m-%d')),
-                                  ('fecha', '&lt;=', (context_today() + relativedelta(month=12, day=31)).strftime('%Y-%m-%d'))]"/>
+                        domain="[('fecha', '&gt;=', context_today().strftime('%Y-01-01')), ('fecha', '&lt;=', context_today().strftime('%Y-12-31'))]"/>
                 <group expand="0" string="Agrupar por">
                     <filter string="Finca" name="group_finca" context="{'group_by': 'finca_id'}"/>
                     <filter string="Estado BBCH" name="group_bbch" context="{'group_by': 'codigo_bbch'}"/>
@@ -1546,8 +1541,7 @@
                 <filter string="Poda en verde" name="verde" domain="[('tipo_poda', '=', 'verde')]"/>
                 <separator/>
                 <filter string="Este año" name="anio_actual"
-                        domain="[('fecha', '>=', (context_today() + relativedelta(month=1, day=1)).strftime('%Y-%m-%d')),
-                                  ('fecha', '&lt;=', (context_today() + relativedelta(month=12, day=31)).strftime('%Y-%m-%d'))]"/>
+                        domain="[('fecha', '&gt;=', context_today().strftime('%Y-01-01')), ('fecha', '&lt;=', context_today().strftime('%Y-12-31'))]"/>
                 <group expand="0" string="Agrupar por">
                     <filter string="Finca" name="group_finca" context="{'group_by': 'finca_id'}"/>
                     <filter string="Tipo" name="group_tipo" context="{'group_by': 'tipo_poda'}"/>
