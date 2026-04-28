@@ -1,29 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Categoría de grupos para el Cuaderno de Campo -->
-    <record id="module_category_vinedo_cuaderno_campo" model="ir.module.category">
-        <field name="name">Cuaderno de Campo</field>
-        <field name="description">Grupos de seguridad del Cuaderno de Campo</field>
-    </record>
-
     <!-- Grupos de seguridad del Cuaderno de Campo -->
+    <!-- La categoría se crea automáticamente desde el campo 'category' del __manifest__.py -->
     <record id="group_vinedo_consulta" model="res.groups">
         <field name="name">Cuaderno de Campo - Consulta</field>
-        <field name="category_id" ref="module_category_vinedo_cuaderno_campo"/>
+        <field name="category_id" ref="base.module_category_agriculture_field_service"/>
         <field name="comment">Acceso de solo lectura a todos los datos del cuaderno de campo</field>
     </record>
 
     <record id="group_vinedo_usuario" model="res.groups">
         <field name="name">Cuaderno de Campo - Usuario</field>
-        <field name="category_id" ref="module_category_vinedo_cuaderno_campo"/>
+        <field name="category_id" ref="base.module_category_agriculture_field_service"/>
         <field name="comment">Acceso de lectura/escritura a datos del cuaderno de campo</field>
-        <field name="implied_ids" eval="[(4, ref('group_vinedo_consulta'))]"/>
+        <field name="implied_ids" eval="[(4, ref('vinedo_cuaderno_campo.group_vinedo_consulta'))]"/>
     </record>
 
     <record id="group_vinedo_responsable" model="res.groups">
         <field name="name">Cuaderno de Campo - Responsable</field>
-        <field name="category_id" ref="module_category_vinedo_cuaderno_campo"/>
+        <field name="category_id" ref="base.module_category_agriculture_field_service"/>
         <field name="comment">Acceso completo: leer, escribir, crear, borrar + informes</field>
-        <field name="implied_ids" eval="[(4, ref('group_vinedo_usuario'))]"/>
+        <field name="implied_ids" eval="[(4, ref('vinedo_cuaderno_campo.group_vinedo_usuario'))]"/>
     </record>
 </odoo>
