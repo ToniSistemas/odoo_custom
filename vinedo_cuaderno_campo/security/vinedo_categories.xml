@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="module_category_agriculture" model="ir.module.category">
+        <field name="name">Agriculture</field>
+        <field name="sequence">100</field>
+    </record>
+    <record id="module_category_agriculture_field_service" model="ir.module.category">
+        <field name="name">Field Service</field>
+        <field name="parent_id" ref="vinedo_cuaderno_campo.module_category_agriculture"/>
+        <field name="sequence">1</field>
+    </record>
+</odoo>

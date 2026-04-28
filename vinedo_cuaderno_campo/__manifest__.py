@@ -31,6 +31,7 @@
     'license': 'LGPL-3',
     'depends': ['base', 'hr', 'mail', 'spreadsheet_dashboard', 'product'],
     'data': [
+        'security/vinedo_categories.xml',
         'security/vinedo_security.xml',
         'security/ir.model.access.csv',
         'views/vinedo_views.xml',
