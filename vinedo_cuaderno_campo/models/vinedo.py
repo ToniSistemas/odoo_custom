@@ -991,12 +991,12 @@ class RegistroClima(models.Model):
 
     finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True, ondelete='cascade', index=True)
     fecha = fields.Date(string='Fecha', required=True, index=True)
-    temperatura_max = fields.Float(string='Temp. máxima (°C)', digits=(5, 1))
-    temperatura_min = fields.Float(string='Temp. mínima (°C)', digits=(5, 1))
-    temperatura_media = fields.Float(string='Temp. media (°C)', digits=(5, 1))
-    precipitacion = fields.Float(string='Precipitación (mm)', digits=(6, 1))
-    humedad_relativa = fields.Float(string='Humedad relativa (%)', digits=(5, 1))
-    viento_velocidad = fields.Float(string='Viento (km/h)', digits=(5, 1))
+    temperatura_max = fields.Float(string='Temp. máxima (°C)', digits=(5, 1), aggregator='max')
+    temperatura_min = fields.Float(string='Temp. mínima (°C)', digits=(5, 1), aggregator='min')
+    temperatura_media = fields.Float(string='Temp. media (°C)', digits=(5, 1), aggregator='avg')
+    precipitacion = fields.Float(string='Precipitación (mm)', digits=(6, 1), aggregator='sum')
+    humedad_relativa = fields.Float(string='Humedad relativa (%)', digits=(5, 1), aggregator=False)
+    viento_velocidad = fields.Float(string='Viento (km/h)', digits=(5, 1), aggregator=False)
     viento_direccion = fields.Selection([
         ('N', 'N'), ('NE', 'NE'), ('E', 'E'), ('SE', 'SE'),
         ('S', 'S'), ('SO', 'SO'), ('O', 'O'), ('NO', 'NO'),
