@@ -1544,13 +1544,13 @@ class ClimaImportWizard(models.TransientModel):
     _description = 'Importar datos Open-Meteo'
 
     finca_id = fields.Many2one(
-        'vinedo.finca', string='Finca', required=True,
+        'vinedo.finca', string='Finca',
         help='La finca debe tener coordenadas GPS (latitud y longitud).')
     fecha_inicio = fields.Date(
-        string='Fecha inicio', required=True,
+        string='Fecha inicio',
         default=lambda self: fields.Date.today().replace(month=1, day=1))
     fecha_fin = fields.Date(
-        string='Fecha fin', required=True,
+        string='Fecha fin',
         default=fields.Date.today)
     sobrescribir = fields.Boolean(
         string='Sobrescribir registros existentes', default=False,
@@ -1573,6 +1573,10 @@ class ClimaImportWizard(models.TransientModel):
         """Descarga datos de Open-Meteo y crea/actualiza registros de clima."""
         import datetime
         self.ensure_one()
+        if not self.finca_id:
+            raise UserError(_('Selecciona una finca antes de importar.'))
+        if not self.fecha_inicio or not self.fecha_fin:
+            raise UserError(_('Introduce el rango de fechas antes de importar.'))
         finca = self.finca_id
         if not finca.latitude or not finca.longitude:
             raise UserError(_(
