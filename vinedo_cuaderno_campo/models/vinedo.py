@@ -1559,15 +1559,14 @@ class ClimaImportWizard(models.TransientModel):
 
     @api.model
     def action_open(self):
-        """Crea una instancia nueva del wizard y la abre."""
-        wiz = self.create({})
+        """Abre el formulario del wizard sin pre-crear el registro."""
         return {
             'type': 'ir.actions.act_window',
             'name': _('Importar datos meteorologicos'),
             'res_model': self._name,
-            'res_id': wiz.id,
             'view_mode': 'form',
             'target': 'new',
+            'context': self.env.context,
         }
 
     def action_importar(self):
