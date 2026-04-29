@@ -89,20 +89,19 @@
                                 </list>
                             </field>
                         </page>
-                        <page string="Añadas">
+                        <page string="Lotes de Cosecha">
                             <field name="anada_ids">
                                 <list editable="bottom">
                                     <field name="anio"/>
                                     <field name="variedad_id"/>
+                                    <field name="fecha_vendimia"/>
                                     <field name="cantidad" sum="Total kg"/>
-                                    <field name="graduacion"/>
-                                    <field name="sulfuroso_total" optional="show"/>
-                                    <field name="ph" optional="show"/>
-                                    <field name="densidad" optional="hide"/>
-                                    <field name="acidez_total" optional="show"/>
-                                    <field name="acidez_volatil" optional="hide"/>
-                                    <field name="malico" optional="hide"/>
-                                    <button name="action_open_attachments" type="object" icon="fa-paperclip" invisible="not id" string="" class="btn btn-sm btn-link" help="Adjuntar analíticas PDF"/>
+                                    <field name="graduacion" optional="show"/>
+                                    <field name="destino" optional="show"/>
+                                    <field name="bodega_destino" optional="hide"/>
+                                    <field name="tiempo_utilizado" optional="hide"/>
+                                    <field name="coste_externo" optional="hide"/>
+                                    <field name="coste_maquinaria" optional="hide"/>
                                 </list>
                             </field>
                         </page>
