@@ -1101,7 +1101,7 @@
                 <field name="temperatura_min" aggregator="min"/>
                 <field name="temperatura_media" aggregator="avg"/>
                 <field name="precipitacion" aggregator="sum"/>
-                <field name="humedad_relativa" optional="show" aggregator="false"/>
+                <field name="humedad_relativa" optional="show"/>
                 <field name="riesgo" optional="show"/>
             </list>
         </field>
