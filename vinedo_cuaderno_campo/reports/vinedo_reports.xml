@@ -225,17 +225,18 @@
                             </tbody>
                         </table>
 
-                        <!-- Añadas -->
-                        <h3>Añadas / Cosechas</h3>
+                        <!-- Lotes de cosecha -->
+                        <h3>Lotes de Cosecha</h3>
                         <table class="table table-sm table-striped">
                             <thead>
                                 <tr>
                                     <th>Año</th>
                                     <th>Variedad</th>
+                                    <th>Fecha vendimia</th>
                                     <th>Kg</th>
                                     <th>% vol</th>
-                                    <th>pH</th>
-                                    <th>Acidez (g/L)</th>
+                                    <th>Destino</th>
+                                    <th>Bodega / Comprador</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -243,38 +244,11 @@
                                     <tr>
                                         <td t-esc="an.anio"/>
                                         <td t-esc="an.variedad_id.name"/>
+                                        <td t-esc="an.fecha_vendimia or ''"/>
                                         <td t-esc="an.cantidad or ''"/>
                                         <td t-esc="an.graduacion or ''"/>
-                                        <td t-esc="an.ph or ''"/>
-                                        <td t-esc="an.acidez_total or ''"/>
-                                    </tr>
-                                </t>
-                            </tbody>
-                        </table>
-
-                        <!-- Lotes de cosecha -->
-                        <h3>Lotes de Cosecha</h3>
-                        <table class="table table-sm table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Lote</th>
-                                    <th>Fecha</th>
-                                    <th>Variedad</th>
-                                    <th>Cantidad (kg)</th>
-                                    <th>Destino</th>
-                                    <th>Bodega / Comprador</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <t t-set="lotes" t-value="finca.env['vinedo.lote.cosecha'].search([('finca_id','=',finca.id),('anio','=',anio)], order='fecha_creacion desc')"/>
-                                <t t-foreach="lotes" t-as="lot">
-                                    <tr>
-                                        <td t-esc="lot.name"/>
-                                        <td t-esc="lot.fecha_creacion"/>
-                                        <td t-esc="lot.variedad_id.name or ''"/>
-                                        <td t-esc="lot.cantidad_kg or ''"/>
-                                        <td t-esc="dict(lot._fields['destino'].selection).get(lot.destino,'')"/>
-                                        <td t-esc="lot.bodega_destino or ''"/>
+                                        <td t-esc="dict(an._fields['destino'].selection).get(an.destino,'')"/>
+                                        <td t-esc="an.bodega_destino or ''"/>
                                     </tr>
                                 </t>
                             </tbody>
@@ -284,7 +258,7 @@
                         <t t-set="coste_trat" t-value="sum(tr.coste for tr in trats if tr.coste) or 0.0"/>
                         <t t-set="coste_aport" t-value="sum(ap.coste for ap in aports if ap.coste) or 0.0"/>
                         <t t-set="horas_total" t-value="sum(trb.horas for trb in trabajos if trb.horas) or 0.0"/>
-                        <t t-set="kg_total" t-value="sum(lot.cantidad_kg for lot in lotes if lot.cantidad_kg) or 0.0"/>
+                        <t t-set="kg_total" t-value="sum(an.cantidad for an in finca.anada_ids.filtered(lambda a: a.anio == anio) if an.cantidad) or 0.0"/>
 
                         <h3>Resumen del Año</h3>
                         <table class="table table-sm">

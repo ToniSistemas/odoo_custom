@@ -259,7 +259,7 @@
                 <field name="variedad_id"/>
                 <field name="cantidad" sum="Total kg"/>
                 <field name="graduacion" avg="Graduación Media"/>
-                <field name="acidez_total" avg="Acidez Total Media"/>
+                <field name="fecha_vendimia"/>
             </list>
         </field>
     </record>
@@ -290,17 +290,11 @@
                             <field name="rendimiento_kg_ha" readonly="1"/>
                             <field name="destino"/>
                             <field name="bodega_destino"/>
-                            <field name="lote_id"/>
                         </group>
-                        <group string="Análisis" invisible="1">
-                            <field name="sulfuroso_total"/>
-                            <field name="ph"/>
-                            <field name="densidad"/>
-                            <field name="acidez_total"/>
-                            <field name="acidez_volatil"/>
-                            <field name="malico"/>
-                            <field name="attachment_count" invisible="1"/>
-                            <button name="action_open_attachments" type="object" string="Adjuntar analíticas" icon="fa-paperclip" invisible="not id" help="Adjuntar archivos PDF de analíticas"/>
+                        <group string="Costes y tiempos">
+                            <field name="tiempo_utilizado"/>
+                            <field name="coste_externo"/>
+                            <field name="coste_maquinaria"/>
                         </group>
                     </group>
                 </sheet>
@@ -313,7 +307,7 @@
         <field name="name">vinedo.anada.pivot</field>
         <field name="model">vinedo.anada</field>
         <field name="arch" type="xml">
-            <pivot string="Añadas" sample="1">
+            <pivot string="Lotes de Cosecha" sample="1">
                 <field name="anio" type="row"/>
                 <field name="finca_id" type="row"/>
                 <field name="variedad_id" type="col"/>
@@ -327,7 +321,7 @@
         <field name="name">vinedo.anada.graph</field>
         <field name="model">vinedo.anada</field>
         <field name="arch" type="xml">
-            <graph string="Añadas" type="bar" sample="1">
+            <graph string="Lotes de Cosecha" type="bar" sample="1">
                 <field name="finca_id" type="row"/>
                 <field name="variedad_id" type="col"/>
                 <field name="cantidad" type="measure"/>
@@ -357,12 +351,12 @@
     </record>
 
     <record id="action_anada" model="ir.actions.act_window">
-        <field name="name">Añadas</field>
+        <field name="name">Lotes de Cosecha</field>
         <field name="res_model">vinedo.anada</field>
         <field name="view_mode">list,form,pivot,graph</field>
     </record>
 
-    <menuitem id="menu_vinedo_anadas" name="Añadas" parent="menu_vinedo_root" action="action_anada" sequence="3"/>
+    <menuitem id="menu_vinedo_anadas" name="Lotes de Cosecha" parent="menu_vinedo_root" action="action_anada" sequence="3"/>
 
     <!-- ============================================================ -->
     <!-- Territorio Views (Configuración)                            -->
@@ -1343,96 +1337,6 @@
     </record>
 
     <menuitem id="menu_vinedo_fenologia" name="Fenología" parent="menu_vinedo_root" action="action_seguimiento_fenologico" sequence="12"/>
-
-    <!-- ============================================================ -->
-    <!-- Lote de Cosecha Views                                       -->
-    <!-- ============================================================ -->
-    <record id="view_lote_cosecha_tree" model="ir.ui.view">
-        <field name="name">vinedo.lote.cosecha.tree</field>
-        <field name="model">vinedo.lote.cosecha</field>
-        <field name="arch" type="xml">
-            <list>
-                <field name="name"/>
-                <field name="fecha_creacion"/>
-                <field name="finca_id"/>
-                <field name="variedad_id"/>
-                <field name="anio"/>
-                <field name="cantidad_kg" sum="Total kg"/>
-                <field name="destino"/>
-                <field name="bodega_destino" optional="show"/>
-            </list>
-        </field>
-    </record>
-
-    <record id="view_lote_cosecha_form" model="ir.ui.view">
-        <field name="name">vinedo.lote.cosecha.form</field>
-        <field name="model">vinedo.lote.cosecha</field>
-        <field name="arch" type="xml">
-            <form>
-                <sheet>
-                    <div class="oe_title">
-                        <h1><field name="name" placeholder="Nombre del lote"/></h1>
-                    </div>
-                    <group>
-                        <group>
-                            <field name="fecha_creacion"/>
-                            <field name="finca_id"/>
-                            <field name="variedad_id"/>
-                            <field name="anio"/>
-                        </group>
-                        <group>
-                            <field name="cantidad_kg"/>
-                            <field name="destino"/>
-                            <field name="bodega_destino"/>
-                        </group>
-                    </group>
-                    <field name="observaciones"/>
-                </sheet>
-                <chatter/>
-            </form>
-        </field>
-    </record>
-
-    <record id="view_lote_cosecha_pivot" model="ir.ui.view">
-        <field name="name">vinedo.lote.cosecha.pivot</field>
-        <field name="model">vinedo.lote.cosecha</field>
-        <field name="arch" type="xml">
-            <pivot string="Lotes de Cosecha" sample="1">
-                <field name="anio" type="col"/>
-                <field name="finca_id" type="row"/>
-                <field name="variedad_id" type="row"/>
-                <field name="cantidad_kg" type="measure"/>
-            </pivot>
-        </field>
-    </record>
-
-    <record id="view_lote_cosecha_search" model="ir.ui.view">
-        <field name="name">vinedo.lote.cosecha.search</field>
-        <field name="model">vinedo.lote.cosecha</field>
-        <field name="arch" type="xml">
-            <search>
-                <field name="name" string="Lote"/>
-                <field name="finca_id" string="Finca"/>
-                <field name="variedad_id" string="Variedad"/>
-                <field name="anio" string="Año"/>
-                <filter string="Este año" name="anio_actual" domain="[('anio', '=', context_today().year)]"/>
-                <filter string="Bodega" name="bodega" domain="[('destino', '=', 'bodega')]"/>
-                <filter string="Venta directa" name="venta" domain="[('destino', '=', 'venta_directa')]"/>
-                <filter string="Año" name="group_anio" context="{'group_by': 'anio'}"/>
-                    <filter string="Finca" name="group_finca" context="{'group_by': 'finca_id'}"/>
-                    <filter string="Variedad" name="group_variedad" context="{'group_by': 'variedad_id'}"/>
-                    <filter string="Destino" name="group_destino" context="{'group_by': 'destino'}"/>
-                </search>
-        </field>
-    </record>
-
-    <record id="action_lote_cosecha" model="ir.actions.act_window">
-        <field name="name">Lotes de Cosecha</field>
-        <field name="res_model">vinedo.lote.cosecha</field>
-        <field name="view_mode">list,form,pivot</field>
-    </record>
-
-    <menuitem id="menu_vinedo_lotes_cosecha" name="Lotes de Cosecha" parent="menu_vinedo_root" action="action_lote_cosecha" sequence="13"/>
 
     <!-- ============================================================ -->
     <!-- Poda Views                                                  -->

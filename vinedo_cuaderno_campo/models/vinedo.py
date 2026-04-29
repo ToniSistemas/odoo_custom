@@ -544,7 +544,7 @@ class Plantacion(models.Model):
 
 class Anada(models.Model):
     _name = 'vinedo.anada'
-    _description = 'Añada / Cosecha por variedad'
+    _description = 'Lotes de Cosecha'
     _order = 'anio desc, finca_id, variedad_id'
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
@@ -554,13 +554,7 @@ class Anada(models.Model):
     anio = fields.Integer(string='Año', required=True, default=lambda self: fields.Date.today().year, aggregator=False)
     graduacion = fields.Float(string='Graduación alcohólica (%vol)', digits=(5, 2), aggregator='avg')
     cantidad = fields.Float(string='Cantidad recolectada (kg)', digits=(12, 2))
-    sulfuroso_total = fields.Float(string='Sulfuroso total (mg/L)', digits=(6, 2), aggregator='avg')
-    ph = fields.Float(string='pH', digits=(4, 2), aggregator='avg')
-    densidad = fields.Float(string='Densidad (g/mL)', digits=(6, 4), aggregator='avg')
-    acidez_total = fields.Float(string='Acidez total (g/L)', digits=(5, 2), aggregator='avg')
-    acidez_volatil = fields.Float(string='Acidez volátil (g/L)', digits=(5, 2), aggregator='avg')
-    malico = fields.Float(string='Málico (g/L)', digits=(5, 2), aggregator='avg')
-    # Nuevos campos de cosecha
+    # Campos de cosecha
     fecha_vendimia = fields.Date(string='Fecha de vendimia', index=True)
     cuadrilla = fields.Char(string='Cuadrilla / Responsable')
     rendimiento_kg_ha = fields.Float(string='Rendimiento (kg/ha)', digits=(10, 2), compute='_compute_rendimiento', store=True)
@@ -571,8 +565,9 @@ class Anada(models.Model):
         ('otro', 'Otro'),
     ], string='Destino', default='bodega')
     bodega_destino = fields.Char(string='Bodega / Comprador')
-    lote_id = fields.Many2one('vinedo.lote.cosecha', string='Lote de cosecha', index=True, ondelete='set null')
-    attachment_count = fields.Integer(string='Analíticas', compute='_compute_attachment_count')
+    tiempo_utilizado = fields.Float(string='Tiempo utilizado (h)', digits=(10, 2))
+    coste_externo = fields.Float(string='Coste externo (€)', digits=(10, 2))
+    coste_maquinaria = fields.Float(string='Coste maquinaria (€)', digits=(10, 2))
     variedad_disponible_ids = fields.Many2many(
         'vinedo.variedad', string='Variedades disponibles',
         compute='_compute_variedad_disponible_ids')
@@ -592,28 +587,6 @@ class Anada(models.Model):
                 rec.rendimiento_kg_ha = round(rec.cantidad / rec.finca_id.area, 2)
             else:
                 rec.rendimiento_kg_ha = 0.0
-
-    def _compute_attachment_count(self):
-        for rec in self:
-            rec.attachment_count = self.env['ir.attachment'].search_count([
-                ('res_model', '=', 'vinedo.anada'),
-                ('res_id', '=', rec.id),
-            ])
-
-    def action_open_attachments(self):
-        self.ensure_one()
-        return {
-            'type': 'ir.actions.act_window',
-            'name': f'Analíticas — {self.name}',
-            'res_model': 'ir.attachment',
-            'view_mode': 'list,form',
-            'domain': [('res_model', '=', 'vinedo.anada'), ('res_id', '=', self.id)],
-            'context': {
-                'default_res_model': 'vinedo.anada',
-                'default_res_id': self.id,
-            },
-            'target': 'new',
-        }
 
     @api.depends('finca_id', 'variedad_id', 'anio')
     def _compute_name(self):
@@ -958,29 +931,6 @@ class Recinto(models.Model):
     def action_toggle_activo(self):
         for rec in self:
             rec.activo = not rec.activo
-
-
-class LoteCosecha(models.Model):
-    """Lote de cosecha con trazabilidad."""
-    _name = 'vinedo.lote.cosecha'
-    _description = 'Lote de cosecha'
-    _order = 'fecha_creacion desc, name'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
-
-    name = fields.Char(string='Lote', required=True, index=True)
-    fecha_creacion = fields.Date(string='Fecha de creación', default=fields.Date.today, required=True, index=True)
-    finca_id = fields.Many2one('vinedo.finca', string='Finca', index=True)
-    variedad_id = fields.Many2one('vinedo.variedad', string='Variedad', index=True)
-    anio = fields.Integer(string='Año', default=lambda self: fields.Date.today().year)
-    cantidad_kg = fields.Float(string='Cantidad (kg)', digits=(12, 2))
-    destino = fields.Selection([
-        ('bodega', 'Bodega'),
-        ('venta_directa', 'Venta directa'),
-        ('autoconsumo', 'Autoconsumo'),
-        ('otro', 'Otro'),
-    ], string='Destino', default='bodega')
-    bodega_destino = fields.Char(string='Bodega / Comprador')
-    observaciones = fields.Text(string='Observaciones')
 
 
 class RegistroClima(models.Model):
