@@ -1097,10 +1097,10 @@
             <list>
                 <field name="fecha"/>
                 <field name="finca_id"/>
-                <field name="temperatura_max" aggregator="max"/>
-                <field name="temperatura_min" aggregator="min"/>
-                <field name="temperatura_media" aggregator="avg"/>
-                <field name="precipitacion" aggregator="sum"/>
+                <field name="temperatura_max"/>
+                <field name="temperatura_min"/>
+                <field name="temperatura_media"/>
+                <field name="precipitacion"/>
                 <field name="humedad_relativa" optional="show"/>
                 <field name="riesgo" optional="show"/>
             </list>
