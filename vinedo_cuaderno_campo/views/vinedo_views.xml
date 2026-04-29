@@ -292,7 +292,7 @@
                             <field name="bodega_destino"/>
                             <field name="lote_id"/>
                         </group>
-                        <group string="Análisis">
+                        <group string="Análisis" invisible="1">
                             <field name="sulfuroso_total"/>
                             <field name="ph"/>
                             <field name="densidad"/>
