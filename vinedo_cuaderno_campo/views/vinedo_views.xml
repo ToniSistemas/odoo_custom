@@ -629,6 +629,7 @@
         <field name="model">vinedo.tratamiento</field>
         <field name="arch" type="xml">
             <calendar string="Calendario de Tratamientos" date_start="fecha" color="finca_id">
+                <field name="name"/>
                 <field name="finca_id"/>
                 <field name="tipo"/>
                 <field name="producto"/>
@@ -740,6 +741,7 @@
         <field name="model">vinedo.aportacion</field>
         <field name="arch" type="xml">
             <calendar string="Calendario de Aportaciones" date_start="fecha" color="finca_id">
+                <field name="name"/>
                 <field name="finca_id"/>
                 <field name="tipo_producto"/>
                 <field name="producto_id"/>
@@ -843,6 +845,7 @@
         <field name="model">vinedo.trabajo</field>
         <field name="arch" type="xml">
             <calendar string="Calendario de Trabajos" date_start="fecha" color="finca_id">
+                <field name="name"/>
                 <field name="finca_id"/>
                 <field name="tipo_trabajo"/>
                 <field name="empleado_id"/>
