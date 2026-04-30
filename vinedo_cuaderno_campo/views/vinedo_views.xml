@@ -1444,9 +1444,9 @@
         <field name="binding_view_types">list</field>
         <field name="state">code</field>
         <field name="code">
-# Recalcular el campo name en todos los registros seleccionados
+# Forzar recálculo del campo name escribiendo un campo que fuerce el trigger
 for rec in records:
-    rec._compute_name()
+    rec.write({'name': rec.name})
 </field>
     </record>
 
@@ -1457,9 +1457,8 @@ for rec in records:
         <field name="binding_view_types">list</field>
         <field name="state">code</field>
         <field name="code">
-# Recalcular el campo name en todos los registros seleccionados
 for rec in records:
-    rec._compute_name()
+    rec.write({'name': rec.name})
 </field>
     </record>
 
@@ -1470,9 +1469,8 @@ for rec in records:
         <field name="binding_view_types">list</field>
         <field name="state">code</field>
         <field name="code">
-# Recalcular el campo name en todos los registros seleccionados
 for rec in records:
-    rec._compute_name()
+    rec.write({'name': rec.name})
 </field>
     </record>
 
