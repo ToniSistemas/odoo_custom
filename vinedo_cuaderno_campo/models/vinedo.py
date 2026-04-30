@@ -651,6 +651,24 @@ class Aportacion(models.Model):
                 parts.append(rec.producto_id.name)
             rec.name = ' — '.join(parts) if parts else _('Nueva Aportación')
 
+    def name_get(self):
+        result = []
+        for rec in self:
+            name = rec.name or self._build_display_name(rec)
+            result.append((rec.id, name))
+        return result
+
+    def _build_display_name(self, rec):
+        parts = []
+        if rec.finca_id:
+            parts.append(rec.finca_id.name)
+        tipo_label = dict(rec._fields['tipo_producto'].selection).get(rec.tipo_producto, '')
+        if tipo_label:
+            parts.append(tipo_label)
+        if rec.producto_id:
+            parts.append(rec.producto_id.name)
+        return ' — '.join(parts) if parts else _('Nueva Aportación')
+
     @api.depends('cantidad', 'precio_kg')
     def _compute_coste(self):
         for rec in self:
@@ -719,6 +737,25 @@ class Tratamiento(models.Model):
             if prod_name:
                 parts.append(prod_name)
             rec.name = ' — '.join(parts) if parts else _('Nuevo Tratamiento')
+
+    def name_get(self):
+        result = []
+        for rec in self:
+            name = rec.name or self._build_display_name(rec)
+            result.append((rec.id, name))
+        return result
+
+    def _build_display_name(self, rec):
+        parts = []
+        if rec.finca_id:
+            parts.append(rec.finca_id.name)
+        tipo_label = dict(rec._fields['tipo'].selection).get(rec.tipo, '')
+        if tipo_label:
+            parts.append(tipo_label)
+        prod_name = rec.producto or (rec.producto_id.name if rec.producto_id else '')
+        if prod_name:
+            parts.append(prod_name)
+        return ' — '.join(parts) if parts else _('Nuevo Tratamiento')
 
     @api.depends('litros', 'precio_litro')
     def _compute_coste(self):
@@ -871,6 +908,23 @@ class Trabajo(models.Model):
             if rec.empleado_id:
                 parts.append(rec.empleado_id.name)
             rec.name = ' — '.join(parts) if parts else _('Nuevo Trabajo')
+
+    def name_get(self):
+        result = []
+        for rec in self:
+            name = rec.name or self._build_display_name(rec)
+            result.append((rec.id, name))
+        return result
+
+    def _build_display_name(self, rec):
+        parts = []
+        if rec.finca_id:
+            parts.append(rec.finca_id.name)
+        if rec.tipo_trabajo:
+            parts.append(rec.tipo_trabajo.name)
+        if rec.empleado_id:
+            parts.append(rec.empleado_id.name)
+        return ' — '.join(parts) if parts else _('Nuevo Trabajo')
 
 
 class RecintoVariedad(models.Model):
