@@ -621,6 +621,8 @@ class Aportacion(models.Model):
     _description = 'Aportación de minerales/abonos con coste'
     _order = 'fecha desc, finca_id'
 
+    name = fields.Char(string='Nombre', compute='_compute_name', store=True)
+
     finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True, ondelete='cascade', index=True)
     fecha = fields.Date(string='Fecha', default=fields.Date.today, required=True)
     descripcion = fields.Text(string='Descripción')
@@ -634,6 +636,19 @@ class Aportacion(models.Model):
     ], string='Tipo', default='mineral')
     precio_kg = fields.Float(string='Precio (€)', digits=(10, 4), aggregator='avg')
     coste = fields.Float(string='Coste (€)', digits=(10, 2), compute='_compute_coste', store=True)
+
+    @api.depends('finca_id', 'producto_id', 'tipo_producto')
+    def _compute_name(self):
+        for rec in self:
+            parts = []
+            if rec.finca_id:
+                parts.append(rec.finca_id.name)
+            tipo_label = dict(rec._fields['tipo_producto'].selection).get(rec.tipo_producto, '')
+            if tipo_label:
+                parts.append(tipo_label)
+            if rec.producto_id:
+                parts.append(rec.producto_id.name)
+            rec.name = ' — '.join(parts) if parts else _('Nueva Aportación')
 
     @api.depends('cantidad', 'precio_kg')
     def _compute_coste(self):
@@ -650,6 +665,8 @@ class Tratamiento(models.Model):
     _name = 'vinedo.tratamiento'
     _description = 'Tratamiento fitosanitario u otro con coste y enlace a Registro MAPA'
     _order = 'fecha desc, finca_id'
+
+    name = fields.Char(string='Nombre', compute='_compute_name', store=True)
 
     finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True, ondelete='cascade', index=True)
     tipo = fields.Selection([('fitosanitario', 'Fitosanitario'), ('otro', 'Otro')],
@@ -686,6 +703,20 @@ class Tratamiento(models.Model):
     phi_vencimiento = fields.Date(
         string='Cosecha no antes de', compute='_compute_phi_vencimiento', store=True,
         help='Fecha más temprana de cosecha permitida tras este tratamiento (fecha aplicación + PHI)')
+
+    @api.depends('finca_id', 'tipo', 'producto', 'producto_id')
+    def _compute_name(self):
+        for rec in self:
+            parts = []
+            if rec.finca_id:
+                parts.append(rec.finca_id.name)
+            tipo_label = dict(rec._fields['tipo'].selection).get(rec.tipo, '')
+            if tipo_label:
+                parts.append(tipo_label)
+            prod_name = rec.producto or (rec.producto_id.name if rec.producto_id else '')
+            if prod_name:
+                parts.append(prod_name)
+            rec.name = ' — '.join(parts) if parts else _('Nuevo Tratamiento')
 
     @api.depends('litros', 'precio_litro')
     def _compute_coste(self):
@@ -817,12 +848,26 @@ class Trabajo(models.Model):
     _description = 'Trabajo realizado en finca'
     _order = 'fecha desc, finca_id'
 
+    name = fields.Char(string='Nombre', compute='_compute_name', store=True)
+
     finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True, ondelete='cascade', index=True)
     fecha = fields.Date(string='Fecha', default=fields.Date.today, required=True, index=True)
     empleado_id = fields.Many2one('hr.employee', string='Empleado', index=True)
     tipo_trabajo = fields.Many2one('vinedo.tipo.trabajo', string='Trabajo realizado', required=True)
     horas = fields.Float(string='Horas', digits=(5, 2))
     observaciones = fields.Text(string='Observaciones')
+
+    @api.depends('finca_id', 'tipo_trabajo', 'empleado_id')
+    def _compute_name(self):
+        for rec in self:
+            parts = []
+            if rec.finca_id:
+                parts.append(rec.finca_id.name)
+            if rec.tipo_trabajo:
+                parts.append(rec.tipo_trabajo.name)
+            if rec.empleado_id:
+                parts.append(rec.empleado_id.name)
+            rec.name = ' — '.join(parts) if parts else _('Nuevo Trabajo')
 
 
 class RecintoVariedad(models.Model):
