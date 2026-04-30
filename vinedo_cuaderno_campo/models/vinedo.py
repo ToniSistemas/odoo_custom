@@ -673,6 +673,20 @@ class Aportacion(models.Model):
             self._compute_name()
         return result
 
+    def action_recalcular_nombres(self):
+        """Recalcula el campo name de todos los registros seleccionados."""
+        self._compute_name()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Nombres actualizados'),
+                'message': _('Se han recalculado los nombres de %d registro(s).') % len(self),
+                'type': 'success',
+                'sticky': False,
+            },
+        }
+
     @api.depends('cantidad', 'precio_kg')
     def _compute_coste(self):
         for rec in self:
@@ -762,6 +776,20 @@ class Tratamiento(models.Model):
         if any(f in vals for f in ('finca_id', 'tipo', 'producto', 'producto_id')):
             self._compute_name()
         return result
+
+    def action_recalcular_nombres(self):
+        """Recalcula el campo name de todos los registros seleccionados."""
+        self._compute_name()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Nombres actualizados'),
+                'message': _('Se han recalculado los nombres de %d registro(s).') % len(self),
+                'type': 'success',
+                'sticky': False,
+            },
+        }
 
     @api.depends('litros', 'precio_litro')
     def _compute_coste(self):
@@ -935,6 +963,20 @@ class Trabajo(models.Model):
         if any(f in vals for f in ('finca_id', 'tipo_trabajo', 'empleado_id')):
             self._compute_name()
         return result
+
+    def action_recalcular_nombres(self):
+        """Recalcula el campo name de todos los registros seleccionados."""
+        self._compute_name()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Nombres actualizados'),
+                'message': _('Se han recalculado los nombres de %d registro(s).') % len(self),
+                'type': 'success',
+                'sticky': False,
+            },
+        }
 
 
 class RecintoVariedad(models.Model):
