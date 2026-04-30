@@ -1443,7 +1443,11 @@
         <field name="binding_model_id" ref="model_vinedo_tratamiento"/>
         <field name="binding_view_types">list</field>
         <field name="state">code</field>
-        <field name="code">action = records.action_recalcular_nombres()</field>
+        <field name="code">
+# Recalcular el campo name en todos los registros seleccionados
+for rec in records:
+    rec._compute_name()
+</field>
     </record>
 
     <record id="action_server_recalcular_nombres_aportacion" model="ir.actions.server">
@@ -1452,7 +1456,11 @@
         <field name="binding_model_id" ref="model_vinedo_aportacion"/>
         <field name="binding_view_types">list</field>
         <field name="state">code</field>
-        <field name="code">action = records.action_recalcular_nombres()</field>
+        <field name="code">
+# Recalcular el campo name en todos los registros seleccionados
+for rec in records:
+    rec._compute_name()
+</field>
     </record>
 
     <record id="action_server_recalcular_nombres_trabajo" model="ir.actions.server">
@@ -1461,7 +1469,11 @@
         <field name="binding_model_id" ref="model_vinedo_trabajo"/>
         <field name="binding_view_types">list</field>
         <field name="state">code</field>
-        <field name="code">action = records.action_recalcular_nombres()</field>
+        <field name="code">
+# Recalcular el campo name en todos los registros seleccionados
+for rec in records:
+    rec._compute_name()
+</field>
     </record>
 
 </odoo>
