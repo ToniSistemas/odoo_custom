@@ -651,6 +651,19 @@ class Aportacion(models.Model):
                 parts.append(rec.producto_id.name)
             rec.name = ' — '.join(parts) if parts else _('Nueva Aportación')
 
+    @api.depends('finca_id', 'producto_id', 'tipo_producto')
+    def _compute_display_name(self):
+        for rec in self:
+            parts = []
+            if rec.finca_id:
+                parts.append(rec.finca_id.name)
+            tipo_label = dict(rec._fields['tipo_producto'].selection).get(rec.tipo_producto, '')
+            if tipo_label:
+                parts.append(tipo_label)
+            if rec.producto_id:
+                parts.append(rec.producto_id.name)
+            rec.display_name = ' — '.join(parts) if parts else _('Nueva Aportación')
+
     @api.depends('cantidad', 'precio_kg')
     def _compute_coste(self):
         for rec in self:
@@ -719,6 +732,20 @@ class Tratamiento(models.Model):
             if prod_name:
                 parts.append(prod_name)
             rec.name = ' — '.join(parts) if parts else _('Nuevo Tratamiento')
+
+    @api.depends('finca_id', 'tipo', 'producto', 'producto_id')
+    def _compute_display_name(self):
+        for rec in self:
+            parts = []
+            if rec.finca_id:
+                parts.append(rec.finca_id.name)
+            tipo_label = dict(rec._fields['tipo'].selection).get(rec.tipo, '')
+            if tipo_label:
+                parts.append(tipo_label)
+            prod_name = rec.producto or (rec.producto_id.name if rec.producto_id else '')
+            if prod_name:
+                parts.append(prod_name)
+            rec.display_name = ' — '.join(parts) if parts else _('Nuevo Tratamiento')
 
     @api.depends('litros', 'precio_litro')
     def _compute_coste(self):
@@ -872,6 +899,18 @@ class Trabajo(models.Model):
                 parts.append(rec.empleado_id.name)
             rec.name = ' — '.join(parts) if parts else _('Nuevo Trabajo')
 
+    @api.depends('finca_id', 'tipo_trabajo', 'empleado_id')
+    def _compute_display_name(self):
+        for rec in self:
+            parts = []
+            if rec.finca_id:
+                parts.append(rec.finca_id.name)
+            if rec.tipo_trabajo:
+                parts.append(rec.tipo_trabajo.name)
+            if rec.empleado_id:
+                parts.append(rec.empleado_id.name)
+            rec.display_name = ' — '.join(parts) if parts else _('Nuevo Trabajo')
+
 
 class RecintoVariedad(models.Model):
     """Distribución de variedades dentro de un recinto SIGPAC mediante porcentaje."""
@@ -1009,8 +1048,8 @@ class RegistroClima(models.Model):
     ], string='Riesgo detectado', default='none')
     observaciones = fields.Text(string='Observaciones')
 
-    _rec_name = 'name'
-    name = fields.Char(string='Descripción', compute='_compute_name')
+    _rec_name = 'finca_id'
+    name = fields.Char(string='Descripción', compute='_compute_display_name')
 
     _sql_constraints = [
         ('finca_fecha_uniq', 'unique(finca_id, fecha)',
@@ -1018,13 +1057,13 @@ class RegistroClima(models.Model):
     ]
 
     @api.depends('finca_id', 'fecha', 'riesgo')
-    def _compute_name(self):
+    def _compute_display_name(self):
         for rec in self:
             parts = [rec.finca_id.name or '', str(rec.fecha or '')]
             if rec.riesgo and rec.riesgo != 'none':
                 riesgo_label = dict(rec._fields['riesgo'].selection).get(rec.riesgo, '')
                 parts.append(f'⚠ {riesgo_label}')
-            rec.name = ' — '.join(p for p in parts if p)
+            rec.display_name = ' — '.join(p for p in parts if p)
 
 
 class SeguimientoFenologico(models.Model):
@@ -1032,9 +1071,7 @@ class SeguimientoFenologico(models.Model):
     _name = 'vinedo.seguimiento.fenologico'
     _description = 'Seguimiento fenológico BBCH'
     _order = 'fecha desc, finca_id'
-    _rec_name = 'name'
 
-    name = fields.Char(string='Descripción', compute='_compute_name')
     finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True, ondelete='cascade', index=True)
     fecha = fields.Date(string='Fecha', required=True, index=True)
     codigo_bbch = fields.Selection([
@@ -1074,14 +1111,14 @@ class SeguimientoFenologico(models.Model):
             rec.descripcion = dict(rec._fields['codigo_bbch'].selection).get(rec.codigo_bbch, '')
 
     @api.depends('finca_id', 'codigo_bbch')
-    def _compute_name(self):
+    def _compute_display_name(self):
         for rec in self:
             name = f'{rec.finca_id.name or ""} — BBCH {rec.codigo_bbch or ""}'
             descripcion = dict(rec._fields['codigo_bbch'].selection).get(rec.codigo_bbch, '')
             if descripcion:
                 desc = descripcion.split(' - ', 1)[-1] if ' - ' in descripcion else descripcion
                 name += f' ({desc})'
-            rec.name = name
+            rec.display_name = name
 
 
 class PlantacionRegistro(models.Model):
