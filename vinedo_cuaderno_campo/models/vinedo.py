@@ -620,6 +620,7 @@ class Aportacion(models.Model):
     _name = 'vinedo.aportacion'
     _description = 'Aportación de minerales/abonos con coste'
     _order = 'fecha desc, finca_id'
+    _rec_name = 'name'
 
     name = fields.Char(string='Nombre', compute='_compute_name', store=True)
 
@@ -665,6 +666,7 @@ class Tratamiento(models.Model):
     _name = 'vinedo.tratamiento'
     _description = 'Tratamiento fitosanitario u otro con coste y enlace a Registro MAPA'
     _order = 'fecha desc, finca_id'
+    _rec_name = 'name'
 
     name = fields.Char(string='Nombre', compute='_compute_name', store=True)
 
@@ -847,6 +849,7 @@ class Trabajo(models.Model):
     _name = 'vinedo.trabajo'
     _description = 'Trabajo realizado en finca'
     _order = 'fecha desc, finca_id'
+    _rec_name = 'name'
 
     name = fields.Char(string='Nombre', compute='_compute_name', store=True)
 
