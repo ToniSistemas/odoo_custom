@@ -624,6 +624,18 @@
         </field>
     </record>
 
+    <record id="view_tratamiento_calendar" model="ir.ui.view">
+        <field name="name">vinedo.tratamiento.calendar</field>
+        <field name="model">vinedo.tratamiento</field>
+        <field name="arch" type="xml">
+            <calendar string="Calendario de Tratamientos" date_start="fecha" color="finca_id">
+                <field name="finca_id"/>
+                <field name="tipo"/>
+                <field name="producto"/>
+            </calendar>
+        </field>
+    </record>
+
     <record id="view_tratamiento_pivot" model="ir.ui.view">
         <field name="name">vinedo.tratamiento.pivot</field>
         <field name="model">vinedo.tratamiento</field>
@@ -676,7 +688,7 @@
     <record id="action_tratamiento" model="ir.actions.act_window">
         <field name="name">Tratamientos</field>
         <field name="res_model">vinedo.tratamiento</field>
-        <field name="view_mode">list,form,pivot,graph</field>
+        <field name="view_mode">list,form,calendar,pivot,graph</field>
     </record>
 
     <menuitem id="menu_vinedo_tratamientos" name="Tratamientos" parent="menu_vinedo_root" action="action_tratamiento" sequence="4"/>
@@ -720,6 +732,18 @@
                     </group>
                 </sheet>
             </form>
+        </field>
+    </record>
+
+    <record id="view_aportacion_calendar" model="ir.ui.view">
+        <field name="name">vinedo.aportacion.calendar</field>
+        <field name="model">vinedo.aportacion</field>
+        <field name="arch" type="xml">
+            <calendar string="Calendario de Aportaciones" date_start="fecha" color="finca_id">
+                <field name="finca_id"/>
+                <field name="tipo_producto"/>
+                <field name="producto_id"/>
+            </calendar>
         </field>
     </record>
 
@@ -771,7 +795,7 @@
     <record id="action_aportacion" model="ir.actions.act_window">
         <field name="name">Aportaciones</field>
         <field name="res_model">vinedo.aportacion</field>
-        <field name="view_mode">list,form,pivot,graph</field>
+        <field name="view_mode">list,form,calendar,pivot,graph</field>
     </record>
 
     <menuitem id="menu_vinedo_aportaciones" name="Aportaciones" parent="menu_vinedo_root" action="action_aportacion" sequence="6"/>
@@ -811,6 +835,18 @@
                     </group>
                 </sheet>
             </form>
+        </field>
+    </record>
+
+    <record id="view_trabajo_calendar" model="ir.ui.view">
+        <field name="name">vinedo.trabajo.calendar</field>
+        <field name="model">vinedo.trabajo</field>
+        <field name="arch" type="xml">
+            <calendar string="Calendario de Trabajos" date_start="fecha" color="finca_id">
+                <field name="finca_id"/>
+                <field name="tipo_trabajo"/>
+                <field name="empleado_id"/>
+            </calendar>
         </field>
     </record>
 
@@ -858,7 +894,7 @@
     <record id="action_trabajo" model="ir.actions.act_window">
         <field name="name">Trabajos</field>
         <field name="res_model">vinedo.trabajo</field>
-        <field name="view_mode">list,form,pivot,graph</field>
+        <field name="view_mode">list,form,calendar,pivot,graph</field>
     </record>
 
     <menuitem id="menu_vinedo_trabajos" name="Trabajos" parent="menu_vinedo_root" action="action_trabajo" sequence="7"/>
