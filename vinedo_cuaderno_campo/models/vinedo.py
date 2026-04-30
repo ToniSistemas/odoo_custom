@@ -622,7 +622,7 @@ class Aportacion(models.Model):
     _order = 'fecha desc, finca_id'
     _rec_name = 'name'
 
-    name = fields.Char(string='Nombre', readonly=True)
+    name = fields.Char(string='Nombre', compute='_compute_name', store=True, readonly=True)
 
     finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True, ondelete='cascade', index=True)
     fecha = fields.Date(string='Fecha', default=fields.Date.today, required=True)
@@ -638,54 +638,24 @@ class Aportacion(models.Model):
     precio_kg = fields.Float(string='Precio (€)', digits=(10, 4), aggregator='avg')
     coste = fields.Float(string='Coste (€)', digits=(10, 2), compute='_compute_coste', store=True)
 
+    @api.depends('finca_id', 'producto_id', 'tipo_producto')
+    def _compute_name(self):
+        for rec in self:
+            parts = []
+            if rec.finca_id:
+                parts.append(rec.finca_id.name)
+            tipo_label = dict(rec._fields['tipo_producto'].selection).get(rec.tipo_producto, '')
+            if tipo_label:
+                parts.append(tipo_label)
+            if rec.producto_id:
+                parts.append(rec.producto_id.name)
+            rec.name = ' — '.join(parts) if parts else _('Nueva Aportación')
+
     def name_get(self):
         result = []
         for rec in self:
-            result.append((rec.id, rec.name or self._make_name(rec)))
+            result.append((rec.id, rec.name or _('Nueva Aportación')))
         return result
-
-    def _make_name(self, rec):
-        parts = []
-        if rec.finca_id:
-            parts.append(rec.finca_id.name)
-        tipo_label = dict(rec._fields['tipo_producto'].selection).get(rec.tipo_producto, '')
-        if tipo_label:
-            parts.append(tipo_label)
-        if rec.producto_id:
-            parts.append(rec.producto_id.name)
-        return ' — '.join(parts) if parts else _('Nueva Aportación')
-
-    @api.model_create_multi
-    def create(self, vals_list):
-        for vals in vals_list:
-            if 'name' not in vals:
-                vals['name'] = self._make_name_from_vals(vals)
-        return super().create(vals_list)
-
-    def write(self, vals):
-        result = super().write(vals)
-        if any(f in vals for f in ('finca_id', 'producto_id', 'tipo_producto')):
-            for rec in self:
-                super(Aportacion, rec).write({'name': rec._make_name(rec)})
-        return result
-
-    def _make_name_from_vals(self, vals):
-        parts = []
-        finca_id = vals.get('finca_id')
-        if finca_id:
-            finca = self.env['vinedo.finca'].browse(finca_id)
-            if finca.exists():
-                parts.append(finca.name)
-        tipo = vals.get('tipo_producto', 'mineral')
-        tipo_label = dict(self._fields['tipo_producto'].selection).get(tipo, '')
-        if tipo_label:
-            parts.append(tipo_label)
-        producto_id = vals.get('producto_id')
-        if producto_id:
-            prod = self.env['product.product'].browse(producto_id)
-            if prod.exists():
-                parts.append(prod.name)
-        return ' — '.join(parts) if parts else _('Nueva Aportación')
 
     @api.depends('cantidad', 'precio_kg')
     def _compute_coste(self):
@@ -742,58 +712,25 @@ class Tratamiento(models.Model):
         string='Cosecha no antes de', compute='_compute_phi_vencimiento', store=True,
         help='Fecha más temprana de cosecha permitida tras este tratamiento (fecha aplicación + PHI)')
 
+    @api.depends('finca_id', 'tipo', 'producto', 'producto_id')
+    def _compute_name(self):
+        for rec in self:
+            parts = []
+            if rec.finca_id:
+                parts.append(rec.finca_id.name)
+            tipo_label = dict(rec._fields['tipo'].selection).get(rec.tipo, '')
+            if tipo_label:
+                parts.append(tipo_label)
+            prod_name = rec.producto or (rec.producto_id.name if rec.producto_id else '')
+            if prod_name:
+                parts.append(prod_name)
+            rec.name = ' — '.join(parts) if parts else _('Nuevo Tratamiento')
+
     def name_get(self):
         result = []
         for rec in self:
-            result.append((rec.id, rec.name or self._make_name(rec)))
+            result.append((rec.id, rec.name or _('Nuevo Tratamiento')))
         return result
-
-    def _make_name(self, rec):
-        parts = []
-        if rec.finca_id:
-            parts.append(rec.finca_id.name)
-        tipo_label = dict(rec._fields['tipo'].selection).get(rec.tipo, '')
-        if tipo_label:
-            parts.append(tipo_label)
-        prod_name = rec.producto or (rec.producto_id.name if rec.producto_id else '')
-        if prod_name:
-            parts.append(prod_name)
-        return ' — '.join(parts) if parts else _('Nuevo Tratamiento')
-
-    @api.model_create_multi
-    def create(self, vals_list):
-        for vals in vals_list:
-            if 'name' not in vals:
-                vals['name'] = self._make_name_from_vals(vals)
-        return super().create(vals_list)
-
-    def write(self, vals):
-        result = super().write(vals)
-        if any(f in vals for f in ('finca_id', 'tipo', 'producto', 'producto_id')):
-            for rec in self:
-                super(Tratamiento, rec).write({'name': rec._make_name(rec)})
-        return result
-
-    def _make_name_from_vals(self, vals):
-        parts = []
-        finca_id = vals.get('finca_id')
-        if finca_id:
-            finca = self.env['vinedo.finca'].browse(finca_id)
-            if finca.exists():
-                parts.append(finca.name)
-        tipo = vals.get('tipo', 'fitosanitario')
-        tipo_label = dict(self._fields['tipo'].selection).get(tipo, '')
-        if tipo_label:
-            parts.append(tipo_label)
-        producto_name = vals.get('producto', '')
-        producto_id = vals.get('producto_id')
-        if not producto_name and producto_id:
-            prod = self.env['product.product'].browse(producto_id)
-            if prod.exists():
-                producto_name = prod.name
-        if producto_name:
-            parts.append(producto_name)
-        return ' — '.join(parts) if parts else _('Nuevo Tratamiento')
 
     @api.depends('litros', 'precio_litro')
     def _compute_coste(self):
@@ -926,7 +863,7 @@ class Trabajo(models.Model):
     _order = 'fecha desc, finca_id'
     _rec_name = 'name'
 
-    name = fields.Char(string='Nombre', readonly=True)
+    name = fields.Char(string='Nombre', compute='_compute_name', store=True, readonly=True)
 
     finca_id = fields.Many2one('vinedo.finca', string='Finca', required=True, ondelete='cascade', index=True)
     fecha = fields.Date(string='Fecha', default=fields.Date.today, required=True, index=True)
@@ -935,54 +872,23 @@ class Trabajo(models.Model):
     horas = fields.Float(string='Horas', digits=(5, 2))
     observaciones = fields.Text(string='Observaciones')
 
+    @api.depends('finca_id', 'tipo_trabajo', 'empleado_id')
+    def _compute_name(self):
+        for rec in self:
+            parts = []
+            if rec.finca_id:
+                parts.append(rec.finca_id.name)
+            if rec.tipo_trabajo:
+                parts.append(rec.tipo_trabajo.name)
+            if rec.empleado_id:
+                parts.append(rec.empleado_id.name)
+            rec.name = ' — '.join(parts) if parts else _('Nuevo Trabajo')
+
     def name_get(self):
         result = []
         for rec in self:
-            result.append((rec.id, rec.name or self._make_name(rec)))
+            result.append((rec.id, rec.name or _('Nuevo Trabajo')))
         return result
-
-    def _make_name(self, rec):
-        parts = []
-        if rec.finca_id:
-            parts.append(rec.finca_id.name)
-        if rec.tipo_trabajo:
-            parts.append(rec.tipo_trabajo.name)
-        if rec.empleado_id:
-            parts.append(rec.empleado_id.name)
-        return ' — '.join(parts) if parts else _('Nuevo Trabajo')
-
-    @api.model_create_multi
-    def create(self, vals_list):
-        for vals in vals_list:
-            if 'name' not in vals:
-                vals['name'] = self._make_name_from_vals(vals)
-        return super().create(vals_list)
-
-    def write(self, vals):
-        result = super().write(vals)
-        if any(f in vals for f in ('finca_id', 'tipo_trabajo', 'empleado_id')):
-            for rec in self:
-                super(Trabajo, rec).write({'name': rec._make_name(rec)})
-        return result
-
-    def _make_name_from_vals(self, vals):
-        parts = []
-        finca_id = vals.get('finca_id')
-        if finca_id:
-            finca = self.env['vinedo.finca'].browse(finca_id)
-            if finca.exists():
-                parts.append(finca.name)
-        tipo_trabajo_id = vals.get('tipo_trabajo')
-        if tipo_trabajo_id:
-            tipo = self.env['vinedo.tipo.trabajo'].browse(tipo_trabajo_id)
-            if tipo.exists():
-                parts.append(tipo.name)
-        empleado_id = vals.get('empleado_id')
-        if empleado_id:
-            emp = self.env['hr.employee'].browse(empleado_id)
-            if emp.exists():
-                parts.append(emp.name)
-        return ' — '.join(parts) if parts else _('Nuevo Trabajo')
 
 
 class RecintoVariedad(models.Model):
@@ -1126,6 +1032,16 @@ class RegistroClima(models.Model):
          'Ya existe un registro climático para esta fecha en esta finca.'),
     ]
 
+    def name_get(self):
+        result = []
+        for rec in self:
+            name = f'{rec.finca_id.name} — {rec.fecha}'
+            if rec.riesgo and rec.riesgo != 'none':
+                riesgo_label = dict(rec._fields['riesgo'].selection).get(rec.riesgo, '')
+                name += f' ⚠ {riesgo_label}'
+            result.append((rec.id, name))
+        return result
+
 
 class SeguimientoFenologico(models.Model):
     """Seguimiento fenológico BBCH de la vid."""
@@ -1170,6 +1086,17 @@ class SeguimientoFenologico(models.Model):
     def _compute_descripcion(self):
         for rec in self:
             rec.descripcion = dict(rec._fields['codigo_bbch'].selection).get(rec.codigo_bbch, '')
+
+    def name_get(self):
+        result = []
+        for rec in self:
+            name = f'{rec.finca_id.name} — BBCH {rec.codigo_bbch}'
+            if rec.descripcion:
+                # Extract short description after the dash
+                desc = rec.descripcion.split(' - ', 1)[-1] if ' - ' in rec.descripcion else rec.descripcion
+                name += f' ({desc})'
+            result.append((rec.id, name))
+        return result
 
 
 class PlantacionRegistro(models.Model):
