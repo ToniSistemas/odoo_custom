@@ -1434,41 +1434,4 @@
 
     <menuitem id="menu_vinedo_podas" name="Podas" parent="menu_vinedo_root" action="action_poda" sequence="14"/>
 
-    <!-- ============================================================ -->
-    <!-- Acciones planificadas: Recalcular nombres                   -->
-    <!-- ============================================================ -->
-    <record id="action_server_recalcular_nombres_tratamiento" model="ir.actions.server">
-        <field name="name">Recalcular nombres</field>
-        <field name="model_id" ref="model_vinedo_tratamiento"/>
-        <field name="binding_model_id" ref="model_vinedo_tratamiento"/>
-        <field name="binding_view_types">list</field>
-        <field name="state">code</field>
-        <field name="code">
-# Forzar recálculo del display_name guardando sin cambios
-records.write({'fecha': records[:1].fecha})
-</field>
-    </record>
-
-    <record id="action_server_recalcular_nombres_aportacion" model="ir.actions.server">
-        <field name="name">Recalcular nombres</field>
-        <field name="model_id" ref="model_vinedo_aportacion"/>
-        <field name="binding_model_id" ref="model_vinedo_aportacion"/>
-        <field name="binding_view_types">list</field>
-        <field name="state">code</field>
-        <field name="code">
-records.write({'fecha': records[:1].fecha})
-</field>
-    </record>
-
-    <record id="action_server_recalcular_nombres_trabajo" model="ir.actions.server">
-        <field name="name">Recalcular nombres</field>
-        <field name="model_id" ref="model_vinedo_trabajo"/>
-        <field name="binding_model_id" ref="model_vinedo_trabajo"/>
-        <field name="binding_view_types">list</field>
-        <field name="state">code</field>
-        <field name="code">
-records.write({'fecha': records[:1].fecha})
-</field>
-    </record>
-
 </odoo>
