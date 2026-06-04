@@ -148,14 +148,13 @@
                 <filter name="confirmed" string="Confirmadas" domain="[('state','=','confirmed')]"/>
                 <filter name="invoiced"  string="Facturadas"  domain="[('state','=','invoiced')]"/>
                 <filter name="cancelled" string="Canceladas"  domain="[('state','=','cancelled')]"/>
-                <group expand="0" string="Agrupar por">
-                    <filter name="group_project" string="Proyecto"
-                            context="{'group_by': 'project_id'}"/>
-                    <filter name="group_partner" string="Cliente"
-                            context="{'group_by': 'partner_id'}"/>
-                    <filter name="group_state"   string="Estado"
-                            context="{'group_by': 'state'}"/>
-                </group>
+                <separator/>
+                <filter name="group_project" string="Proyecto"
+                        context="{'group_by': 'project_id'}"/>
+                <filter name="group_partner" string="Cliente"
+                        context="{'group_by': 'partner_id'}"/>
+                <filter name="group_state"   string="Estado"
+                        context="{'group_by': 'state'}"/>
             </search>
         </field>
     </record>
