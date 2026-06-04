@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_bodega_variedad,bodega.variedad,model_bodega_variedad,base.group_user,1,1,1,1
+access_bodega_tipo_parametro,bodega.tipo.parametro,model_bodega_tipo_parametro,base.group_user,1,1,1,1
+access_bodega_parametro_quimico,bodega.parametro.quimico,model_bodega_parametro_quimico,base.group_user,1,1,1,1

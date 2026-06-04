@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============================================================ -->
+    <!-- Tipo de Parámetro Químico                                    -->
+    <!-- ============================================================ -->
+    <record id="view_bodega_tipo_parametro_list" model="ir.ui.view">
+        <field name="name">bodega.tipo.parametro.list</field>
+        <field name="model">bodega.tipo.parametro</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="unidad"/>
+                <field name="rango_min"/>
+                <field name="rango_max"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_bodega_tipo_parametro_form" model="ir.ui.view">
+        <field name="name">bodega.tipo.parametro.form</field>
+        <field name="model">bodega.tipo.parametro</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="unidad"/>
+                        </group>
+                        <group>
+                            <field name="rango_min"/>
+                            <field name="rango_max"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <field name="descripcion" placeholder="Descripción del parámetro..."/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_bodega_tipo_parametro" model="ir.actions.act_window">
+        <field name="name">Tipos de Parámetro Químico</field>
+        <field name="res_model">bodega.tipo.parametro</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============================================================ -->
+    <!-- Menús de Bodega                                              -->
+    <!-- ============================================================ -->
+
+    <!-- App raíz -->
+    <menuitem id="menu_bodega_root"
+        name="Bodega"
+        sequence="50"/>
+
+    <!-- Lotes / Partidas -->
+    <menuitem id="menu_bodega_lotes"
+        name="Lotes / Partidas"
+        parent="menu_bodega_root"
+        action="action_bodega_lotes"
+        sequence="10"/>
+
+    <!-- Configuración -->
+    <menuitem id="menu_bodega_configuracion"
+        name="Configuración"
+        parent="menu_bodega_root"
+        sequence="90"/>
+
+    <menuitem id="menu_bodega_variedades"
+        name="Variedades de Uva"
+        parent="menu_bodega_configuracion"
+        action="action_bodega_variedad"
+        sequence="10"/>
+
+    <menuitem id="menu_bodega_tipos_parametro"
+        name="Tipos de Parámetro Químico"
+        parent="menu_bodega_configuracion"
+        action="action_bodega_tipo_parametro"
+        sequence="20"/>
+</odoo>

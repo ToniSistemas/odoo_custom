@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============================================================ -->
+    <!-- Herencia de stock.lot — Pestaña Bodega                       -->
+    <!-- ============================================================ -->
+    <record id="view_production_lot_form_bodega" model="ir.ui.view">
+        <field name="name">stock.lot.form.bodega</field>
+        <field name="model">stock.lot</field>
+        <field name="inherit_id" ref="stock.view_production_lot_form"/>
+        <field name="arch" type="xml">
+            <notebook position="inside">
+                <page string="Bodega" name="bodega">
+                    <group>
+                        <group string="Información vitivinícola">
+                            <field name="anada"/>
+                            <field name="tipo_vino"/>
+                            <field name="denominacion"/>
+                            <field name="variedad_ids" widget="many2many_tags"/>
+                        </group>
+                        <group string="Notas de cata">
+                            <field name="notas_cata" nolabel="1"
+                                placeholder="Observaciones organolépticas..."/>
+                        </group>
+                    </group>
+                    <separator string="Parámetros Químicos"/>
+                    <field name="parametro_quimico_ids">
+                        <list editable="bottom">
+                            <field name="tipo_id"/>
+                            <field name="valor"/>
+                            <field name="unidad" optional="show"/>
+                            <field name="fecha"/>
+                            <field name="laboratorio" optional="show"/>
+                            <field name="observaciones" optional="hide"/>
+                        </list>
+                    </field>
+                </page>
+            </notebook>
+        </field>
+    </record>
+
+    <!-- Acción para ver lotes desde el menú Bodega -->
+    <record id="action_bodega_lotes" model="ir.actions.act_window">
+        <field name="name">Lotes / Partidas</field>
+        <field name="res_model">stock.lot</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_available': 0}</field>
+    </record>
+</odoo>
