@@ -18,6 +18,7 @@
     'depends': ['stock'],
     'data': [
         'security/ir.model.access.csv',
+        'views/res_company_views.xml',
         'views/bodega_variedad_views.xml',
         'views/bodega_tipo_parametro_views.xml',
         'views/stock_lot_views.xml',

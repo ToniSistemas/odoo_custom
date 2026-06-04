@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_company_bodega_form" model="ir.ui.view">
+        <field name="name">res.company.bodega.form</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Bodega" name="bodega">
+                    <group string="Identificación del establecimiento">
+                        <field name="bodega_ria"/>
+                        <field name="bodega_registro_sanitario"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>
