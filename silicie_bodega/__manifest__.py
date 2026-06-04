@@ -20,6 +20,7 @@
         'wizard/silicie_export_wizard.xml',
         'views/silicie_menus.xml',
     ],
+    'images': ['static/description/icon.png'],
     'application': False,
     'installable': True,
     'auto_install': False,
