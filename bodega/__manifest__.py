@@ -23,6 +23,7 @@
         'views/stock_lot_views.xml',
         'views/bodega_menus.xml',
     ],
+    'images': ['static/description/icon.png'],
     'installable': True,
     'application': True,
     'auto_install': False,
