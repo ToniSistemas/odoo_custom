@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vista de formulario del asiento SILICIE -->
+    <record id="view_silicie_asiento_form" model="ir.ui.view">
+        <field name="name">silicie.asiento.form</field>
+        <field name="model">silicie.asiento</field>
+        <field name="arch" type="xml">
+            <form string="Asiento SILICIE">
+                <header>
+                    <button name="action_confirmar" string="Confirmar"
+                            type="object" class="btn-primary"
+                            invisible="estado != 'borrador'"/>
+                    <button name="action_borrador" string="Volver a Borrador"
+                            type="object"
+                            invisible="estado == 'borrador'"/>
+                    <field name="estado" widget="statusbar"
+                           statusbar_visible="borrador,confirmado,exportado"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Operador">
+                            <field name="company_id" options="{'no_create': True}"/>
+                            <field name="nif"/>
+                            <field name="cae"/>
+                        </group>
+                        <group string="Movimiento">
+                            <field name="fecha"/>
+                            <field name="tipo_movimiento"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Producto">
+                            <field name="producto_codigo"/>
+                            <field name="cantidad_litros"/>
+                            <field name="grado_alcoholico"/>
+                            <field name="litros_alcohol_puro" readonly="1"/>
+                        </group>
+                        <group string="Justificante">
+                            <field name="justificante_tipo"/>
+                            <field name="justificante_numero"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Origen / Destino">
+                            <field name="origen_destino_nif"/>
+                            <field name="origen_destino_cae"/>
+                            <field name="origen_destino_nombre"/>
+                        </group>
+                        <group string="Envases">
+                            <field name="num_envases"/>
+                            <field name="capacidad_envase"/>
+                        </group>
+                    </group>
+                    <group string="Vínculos en Odoo">
+                        <field name="lot_id"/>
+                        <field name="picking_id"/>
+                    </group>
+                    <group string="Observaciones">
+                        <field name="observaciones" nolabel="1"
+                               placeholder="Texto libre de observaciones para la AEAT..."/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vista de lista del asiento SILICIE -->
+    <record id="view_silicie_asiento_list" model="ir.ui.view">
+        <field name="name">silicie.asiento.list</field>
+        <field name="model">silicie.asiento</field>
+        <field name="arch" type="xml">
+            <list string="Asientos SILICIE" decoration-muted="estado == 'exportado'"
+                  decoration-warning="estado == 'borrador'">
+                <field name="name"/>
+                <field name="fecha"/>
+                <field name="tipo_movimiento"/>
+                <field name="producto_codigo"/>
+                <field name="cantidad_litros" sum="Total litros"/>
+                <field name="litros_alcohol_puro" sum="Total LAP"/>
+                <field name="justificante_numero"/>
+                <field name="origen_destino_nombre"/>
+                <field name="lot_id"/>
+                <field name="estado" widget="badge"
+                       decoration-warning="estado == 'borrador'"
+                       decoration-success="estado == 'confirmado'"
+                       decoration-info="estado == 'exportado'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Vista de búsqueda -->
+    <record id="view_silicie_asiento_search" model="ir.ui.view">
+        <field name="name">silicie.asiento.search</field>
+        <field name="model">silicie.asiento</field>
+        <field name="arch" type="xml">
+            <search string="Buscar asientos SILICIE">
+                <field name="name" string="Referencia"/>
+                <field name="justificante_numero" string="Nº justificante"/>
+                <field name="lot_id" string="Lote"/>
+                <field name="origen_destino_nombre" string="Origen/Destino"/>
+                <separator/>
+                <filter string="Borradores" name="borrador" domain="[('estado','=','borrador')]"/>
+                <filter string="Confirmados" name="confirmado" domain="[('estado','=','confirmado')]"/>
+                <filter string="Exportados" name="exportado" domain="[('estado','=','exportado')]"/>
+                <separator/>
+                <filter string="Entradas" name="entradas"
+                        domain="[('tipo_movimiento','in',['A02','A04','A06','A07','A15','A31','A35'])]"/>
+                <filter string="Salidas" name="salidas"
+                        domain="[('tipo_movimiento','in',['A08','A10','A11','A14','A28','A30','A36'])]"/>
+                <separator/>
+                <filter string="Este año" name="anyo_actual"
+                        domain="[('fecha','&gt;=', (context_today()).strftime('%Y-01-01'))]"/>
+                <group expand="0" string="Agrupar por">
+                    <filter string="Tipo movimiento" name="group_tipo"
+                            context="{'group_by': 'tipo_movimiento'}"/>
+                    <filter string="Estado" name="group_estado"
+                            context="{'group_by': 'estado'}"/>
+                    <filter string="Mes" name="group_mes"
+                            context="{'group_by': 'fecha:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Acción de ventana -->
+    <record id="action_silicie_asiento" model="ir.actions.act_window">
+        <field name="name">Asientos SILICIE</field>
+        <field name="res_model">silicie.asiento</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_silicie_asiento_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Registra tu primer asiento contable SILICIE
+            </p>
+            <p>
+                Los asientos SILICIE reflejan los movimientos de producto
+                que debes comunicar a la AEAT para el libro contable de
+                Impuestos Especiales.
+            </p>
+        </field>
+    </record>
+</odoo>

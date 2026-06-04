@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Botón inteligente en el albarán mostrando asientos SILICIE -->
+    <record id="view_stock_picking_silicie_form" model="ir.ui.view">
+        <field name="name">stock.picking.silicie.form</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button class="oe_stat_button" type="object"
+                        name="action_ver_silicie"
+                        icon="fa-file-text-o"
+                        invisible="silicie_asiento_count == 0">
+                    <field name="silicie_asiento_count"
+                           widget="statinfo" string="SILICIE"/>
+                </button>
+            </xpath>
+        </field>
+    </record>
+</odoo>

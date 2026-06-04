@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Añade sección SILICIE en la ficha de empresa -->
+    <record id="view_company_silicie_form" model="ir.ui.view">
+        <field name="name">res.company.silicie.form</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='general_information']" position="after">
+                <page string="SILICIE" name="silicie">
+                    <group string="Configuración SILICIE">
+                        <field name="silicie_activo"/>
+                        <field name="silicie_cae"
+                               attrs="{'required': [('silicie_activo','=',True)]}"/>
+                        <field name="silicie_tipo_establecimiento"
+                               attrs="{'required': [('silicie_activo','=',True)]}"/>
+                    </group>
+                    <group>
+                        <div colspan="2" class="text-muted">
+                            <p>
+                                <strong>SILICIE</strong> (Sistema Informático de Libros Contables de
+                                Impuestos Especiales) es obligatorio para fábricas, depósitos fiscales,
+                                almacenes fiscales y depósitos de recepción desde el 1 de enero de 2020.
+                            </p>
+                            <p>
+                                El <strong>CAE</strong> (Código de Actividad y Establecimiento) lo asigna
+                                la AEAT al registrar el establecimiento. Es necesario para presentar
+                                los asientos contables.
+                            </p>
+                            <p>
+                                Si <em>SILICIE activo</em> está marcado, el módulo generará asientos
+                                SILICIE automáticamente al validar albaranes de entrada/salida.
+                            </p>
+                        </div>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Wizard de exportación SILICIE -->
+    <record id="view_silicie_export_wizard_form" model="ir.ui.view">
+        <field name="name">silicie.export.wizard.form</field>
+        <field name="model">silicie.export.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Exportar asientos SILICIE">
+                <group string="Período de exportación">
+                    <field name="fecha_desde"/>
+                    <field name="fecha_hasta"/>
+                </group>
+                <group string="Opciones">
+                    <field name="solo_confirmados"/>
+                    <field name="marcar_exportado"/>
+                </group>
+                <group string="Resultado" invisible="not fichero">
+                    <field name="num_asientos" readonly="1"/>
+                    <field name="fichero" filename="fichero_nombre" widget="binary" readonly="1"/>
+                    <field name="fichero_nombre" invisible="1"/>
+                </group>
+                <footer>
+                    <button name="action_exportar" string="Generar fichero SILICIE"
+                            type="object" class="btn-primary"/>
+                    <button string="Cerrar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Acción del wizard -->
+    <record id="action_silicie_export_wizard" model="ir.actions.act_window">
+        <field name="name">Exportar a AEAT (SILICIE)</field>
+        <field name="res_model">silicie.export.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

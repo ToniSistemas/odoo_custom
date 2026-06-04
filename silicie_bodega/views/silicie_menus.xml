@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Submenú SILICIE bajo la aplicación Bodega -->
+    <menuitem id="menu_silicie_root"
+              name="SILICIE"
+              parent="bodega.menu_bodega_root"
+              sequence="20"/>
+
+    <menuitem id="menu_silicie_asientos"
+              name="Asientos Contables"
+              parent="menu_silicie_root"
+              action="action_silicie_asiento"
+              sequence="10"/>
+
+    <menuitem id="menu_silicie_exportar"
+              name="Exportar a AEAT"
+              parent="menu_silicie_root"
+              action="action_silicie_export_wizard"
+              sequence="20"/>
+</odoo>
