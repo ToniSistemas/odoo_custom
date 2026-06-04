@@ -91,27 +91,6 @@
         </field>
     </record>
 
-    <!-- Vista de búsqueda -->
-    <record id="view_silicie_asiento_search" model="ir.ui.view">
-        <field name="name">silicie.asiento.search</field>
-        <field name="model">silicie.asiento</field>
-        <field name="arch" type="xml">
-            <search string="Buscar asientos SILICIE">
-                <field name="name"/>
-                <field name="justificante_numero"/>
-                <field name="producto_codigo"/>
-                <filter string="Borradores" name="borrador" domain="[('estado','=','borrador')]"/>
-                <filter string="Confirmados" name="confirmado" domain="[('estado','=','confirmado')]"/>
-                <filter string="Exportados" name="exportado" domain="[('estado','=','exportado')]"/>
-                <group expand="0" string="Agrupar por">
-                    <filter string="Estado" name="group_estado" context="{'group_by': 'estado'}"/>
-                    <filter string="Tipo movimiento" name="group_tipo" context="{'group_by': 'tipo_movimiento'}"/>
-                    <filter string="Mes" name="group_mes" context="{'group_by': 'fecha:month'}"/>
-                </group>
-            </search>
-        </field>
-    </record>
-
     <!-- Acción de ventana -->
     <record id="action_silicie_asiento" model="ir.actions.act_window">
         <field name="name">Asientos SILICIE</field>
