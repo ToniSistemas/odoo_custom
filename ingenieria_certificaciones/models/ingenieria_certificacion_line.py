@@ -72,7 +72,7 @@ class IngenieriaCertificacionLine(models.Model):
             line = self.sale_line_id
             self.name = line.name
             self.product_id = line.product_id
-            self.uom_id = line.product_uom
+            self.uom_id = line.product_uom_id
             self.qty_contrato = line.product_uom_qty
             self.price_unit = line.price_unit
 
