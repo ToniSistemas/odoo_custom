@@ -19,7 +19,9 @@
                                 <field name="variedad_ids" widget="many2many_tags"/>
                             </group>
                             <group string="Envasado">
-                                <field name="precintas"/>
+                                <field name="precintas_desde"/>
+                                <field name="precintas_hasta"/>
+                                <field name="precintas_total" readonly="1"/>
                                 <field name="etiquetado"/>
                             </group>
                         </group>
