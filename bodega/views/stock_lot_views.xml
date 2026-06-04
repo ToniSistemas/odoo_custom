@@ -8,33 +8,35 @@
         <field name="model">stock.lot</field>
         <field name="inherit_id" ref="stock.view_production_lot_form"/>
         <field name="arch" type="xml">
-            <notebook position="inside">
-                <page string="Bodega" name="bodega">
-                    <group>
-                        <group string="Información vitivinícola">
-                            <field name="anada"/>
-                            <field name="tipo_vino"/>
-                            <field name="denominacion"/>
-                            <field name="variedad_ids" widget="many2many_tags"/>
+            <xpath expr="//sheet" position="inside">
+                <notebook>
+                    <page string="Bodega" name="bodega">
+                        <group>
+                            <group string="Información vitivinícola">
+                                <field name="anada"/>
+                                <field name="tipo_vino"/>
+                                <field name="denominacion"/>
+                                <field name="variedad_ids" widget="many2many_tags"/>
+                            </group>
+                            <group string="Notas de cata">
+                                <field name="notas_cata" nolabel="1"
+                                    placeholder="Observaciones organolépticas..."/>
+                            </group>
                         </group>
-                        <group string="Notas de cata">
-                            <field name="notas_cata" nolabel="1"
-                                placeholder="Observaciones organolépticas..."/>
-                        </group>
-                    </group>
-                    <separator string="Parámetros Químicos"/>
-                    <field name="parametro_quimico_ids">
-                        <list editable="bottom">
-                            <field name="tipo_id"/>
-                            <field name="valor"/>
-                            <field name="unidad" optional="show"/>
-                            <field name="fecha"/>
-                            <field name="laboratorio" optional="show"/>
-                            <field name="observaciones" optional="hide"/>
-                        </list>
-                    </field>
-                </page>
-            </notebook>
+                        <separator string="Parámetros Químicos"/>
+                        <field name="parametro_quimico_ids">
+                            <list editable="bottom">
+                                <field name="tipo_id"/>
+                                <field name="valor"/>
+                                <field name="unidad" optional="show"/>
+                                <field name="fecha"/>
+                                <field name="laboratorio" optional="show"/>
+                                <field name="observaciones" optional="hide"/>
+                            </list>
+                        </field>
+                    </page>
+                </notebook>
+            </xpath>
         </field>
     </record>
 
