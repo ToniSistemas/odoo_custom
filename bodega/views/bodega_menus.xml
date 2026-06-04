@@ -7,7 +7,8 @@
     <!-- App raíz -->
     <menuitem id="menu_bodega_root"
         name="Bodega"
-        sequence="50"/>
+        sequence="50"
+        web_icon="bodega,static/description/icon.png"/>
 
     <!-- Lotes / Partidas -->
     <menuitem id="menu_bodega_lotes"
