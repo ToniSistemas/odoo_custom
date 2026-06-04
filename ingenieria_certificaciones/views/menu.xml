@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Entrada en el menú de Proyecto -->
+    <!-- Menú raíz como aplicación independiente -->
     <menuitem id="menu_ingenieria_certificaciones_root"
               name="Certificaciones"
-              parent="project.menu_main_pm"
+              web_icon="ingenieria_certificaciones,static/description/icon.png"
               sequence="100"/>
 
     <menuitem id="menu_ingenieria_certificaciones_list"

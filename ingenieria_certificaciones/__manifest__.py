@@ -25,6 +25,6 @@
         'reports/report_certificacion_template.xml',
     ],
     'installable': True,
-    'application': False,
+    'application': True,
     'license': 'LGPL-3',
 }
