@@ -8,6 +8,7 @@
             <xpath expr="//notebook" position="inside">
                 <page string="Bodega" name="bodega">
                     <group string="Identificación del establecimiento">
+                        <field name="bodega_nidpb"/>
                         <field name="bodega_ria"/>
                         <field name="bodega_registro_sanitario"/>
                     </group>
