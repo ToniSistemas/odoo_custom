@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="seq_ingenieria_certificacion" model="ir.sequence">
+        <field name="name">Certificación de Obra</field>
+        <field name="code">ingenieria.certificacion</field>
+        <field name="prefix">CERT/%(year)s/</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
+</odoo>

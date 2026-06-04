@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Entrada en el menú de Proyecto -->
+    <menuitem id="menu_ingenieria_certificaciones_root"
+              name="Certificaciones"
+              parent="project.menu_main_pm"
+              sequence="100"/>
+
+    <menuitem id="menu_ingenieria_certificaciones_list"
+              name="Certificaciones de Obra"
+              parent="menu_ingenieria_certificaciones_root"
+              action="action_ingenieria_certificacion"
+              sequence="10"/>
+</odoo>

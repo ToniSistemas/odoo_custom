@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         FORM VIEW
+    ═══════════════════════════════════════════════════════════ -->
+    <record id="view_ingenieria_certificacion_form" model="ir.ui.view">
+        <field name="name">ingenieria.certificacion.form</field>
+        <field name="model">ingenieria.certificacion</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_confirm"
+                            string="Confirmar"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_create_invoice"
+                            string="Crear Factura"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'confirmed'"/>
+                    <button name="action_view_invoice"
+                            string="Ver Factura"
+                            type="object"
+                            invisible="state != 'invoiced'"/>
+                    <button name="action_print_certificacion"
+                            string="Imprimir Certificación"
+                            type="object"
+                            invisible="state == 'cancelled'"/>
+                    <button name="action_cancel"
+                            string="Cancelar"
+                            type="object"
+                            invisible="state in ['invoiced', 'cancelled']"/>
+                    <button name="action_reset_draft"
+                            string="Restablecer Borrador"
+                            type="object"
+                            invisible="state != 'cancelled'"/>
+                    <field name="state"
+                           widget="statusbar"
+                           statusbar_visible="draft,confirmed,invoiced"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="True"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Proyecto / Contrato">
+                            <field name="project_id"
+                                   readonly="state != 'draft'"/>
+                            <field name="sale_order_id"
+                                   readonly="state != 'draft'"
+                                   domain="[('project_id', '=', project_id)]"/>
+                            <field name="partner_id"/>
+                        </group>
+                        <group string="Período">
+                            <field name="date" readonly="state != 'draft'"/>
+                            <field name="date_from" readonly="state != 'draft'"/>
+                            <field name="date_to" readonly="state != 'draft'"/>
+                            <field name="currency_id" invisible="True"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Partidas certificadas">
+                            <field name="line_ids" readonly="state != 'draft'">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="sale_line_id" optional="show"/>
+                                    <field name="name"/>
+                                    <field name="uom_id"/>
+                                    <field name="qty_contrato" string="Contrato"/>
+                                    <field name="qty_certificado_ant"
+                                           string="Cert. Ant."
+                                           readonly="True"/>
+                                    <field name="qty_periodo" string="Este período"/>
+                                    <field name="qty_certificado_total"
+                                           string="Total Cert."
+                                           readonly="True"/>
+                                    <field name="qty_pendiente"
+                                           string="Pendiente"
+                                           readonly="True"/>
+                                    <field name="price_unit" string="P. Unit."/>
+                                    <field name="amount" readonly="True"/>
+                                    <field name="product_id" optional="hide"/>
+                                    <field name="currency_id" column_invisible="True"/>
+                                </list>
+                            </field>
+                            <group class="oe_subtotal_footer">
+                                <field name="amount_total"
+                                       widget="monetary"
+                                       options="{'currency_field': 'currency_id'}"/>
+                            </group>
+                        </page>
+                        <page string="Notas">
+                            <field name="notes"
+                                   placeholder="Observaciones, condiciones especiales..."
+                                   readonly="state != 'draft'"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         LIST VIEW
+    ═══════════════════════════════════════════════════════════ -->
+    <record id="view_ingenieria_certificacion_list" model="ir.ui.view">
+        <field name="name">ingenieria.certificacion.list</field>
+        <field name="model">ingenieria.certificacion</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="sale_order_id"/>
+                <field name="partner_id"/>
+                <field name="date"/>
+                <field name="date_from" optional="hide"/>
+                <field name="date_to" optional="hide"/>
+                <field name="amount_total" widget="monetary"/>
+                <field name="currency_id" column_invisible="True"/>
+                <field name="invoice_id" optional="show"/>
+                <field name="state"
+                       widget="badge"
+                       decoration-success="state == 'invoiced'"
+                       decoration-warning="state == 'confirmed'"
+                       decoration-muted="state == 'cancelled'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SEARCH VIEW
+    ═══════════════════════════════════════════════════════════ -->
+    <record id="view_ingenieria_certificacion_search" model="ir.ui.view">
+        <field name="name">ingenieria.certificacion.search</field>
+        <field name="model">ingenieria.certificacion</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" string="Nº Certificación"/>
+                <field name="project_id"/>
+                <field name="sale_order_id"/>
+                <field name="partner_id"/>
+                <filter name="draft"     string="Borrador"    domain="[('state','=','draft')]"/>
+                <filter name="confirmed" string="Confirmadas" domain="[('state','=','confirmed')]"/>
+                <filter name="invoiced"  string="Facturadas"  domain="[('state','=','invoiced')]"/>
+                <filter name="cancelled" string="Canceladas"  domain="[('state','=','cancelled')]"/>
+                <group expand="0" string="Agrupar por">
+                    <filter name="group_project" string="Proyecto"
+                            context="{'group_by': 'project_id'}"/>
+                    <filter name="group_partner" string="Cliente"
+                            context="{'group_by': 'partner_id'}"/>
+                    <filter name="group_state"   string="Estado"
+                            context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         ACTION
+    ═══════════════════════════════════════════════════════════ -->
+    <record id="action_ingenieria_certificacion" model="ir.actions.act_window">
+        <field name="name">Certificaciones de Obra</field>
+        <field name="res_model">ingenieria.certificacion</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crea tu primera certificación de obra
+            </p>
+            <p>
+                Las certificaciones permiten facturar proyectos por grados de avance,
+                indicando las mediciones de cada partida en cada período.
+            </p>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ingenieria_certificacion_user,ingenieria.certificacion user,model_ingenieria_certificacion,base.group_user,1,1,1,0
+access_ingenieria_certificacion_manager,ingenieria.certificacion manager,model_ingenieria_certificacion,base.group_system,1,1,1,1
+access_ingenieria_certificacion_line_user,ingenieria.certificacion.line user,model_ingenieria_certificacion_line,base.group_user,1,1,1,0
+access_ingenieria_certificacion_line_manager,ingenieria.certificacion.line manager,model_ingenieria_certificacion_line,base.group_system,1,1,1,1
