@@ -101,16 +101,13 @@
                 <field name="justificante_numero" string="Nº justificante"/>
                 <field name="lot_id" string="Lote"/>
                 <field name="origen_destino_nombre" string="Origen/Destino"/>
-                <separator/>
                 <filter string="Borradores" name="borrador" domain="[('estado','=','borrador')]"/>
                 <filter string="Confirmados" name="confirmado" domain="[('estado','=','confirmado')]"/>
                 <filter string="Exportados" name="exportado" domain="[('estado','=','exportado')]"/>
-                <separator/>
                 <filter string="Entradas" name="entradas"
                         domain="[('tipo_movimiento','in',['A02','A04','A06','A07','A15','A31','A35'])]"/>
                 <filter string="Salidas" name="salidas"
                         domain="[('tipo_movimiento','in',['A08','A10','A11','A14','A28','A30','A36'])]"/>
-                <separator/>
                 <group expand="0" string="Agrupar por">
                     <filter string="Tipo movimiento" name="group_tipo"
                             context="{'group_by': 'tipo_movimiento'}"/>
