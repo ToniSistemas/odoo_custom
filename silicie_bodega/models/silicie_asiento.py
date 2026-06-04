@@ -47,7 +47,7 @@ class SilicieAsiento(models.Model):
         ('borrador', 'Borrador'),
         ('confirmado', 'Confirmado'),
         ('exportado', 'Exportado'),
-    ], string='Estado', default='borrador', required=True, tracking=True)
+    ], string='Estado', default='borrador', required=True)
 
     # ── Datos del operador ────────────────────────────────────────────────────
     company_id = fields.Many2one(
