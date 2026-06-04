@@ -5,8 +5,8 @@
         <field name="model">res.company</field>
         <field name="inherit_id" ref="base.view_company_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//notebook" position="inside">
-                <page string="Bodega" name="bodega">
+            <xpath expr="//notebook/page[1]" position="before">
+                <page string="Bodega" name="bodega_company">
                     <group string="Identificación del establecimiento">
                         <field name="bodega_nidpb"/>
                         <field name="bodega_ria"/>

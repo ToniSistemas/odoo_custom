@@ -6,7 +6,7 @@
         <field name="model">res.company</field>
         <field name="inherit_id" ref="base.view_company_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//notebook" position="inside">
+            <xpath expr="//notebook/page[1]" position="before">
                 <page string="SILICIE" name="silicie">
                     <group string="Configuración SILICIE">
                         <field name="silicie_activo"/>
