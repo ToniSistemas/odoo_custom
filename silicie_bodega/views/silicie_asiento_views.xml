@@ -111,8 +111,6 @@
                 <filter string="Salidas" name="salidas"
                         domain="[('tipo_movimiento','in',['A08','A10','A11','A14','A28','A30','A36'])]"/>
                 <separator/>
-                <filter string="Este año" name="anyo_actual"
-                        domain="[('fecha','&gt;=', (context_today()).strftime('%Y-01-01'))]"/>
                 <group expand="0" string="Agrupar por">
                     <filter string="Tipo movimiento" name="group_tipo"
                             context="{'group_by': 'tipo_movimiento'}"/>
