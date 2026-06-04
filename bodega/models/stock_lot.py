@@ -31,3 +31,5 @@ class StockLot(models.Model):
         string='Parámetros Químicos',
     )
     notas_cata = fields.Text(string='Notas de cata')
+    precintas = fields.Integer(string='Precintas')
+    etiquetado = fields.Boolean(string='Etiquetado', default=False)

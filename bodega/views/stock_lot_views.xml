@@ -18,10 +18,14 @@
                                 <field name="denominacion"/>
                                 <field name="variedad_ids" widget="many2many_tags"/>
                             </group>
-                            <group string="Notas de cata">
-                                <field name="notas_cata" nolabel="1"
-                                    placeholder="Observaciones organolépticas..."/>
+                            <group string="Envasado">
+                                <field name="precintas"/>
+                                <field name="etiquetado"/>
                             </group>
+                        </group>
+                        <group string="Notas de cata">
+                            <field name="notas_cata" nolabel="1"
+                                placeholder="Observaciones organolépticas..."/>
                         </group>
                         <separator string="Parámetros Químicos"/>
                         <field name="parametro_quimico_ids">
