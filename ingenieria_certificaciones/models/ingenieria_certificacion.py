@@ -115,13 +115,17 @@ class IngenieriaCertificacion(models.Model):
                 vals['product_id'] = line.product_id.id
             if line.uom_id:
                 vals['product_uom_id'] = line.uom_id.id
+            # Enlazar con la línea del pedido para que Odoo cuente
+            # esta factura en el botón inteligente del pedido de venta
+            if line.sale_line_id:
+                vals['sale_line_ids'] = [(4, line.sale_line_id.id)]
             invoice_line_vals.append((0, 0, vals))
 
         invoice = self.env['account.move'].create({
             'move_type': 'out_invoice',
             'partner_id': self.partner_id.id,
             'invoice_date': self.date,
-            'invoice_origin': '%s - %s' % (self.name, self.project_id.name),
+            'invoice_origin': self.sale_order_id.name,
             'invoice_line_ids': invoice_line_vals,
             'narration': 'Certificación %s — Proyecto: %s' % (
                 self.name, self.project_id.name
