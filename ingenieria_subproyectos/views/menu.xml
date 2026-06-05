@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Menú bajo Proyecto → Proyectos Principales -->
+    <menuitem id="menu_parent_project"
+              name="Proyectos Principales"
+              parent="project.menu_main_pm"
+              action="action_parent_project"
+              sequence="3"/>
+</odoo>
