@@ -164,11 +164,9 @@
         <field name="name">Proyectos Principales</field>
         <field name="res_model">project.project</field>
         <field name="view_mode">kanban,list,form</field>
+        <field name="view_id" ref="view_parent_project_kanban"/>
         <field name="domain">[('is_parent_project', '=', True)]</field>
         <field name="context">{'default_is_parent_project': True}</field>
-        <field name="view_ids" eval="[
-            (0, 0, {'view_mode': 'kanban', 'view_id': ref('view_parent_project_kanban')}),
-        ]"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Crea tu primer proyecto principal
