@@ -51,8 +51,7 @@
                             <field name="project_id"
                                    readonly="state != 'draft'"/>
                             <field name="sale_order_id"
-                                   readonly="state != 'draft'"
-                                   domain="[('project_id', '=', project_id)]"/>
+                                   readonly="state != 'draft'"/>
                             <field name="partner_id"/>
                         </group>
                         <group string="Período">
