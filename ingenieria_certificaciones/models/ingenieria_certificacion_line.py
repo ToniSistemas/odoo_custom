@@ -16,7 +16,7 @@ class IngenieriaCertificacionLine(models.Model):
     sale_line_id = fields.Many2one(
         'sale.order.line',
         string='Partida del contrato',
-        domain="[('order_id', '=', parent.sale_order_id)]",
+        domain="[('order_id', '=', parent.sale_order_id), ('order_id', '!=', False)]",
     )
     name = fields.Char(string='Descripción', required=True)
     product_id = fields.Many2one('product.product', string='Producto')
