@@ -50,6 +50,12 @@ class IngenieriaCertificacionLine(models.Model):
         compute='_compute_totales',
         digits='Product Unit of Measure',
     )
+    progress_pct = fields.Float(
+        string='% Avance',
+        compute='_compute_totales',
+        digits=(5, 1),
+        help='Porcentaje del total contratado certificado acumulado (incluyendo este período)',
+    )
     price_unit = fields.Float(
         string='Precio unit.',
         digits='Product Price',
@@ -98,6 +104,10 @@ class IngenieriaCertificacionLine(models.Model):
         for line in self:
             line.qty_certificado_total = line.qty_certificado_ant + line.qty_periodo
             line.qty_pendiente = line.qty_contrato - line.qty_certificado_total
+            if line.qty_contrato:
+                line.progress_pct = (line.qty_certificado_total / line.qty_contrato) * 100.0
+            else:
+                line.progress_pct = 0.0
 
     @api.depends('qty_periodo', 'price_unit')
     def _compute_amount(self):

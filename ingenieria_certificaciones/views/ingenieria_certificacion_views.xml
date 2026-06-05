@@ -80,6 +80,9 @@
                                     <field name="qty_pendiente"
                                            string="Pendiente"
                                            readonly="True"/>
+                                    <field name="progress_pct"
+                                           string="% Avance"
+                                           readonly="True"/>
                                     <field name="price_unit" string="P. Unit."/>
                                     <field name="amount" readonly="True"/>
                                     <field name="product_id" optional="hide"/>
@@ -87,9 +90,14 @@
                                 </list>
                             </field>
                             <group class="oe_subtotal_footer">
+                                <field name="amount_contrato_total"
+                                       widget="monetary"
+                                       string="Total contrato"
+                                       options="{'currency_field': 'currency_id'}"/>
                                 <field name="amount_total"
                                        widget="monetary"
                                        options="{'currency_field': 'currency_id'}"/>
+                                <field name="progress_pct" string="% Avance global"/>
                             </group>
                         </page>
                         <page string="Notas">

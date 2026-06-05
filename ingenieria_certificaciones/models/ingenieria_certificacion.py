@@ -58,6 +58,20 @@ class IngenieriaCertificacion(models.Model):
         store=True,
         currency_field='currency_id',
     )
+    amount_contrato_total = fields.Monetary(
+        string='Total contrato',
+        compute='_compute_amount_total',
+        store=True,
+        currency_field='currency_id',
+        help='Suma de qty_contrato × precio de todas las partidas',
+    )
+    progress_pct = fields.Float(
+        string='% Avance global',
+        compute='_compute_amount_total',
+        store=True,
+        digits=(5, 1),
+        help='Importe total certificado acumulado / importe total del contrato × 100',
+    )
     currency_id = fields.Many2one(
         'res.currency',
         related='sale_order_id.currency_id',
@@ -71,10 +85,17 @@ class IngenieriaCertificacion(models.Model):
     )
     notes = fields.Text(string='Notas / Observaciones')
 
-    @api.depends('line_ids.amount')
+    @api.depends('line_ids.amount', 'line_ids.qty_contrato', 'line_ids.price_unit')
     def _compute_amount_total(self):
         for rec in self:
             rec.amount_total = sum(rec.line_ids.mapped('amount'))
+            rec.amount_contrato_total = sum(
+                l.qty_contrato * l.price_unit for l in rec.line_ids
+            )
+            if rec.amount_contrato_total:
+                rec.progress_pct = (rec.amount_total / rec.amount_contrato_total) * 100.0
+            else:
+                rec.progress_pct = 0.0
 
     @api.model_create_multi
     def create(self, vals_list):

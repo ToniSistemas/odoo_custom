@@ -55,15 +55,16 @@
                            style="font-size:10px;">
                         <thead>
                             <tr class="bg-light">
-                                <th style="width:28%;">Descripción</th>
+                                <th style="width:26%;">Descripción</th>
                                 <th class="text-center" style="width:6%;">Ud.</th>
-                                <th class="text-right" style="width:9%;">Contrato</th>
-                                <th class="text-right" style="width:9%;">Cert. Ant.</th>
-                                <th class="text-right" style="width:9%;">Este período</th>
-                                <th class="text-right" style="width:9%;">Total cert.</th>
-                                <th class="text-right" style="width:9%;">Pendiente</th>
-                                <th class="text-right" style="width:9%;">P. Unit.</th>
-                                <th class="text-right" style="width:12%;">Importe</th>
+                                <th class="text-right" style="width:8%;">Contrato</th>
+                                <th class="text-right" style="width:8%;">Cert. Ant.</th>
+                                <th class="text-right" style="width:8%;">Este período</th>
+                                <th class="text-right" style="width:8%;">Total cert.</th>
+                                <th class="text-right" style="width:7%;">% Av.</th>
+                                <th class="text-right" style="width:7%;">Pendiente</th>
+                                <th class="text-right" style="width:8%;">P. Unit.</th>
+                                <th class="text-right" style="width:10%;">Importe</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -86,6 +87,9 @@
                                         <t t-esc="'%.2f' % line.qty_certificado_total"/>
                                     </td>
                                     <td class="text-right">
+                                        <strong><t t-esc="'%.1f %%' % line.progress_pct"/></strong>
+                                    </td>
+                                    <td class="text-right">
                                         <t t-esc="'%.2f' % line.qty_pendiente"/>
                                     </td>
                                     <td class="text-right">
@@ -101,9 +105,21 @@
                         <tfoot>
                             <tr>
                                 <td colspan="8" class="text-right">
+                                    TOTAL CONTRATO
+                                </td>
+                                <td class="text-right" colspan="2">
+                                    <span t-field="cert.amount_contrato_total"
+                                          t-options='{"widget": "monetary", "display_currency": cert.currency_id}'/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="6" class="text-right">
                                     <strong>TOTAL CERTIFICACIÓN</strong>
                                 </td>
                                 <td class="text-right">
+                                    <strong><t t-esc="'%.1f %%' % cert.progress_pct"/></strong>
+                                </td>
+                                <td class="text-right" colspan="3">
                                     <strong>
                                         <span t-field="cert.amount_total"
                                               t-options='{"widget": "monetary", "display_currency": cert.currency_id}'/>
