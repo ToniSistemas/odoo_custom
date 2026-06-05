@@ -10,7 +10,7 @@
         <field name="name">project.project.parent.kanban</field>
         <field name="model">project.project</field>
         <field name="arch" type="xml">
-            <kanban default_group_by="" color="color">
+            <kanban color="color">
                 <field name="id"/>
                 <field name="name"/>
                 <field name="user_id"/>
@@ -61,7 +61,7 @@
         <field name="name">project.project.subproject.kanban</field>
         <field name="model">project.project</field>
         <field name="arch" type="xml">
-            <kanban default_group_by="" color="color">
+            <kanban color="color">
                 <field name="id"/>
                 <field name="name"/>
                 <field name="user_id"/>
