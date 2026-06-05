@@ -139,7 +139,6 @@
                         </group>
                     </group>
                     <div invisible="not is_parent_project" class="mt-3">
-                        <label string="Subproyectos" class="fw-bold"/>
                         <field name="child_ids" nolabel="1">
                             <list>
                                 <field name="name"/>
