@@ -87,7 +87,7 @@
                                         <t t-esc="'%.2f' % line.qty_certificado_total"/>
                                     </td>
                                     <td class="text-right">
-                                        <strong><t t-esc="'%.1f %%' % line.progress_pct"/></strong>
+                                        <strong><t t-esc="'%.1f' % line.progress_pct + ' %'"/></strong>
                                     </td>
                                     <td class="text-right">
                                         <t t-esc="'%.2f' % line.qty_pendiente"/>
@@ -117,7 +117,7 @@
                                     <strong>TOTAL CERTIFICACIÓN</strong>
                                 </td>
                                 <td class="text-right">
-                                    <strong><t t-esc="'%.1f %%' % cert.progress_pct"/></strong>
+                                    <strong><t t-esc="'%.1f' % cert.progress_pct + ' %'"/></strong>
                                 </td>
                                 <td class="text-right" colspan="3">
                                     <strong>
