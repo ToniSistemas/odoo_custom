@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- Hace que el icono principal de Proyecto abra directamente Proyectos Principales -->
+    <record id="project.menu_main_pm" model="ir.ui.menu">
+        <field name="action" ref="ingenieria_subproyectos.action_parent_project"/>
+    </record>
+
     <!-- Menú bajo Proyecto → Proyectos Principales -->
     <menuitem id="menu_parent_project"
               name="Proyectos Principales"
