@@ -107,6 +107,17 @@
         </field>
     </record>
 
+    <record id="action_apply_hierarchy_template_server" model="ir.actions.server">
+        <field name="name">Aplicar plantilla de jerarquia</field>
+        <field name="model_id" ref="project.model_project_project"/>
+        <field name="binding_model_id" ref="project.model_project_project"/>
+        <field name="state">code</field>
+        <field name="code">
+if records:
+    records.action_apply_hierarchy_template()
+        </field>
+    </record>
+
     <!-- ═══════════════════════════════════════════════════════════
          HERENCIA FORM — project.project
          Añade: smart button, tab "Jerarquía" con subproyectos
@@ -189,17 +200,6 @@
                 Los proyectos principales agrupan subproyectos relacionados.
                 Activa "Es proyecto principal" en un proyecto existente o crea uno nuevo aquí.
             </p>
-        </field>
-    </record>
-
-    <record id="action_apply_hierarchy_template_server" model="ir.actions.server">
-        <field name="name">Aplicar plantilla de jerarquia</field>
-        <field name="model_id" ref="project.model_project_project"/>
-        <field name="binding_model_id" ref="project.model_project_project"/>
-        <field name="state">code</field>
-        <field name="code">
-if records:
-    records.action_apply_hierarchy_template()
         </field>
     </record>
 
