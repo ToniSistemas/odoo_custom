@@ -30,7 +30,6 @@ class ProjectProject(models.Model):
     hierarchy_template_id = fields.Many2one(
         'project.hierarchy.template',
         string='Plantilla jerarquia',
-        domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]",
         help='Plantilla para generar subproyectos, tareas y subtareas de forma automatica.',
     )
 
