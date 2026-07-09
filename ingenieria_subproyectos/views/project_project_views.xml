@@ -126,8 +126,8 @@
                         invisible="not is_parent_project">
                     <field name="child_count" widget="statinfo" string="Subproyectos"/>
                 </button>
-                <button name="action_apply_hierarchy_template"
-                        type="object"
+                <button type="action"
+                        name="%(action_apply_hierarchy_template_server)d"
                         class="oe_stat_button"
                         icon="fa-magic"
                         invisible="not is_parent_project or not hierarchy_template_id">
@@ -145,8 +145,8 @@
                                    invisible="is_parent_project"/>
                             <field name="hierarchy_template_id"
                                 invisible="not is_parent_project"/>
-                            <button name="action_apply_hierarchy_template"
-                                 type="object"
+                                <button type="action"
+                                    name="%(action_apply_hierarchy_template_server)d"
                                  class="btn btn-primary"
                                  string="Aplicar plantilla"
                                  invisible="not is_parent_project or not hierarchy_template_id"/>
@@ -189,6 +189,17 @@
                 Los proyectos principales agrupan subproyectos relacionados.
                 Activa "Es proyecto principal" en un proyecto existente o crea uno nuevo aquí.
             </p>
+        </field>
+    </record>
+
+    <record id="action_apply_hierarchy_template_server" model="ir.actions.server">
+        <field name="name">Aplicar plantilla de jerarquia</field>
+        <field name="model_id" ref="project.model_project_project"/>
+        <field name="binding_model_id" ref="project.model_project_project"/>
+        <field name="state">code</field>
+        <field name="code">
+if records:
+    records.action_apply_hierarchy_template()
         </field>
     </record>
 
