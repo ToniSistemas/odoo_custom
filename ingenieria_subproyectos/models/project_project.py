@@ -40,6 +40,32 @@ class ProjectProject(models.Model):
                 'No se puede crear una referencia circular entre proyectos.'
             ))
 
+    @api.constrains('parent_id', 'is_parent_project', 'company_id')
+    def _check_hierarchy_business_rules(self):
+        for project in self:
+            # A child project can only point to projects explicitly marked as parents.
+            if project.parent_id and not project.parent_id.is_parent_project:
+                raise ValidationError(_(
+                    'El proyecto principal seleccionado debe estar marcado como "Es proyecto principal".'
+                ))
+
+            # A project cannot be both parent container and child at the same time.
+            if project.is_parent_project and project.parent_id:
+                raise ValidationError(_(
+                    'Un proyecto marcado como principal no puede tener proyecto principal asignado.'
+                ))
+
+            # Parent and child must stay in the same company to avoid cross-company leakage.
+            if (
+                project.parent_id
+                and project.company_id
+                and project.parent_id.company_id
+                and project.company_id != project.parent_id.company_id
+            ):
+                raise ValidationError(_(
+                    'El proyecto y su proyecto principal deben pertenecer a la misma compañía.'
+                ))
+
     def action_view_subprojects(self):
         """Abre el kanban de subproyectos de este proyecto principal."""
         self.ensure_one()

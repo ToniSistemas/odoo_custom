@@ -13,7 +13,7 @@
           2. Kanban de subproyectos          → muestra nº de tareas
           3. Vista estándar de Odoo por subproyecto (tareas, subtareas, horas)
     """,
-    'author': '',
+    'author': 'Equipo Ingenieria',
     'category': 'Project',
     'depends': ['project'],
     'data': [
