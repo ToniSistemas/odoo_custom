@@ -126,6 +126,13 @@
                         invisible="not is_parent_project">
                     <field name="child_count" widget="statinfo" string="Subproyectos"/>
                 </button>
+                <button name="action_apply_hierarchy_template"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-magic"
+                        invisible="not is_parent_project or not hierarchy_template_id">
+                    <span>Aplicar plantilla</span>
+                </button>
             </xpath>
 
             <!-- Tab: Jerarquía de Proyecto -->
@@ -136,6 +143,13 @@
                             <field name="is_parent_project"/>
                             <field name="parent_id"
                                    invisible="is_parent_project"/>
+                            <field name="hierarchy_template_id"
+                                invisible="not is_parent_project"/>
+                            <button name="action_apply_hierarchy_template"
+                                 type="object"
+                                 class="btn btn-primary"
+                                 string="Aplicar plantilla"
+                                 invisible="not is_parent_project or not hierarchy_template_id"/>
                         </group>
                     </group>
                     <div invisible="not is_parent_project" class="mt-3">

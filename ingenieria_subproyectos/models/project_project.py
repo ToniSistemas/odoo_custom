@@ -27,6 +27,12 @@ class ProjectProject(models.Model):
         compute='_compute_child_count',
         store=True,
     )
+    hierarchy_template_id = fields.Many2one(
+        'project.hierarchy.template',
+        string='Plantilla jerarquia',
+        domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]",
+        help='Plantilla para generar subproyectos, tareas y subtareas de forma automatica.',
+    )
 
     @api.depends('child_ids')
     def _compute_child_count(self):
@@ -97,4 +103,88 @@ class ProjectProject(models.Model):
             'view_mode': 'kanban,list,form',
             'domain': [('project_id', '=', self.id)],
             'context': {'default_project_id': self.id},
+        }
+
+    def _collect_stage_ids(self, base_stage_ids, task_templates):
+        stage_ids = set(base_stage_ids)
+        for task_line in task_templates:
+            if task_line.stage_id:
+                stage_ids.add(task_line.stage_id.id)
+            for subtask_line in task_line.subtask_template_ids:
+                if subtask_line.stage_id:
+                    stage_ids.add(subtask_line.stage_id.id)
+        return stage_ids
+
+    def _create_tasks_from_templates(self, project, task_templates):
+        Task = self.env['project.task'].sudo()
+        for task_line in task_templates:
+            task_vals = {
+                'name': task_line.name,
+                'project_id': project.id,
+                'description': task_line.description or False,
+            }
+            if task_line.stage_id:
+                task_vals['stage_id'] = task_line.stage_id.id
+
+            task = Task.create(task_vals)
+            for subtask_line in task_line.subtask_template_ids:
+                subtask_vals = {
+                    'name': subtask_line.name,
+                    'project_id': project.id,
+                    'parent_id': task.id,
+                    'description': subtask_line.description or False,
+                }
+                if subtask_line.stage_id:
+                    subtask_vals['stage_id'] = subtask_line.stage_id.id
+                Task.create(subtask_vals)
+
+    def action_apply_hierarchy_template(self):
+        self.ensure_one()
+        if not self.is_parent_project:
+            raise ValidationError(_(
+                'Solo puedes aplicar una plantilla en un proyecto principal.'
+            ))
+        if not self.hierarchy_template_id:
+            raise ValidationError(_(
+                'Selecciona una plantilla antes de aplicarla.'
+            ))
+
+        template = self.hierarchy_template_id
+        if template.company_id and self.company_id and template.company_id != self.company_id:
+            raise ValidationError(_(
+                'La plantilla seleccionada debe pertenecer a la misma compania que el proyecto principal.'
+            ))
+
+        Project = self.env['project.project'].sudo()
+
+        main_task_templates = template.main_task_template_ids.sorted(lambda x: (x.sequence, x.id))
+        main_stage_ids = self._collect_stage_ids(template.main_task_stage_ids.ids, main_task_templates)
+        if main_stage_ids:
+            self.write({'type_ids': [(6, 0, list(main_stage_ids))]})
+
+        self._create_tasks_from_templates(self, main_task_templates)
+
+        for sub_template in template.subproject_template_ids.sorted(lambda x: (x.sequence, x.id)):
+            subproject = Project.create({
+                'name': sub_template.name,
+                'is_parent_project': False,
+                'parent_id': self.id,
+                'company_id': self.company_id.id,
+                'user_id': sub_template.user_id.id or False,
+            })
+            sub_task_templates = sub_template.task_template_ids.sorted(lambda x: (x.sequence, x.id))
+            sub_stage_ids = self._collect_stage_ids(sub_template.task_stage_ids.ids, sub_task_templates)
+            if sub_stage_ids:
+                subproject.write({'type_ids': [(6, 0, list(sub_stage_ids))]})
+            self._create_tasks_from_templates(subproject, sub_task_templates)
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Plantilla aplicada'),
+                'message': _('Se generaron subproyectos, tareas y subtareas desde la plantilla seleccionada.'),
+                'sticky': False,
+                'type': 'success',
+            },
         }

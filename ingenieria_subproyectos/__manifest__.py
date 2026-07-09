@@ -17,7 +17,9 @@
     'category': 'Project',
     'depends': ['project'],
     'data': [
+        'security/ir.model.access.csv',
         'views/project_project_views.xml',
+        'views/project_template_views.xml',
         'views/menu.xml',
     ],
     'installable': True,

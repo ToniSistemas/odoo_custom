@@ -11,4 +11,11 @@
               parent="project.menu_main_pm"
               action="action_parent_project"
               sequence="3"/>
+
+    <menuitem id="menu_project_hierarchy_template"
+              name="Plantillas de proyectos"
+              parent="project.menu_main_pm"
+              action="action_project_hierarchy_template"
+              sequence="90"
+              groups="project.group_project_manager"/>
 </odoo>

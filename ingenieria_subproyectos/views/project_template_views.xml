@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_project_hierarchy_template_tree" model="ir.ui.view">
+        <field name="name">project.hierarchy.template.list</field>
+        <field name="model">project.hierarchy.template</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="company_id"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_project_hierarchy_template_form" model="ir.ui.view">
+        <field name="name">project.hierarchy.template.form</field>
+        <field name="model">project.hierarchy.template</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Proyecto principal">
+                            <group>
+                                <field name="main_task_stage_ids" widget="many2many_tags"/>
+                            </group>
+                            <field name="main_task_template_ids" nolabel="1">
+                                <list editable="bottom">
+                                    <field name="sequence"/>
+                                    <field name="name"/>
+                                    <field name="stage_id"/>
+                                </list>
+                                <form>
+                                    <group>
+                                        <group>
+                                            <field name="sequence"/>
+                                            <field name="name"/>
+                                            <field name="stage_id"/>
+                                        </group>
+                                    </group>
+                                    <group>
+                                        <field name="description"/>
+                                    </group>
+                                    <field name="subtask_template_ids" nolabel="1">
+                                        <list editable="bottom">
+                                            <field name="sequence"/>
+                                            <field name="name"/>
+                                            <field name="stage_id"/>
+                                        </list>
+                                    </field>
+                                </form>
+                            </field>
+                        </page>
+
+                        <page string="Subproyectos">
+                            <field name="subproject_template_ids" nolabel="1">
+                                <list editable="bottom">
+                                    <field name="sequence"/>
+                                    <field name="name"/>
+                                    <field name="user_id"/>
+                                </list>
+                                <form>
+                                    <group>
+                                        <group>
+                                            <field name="sequence"/>
+                                            <field name="name"/>
+                                            <field name="user_id"/>
+                                        </group>
+                                    </group>
+                                    <group>
+                                        <field name="task_stage_ids" widget="many2many_tags"/>
+                                    </group>
+                                    <field name="task_template_ids" nolabel="1">
+                                        <list editable="bottom">
+                                            <field name="sequence"/>
+                                            <field name="name"/>
+                                            <field name="stage_id"/>
+                                        </list>
+                                        <form>
+                                            <group>
+                                                <group>
+                                                    <field name="sequence"/>
+                                                    <field name="name"/>
+                                                    <field name="stage_id"/>
+                                                </group>
+                                            </group>
+                                            <group>
+                                                <field name="description"/>
+                                            </group>
+                                            <field name="subtask_template_ids" nolabel="1">
+                                                <list editable="bottom">
+                                                    <field name="sequence"/>
+                                                    <field name="name"/>
+                                                    <field name="stage_id"/>
+                                                </list>
+                                            </field>
+                                        </form>
+                                    </field>
+                                </form>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_project_hierarchy_template" model="ir.actions.act_window">
+        <field name="name">Plantillas de proyectos</field>
+        <field name="res_model">project.hierarchy.template</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Crea tu primera plantilla de proyectos</p>
+            <p>Define estructura de subproyectos, tareas, subtareas y etapas para reutilizarla en proyectos principales.</p>
+        </field>
+    </record>
+
+</odoo>
