@@ -45,7 +45,7 @@
                     </t>
                     <t t-name="menu">
                         <a role="menuitem" type="edit" class="dropdown-item">Editar</a>
-                        <a role="menuitem" type="object" name="action_archive_project" class="dropdown-item">Archivar</a>
+                        <a role="menuitem" type="action" name="%(action_archive_project_server)d" class="dropdown-item">Archivar</a>
                     </t>
                 </templates>
             </kanban>
@@ -100,10 +100,21 @@
                     </t>
                     <t t-name="menu">
                         <a role="menuitem" type="edit" class="dropdown-item">Editar</a>
-                        <a role="menuitem" type="object" name="action_archive_project" class="dropdown-item">Archivar</a>
+                        <a role="menuitem" type="action" name="%(action_archive_project_server)d" class="dropdown-item">Archivar</a>
                     </t>
                 </templates>
             </kanban>
+        </field>
+    </record>
+
+    <record id="action_archive_project_server" model="ir.actions.server">
+        <field name="name">Archivar proyecto</field>
+        <field name="model_id" ref="project.model_project_project"/>
+        <field name="binding_model_id" ref="project.model_project_project"/>
+        <field name="state">code</field>
+        <field name="code">
+if records:
+    records.write({'active': False})
         </field>
     </record>
 
