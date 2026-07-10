@@ -104,6 +104,11 @@ class ProjectProject(models.Model):
             'context': {'default_project_id': self.id},
         }
 
+    def action_archive_project(self):
+        """Archiva el proyecto en lugar de eliminarlo."""
+        self.write({'active': False})
+        return True
+
     def _collect_stage_ids(self, base_stage_ids, task_templates):
         stage_ids = set(base_stage_ids)
         for task_line in task_templates:

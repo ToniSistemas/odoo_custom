@@ -45,7 +45,7 @@
                     </t>
                     <t t-name="menu">
                         <a role="menuitem" type="edit" class="dropdown-item">Editar</a>
-                        <a role="menuitem" type="delete" class="dropdown-item">Archivar</a>
+                        <a role="menuitem" type="object" name="action_archive_project" class="dropdown-item">Archivar</a>
                     </t>
                 </templates>
             </kanban>
@@ -100,7 +100,7 @@
                     </t>
                     <t t-name="menu">
                         <a role="menuitem" type="edit" class="dropdown-item">Editar</a>
-                        <a role="menuitem" type="delete" class="dropdown-item">Archivar</a>
+                        <a role="menuitem" type="object" name="action_archive_project" class="dropdown-item">Archivar</a>
                     </t>
                 </templates>
             </kanban>
