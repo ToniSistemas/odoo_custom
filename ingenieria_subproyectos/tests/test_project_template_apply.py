@@ -35,21 +35,21 @@ class TestProjectTemplateApply(SavepointCase):
                 (0, 0, {
                     'name': 'Subproyecto estructura',
                     'task_stage_ids': [(6, 0, [stage_exec.id])],
-                    'task_template_ids': [
-                        (0, 0, {
-                            'name': 'Calculo de estructura',
-                            'stage_id': stage_exec.id,
-                            'subtask_template_ids': [
-                                (0, 0, {
-                                    'name': 'Revision de cargas',
-                                    'stage_id': stage_exec.id,
-                                }),
-                            ],
-                        }),
-                    ],
                 }),
             ],
         })
+
+        subproject_template = template.subproject_template_ids[0]
+        subproject_task = self.env['project.hierarchy.template.task'].create({
+            'template_id': template.id,
+            'name': 'Calculo de estructura',
+            'stage_id': stage_exec.id,
+            'subtask_template_ids': [(0, 0, {
+                'name': 'Revision de cargas',
+                'stage_id': stage_exec.id,
+            })],
+        })
+        subproject_template.write({'task_template_ids': [(4, subproject_task.id)]})
 
         main_project = self.Project.create({
             'name': 'Proyecto principal A',

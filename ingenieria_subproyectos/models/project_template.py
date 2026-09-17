@@ -23,7 +23,7 @@ class ProjectHierarchyTemplate(models.Model):
     main_task_template_ids = fields.One2many(
         'project.hierarchy.template.task',
         'template_id',
-        string='Tareas del proyecto principal',
+        string='Tareas',
     )
     subproject_template_ids = fields.One2many(
         'project.hierarchy.template.subproject',
@@ -59,10 +59,13 @@ class ProjectHierarchyTemplateSubproject(models.Model):
         'stage_id',
         string='Etapas de tareas del subproyecto',
     )
-    task_template_ids = fields.One2many(
+    task_template_ids = fields.Many2many(
         'project.hierarchy.template.task',
+        'project_hierarchy_template_subproject_task_rel',
         'subproject_template_id',
-        string='Tareas',
+        'task_template_id',
+        string='Tareas seleccionadas',
+        domain="[('template_id', '=', template_id)]",
     )
 
 
@@ -79,11 +82,6 @@ class ProjectHierarchyTemplateTask(models.Model):
         string='Plantilla principal',
         ondelete='cascade',
     )
-    subproject_template_id = fields.Many2one(
-        'project.hierarchy.template.subproject',
-        string='Subproyecto de plantilla',
-        ondelete='cascade',
-    )
     stage_id = fields.Many2one('project.task.type', string='Etapa')
     subtask_template_ids = fields.One2many(
         'project.hierarchy.template.subtask',
@@ -91,12 +89,12 @@ class ProjectHierarchyTemplateTask(models.Model):
         string='Subtareas',
     )
 
-    @api.constrains('template_id', 'subproject_template_id')
-    def _check_parent_scope(self):
+    @api.constrains('template_id')
+    def _check_template(self):
         for line in self:
-            if bool(line.template_id) == bool(line.subproject_template_id):
+            if not line.template_id:
                 raise ValidationError(_(
-                    'Cada tarea de plantilla debe pertenecer al proyecto principal o a un subproyecto, pero no a ambos.'
+                    'Cada tarea debe pertenecer a una plantilla.'
                 ))
 
 

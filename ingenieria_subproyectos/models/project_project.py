@@ -32,6 +32,11 @@ class ProjectProject(models.Model):
         string='Plantilla jerarquia',
         help='Plantilla para generar subproyectos, tareas y subtareas de forma automatica.',
     )
+    hierarchy_template_applied = fields.Boolean(
+        string='Plantilla aplicada',
+        copy=False,
+        readonly=True,
+    )
 
     @api.depends('child_ids')
     def _compute_child_count(self):
@@ -61,12 +66,7 @@ class ProjectProject(models.Model):
                 ))
 
             # Parent and child must stay in the same company to avoid cross-company leakage.
-            if (
-                project.parent_id
-                and project.company_id
-                and project.parent_id.company_id
-                and project.company_id != project.parent_id.company_id
-            ):
+            if project.parent_id and project.company_id != project.parent_id.company_id:
                 raise ValidationError(_(
                     'El proyecto y su proyecto principal deben pertenecer a la misma compañía.'
                 ))
@@ -120,7 +120,7 @@ class ProjectProject(models.Model):
         return stage_ids
 
     def _create_tasks_from_templates(self, project, task_templates):
-        Task = self.env['project.task'].sudo()
+        Task = self.env['project.task']
         for task_line in task_templates:
             task_vals = {
                 'name': task_line.name,
@@ -152,6 +152,10 @@ class ProjectProject(models.Model):
             raise ValidationError(_(
                 'Selecciona una plantilla antes de aplicarla.'
             ))
+        if self.hierarchy_template_applied:
+            raise ValidationError(_(
+                'Esta plantilla ya se ha aplicado a este proyecto principal.'
+            ))
 
         template = self.hierarchy_template_id
         if template.company_id and self.company_id and template.company_id != self.company_id:
@@ -159,12 +163,14 @@ class ProjectProject(models.Model):
                 'La plantilla seleccionada debe pertenecer a la misma compania que el proyecto principal.'
             ))
 
-        Project = self.env['project.project'].sudo()
+            Project = self.env['project.project']
 
-        main_task_templates = template.main_task_template_ids.sorted(lambda x: (x.sequence, x.id))
+            all_task_templates = template.main_task_template_ids.sorted(lambda x: (x.sequence, x.id))
+            assigned_task_templates = template.subproject_template_ids.mapped('task_template_ids')
+            main_task_templates = all_task_templates - assigned_task_templates
         main_stage_ids = self._collect_stage_ids(template.main_task_stage_ids.ids, main_task_templates)
         if main_stage_ids:
-            self.write({'type_ids': [(6, 0, list(main_stage_ids))]})
+            self.write({'type_ids': [(4, stage_id) for stage_id in main_stage_ids]})
 
         self._create_tasks_from_templates(self, main_task_templates)
 
@@ -179,8 +185,10 @@ class ProjectProject(models.Model):
             sub_task_templates = sub_template.task_template_ids.sorted(lambda x: (x.sequence, x.id))
             sub_stage_ids = self._collect_stage_ids(sub_template.task_stage_ids.ids, sub_task_templates)
             if sub_stage_ids:
-                subproject.write({'type_ids': [(6, 0, list(sub_stage_ids))]})
+                subproject.write({'type_ids': [(4, stage_id) for stage_id in sub_stage_ids]})
             self._create_tasks_from_templates(subproject, sub_task_templates)
+
+        self.write({'hierarchy_template_applied': True})
 
         return {
             'type': 'ir.actions.client',
