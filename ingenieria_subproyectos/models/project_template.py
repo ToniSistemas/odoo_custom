@@ -112,6 +112,11 @@ class ProjectHierarchyTemplateSubtask(models.Model):
     name = fields.Char(string='Nombre subtarea', required=True)
     description = fields.Html(string='Descripcion')
     stage_id = fields.Many2one('project.task.type', string='Etapa')
+    task_type_id = fields.Many2one(
+        'project.task.type.category',
+        string='Tipo de tarea',
+        ondelete='restrict',
+    )
     task_template_id = fields.Many2one(
         'project.hierarchy.template.task',
         required=True,
