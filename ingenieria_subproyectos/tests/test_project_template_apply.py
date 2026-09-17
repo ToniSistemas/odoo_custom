@@ -11,10 +11,12 @@ class TestProjectTemplateApply(SavepointCase):
         cls.Task = cls.env['project.task'].sudo()
         cls.Stage = cls.env['project.task.type'].sudo()
         cls.Template = cls.env['project.hierarchy.template'].sudo()
+        cls.TaskType = cls.env['project.task.type.category'].sudo()
 
     def test_apply_template_creates_hierarchy(self):
         stage_todo = self.Stage.create({'name': 'To Do Template'})
         stage_exec = self.Stage.create({'name': 'Execution Template'})
+        task_type = self.TaskType.create({'name': 'Diseño técnico'})
 
         template = self.Template.create({
             'name': 'Plantilla Ingenieria Base',
@@ -23,6 +25,7 @@ class TestProjectTemplateApply(SavepointCase):
                 (0, 0, {
                     'name': 'Arranque principal',
                     'stage_id': stage_todo.id,
+                    'task_type_id': task_type.id,
                     'subtask_template_ids': [
                         (0, 0, {
                             'name': 'Checklist arranque',
@@ -74,6 +77,7 @@ class TestProjectTemplateApply(SavepointCase):
             ('parent_id', '=', False),
         ], limit=1)
         self.assertTrue(main_task)
+        self.assertEqual(main_task.task_type_id, task_type)
 
         child_task = self.Task.search([
             ('project_id', '=', child.id),

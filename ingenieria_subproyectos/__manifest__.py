@@ -18,6 +18,7 @@
     'depends': ['project'],
     'data': [
         'security/ir.model.access.csv',
+        'views/task_type_views.xml',
         'views/project_project_views.xml',
         'views/project_template_views.xml',
         'views/menu.xml',

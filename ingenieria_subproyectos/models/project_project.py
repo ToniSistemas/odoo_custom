@@ -129,6 +129,8 @@ class ProjectProject(models.Model):
             }
             if task_line.stage_id:
                 task_vals['stage_id'] = task_line.stage_id.id
+            if task_line.task_type_id:
+                task_vals['task_type_id'] = task_line.task_type_id.id
 
             task = Task.create(task_vals)
             for subtask_line in task_line.subtask_template_ids:
@@ -140,6 +142,8 @@ class ProjectProject(models.Model):
                 }
                 if subtask_line.stage_id:
                     subtask_vals['stage_id'] = subtask_line.stage_id.id
+                if subtask_line.task_type_id:
+                    subtask_vals['task_type_id'] = subtask_line.task_type_id.id
                 Task.create(subtask_vals)
 
     def action_apply_hierarchy_template(self):

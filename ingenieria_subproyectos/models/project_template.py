@@ -83,6 +83,11 @@ class ProjectHierarchyTemplateTask(models.Model):
         ondelete='cascade',
     )
     stage_id = fields.Many2one('project.task.type', string='Etapa')
+    task_type_id = fields.Many2one(
+        'project.task.type.category',
+        string='Tipo de tarea',
+        ondelete='restrict',
+    )
     subtask_template_ids = fields.One2many(
         'project.hierarchy.template.subtask',
         'task_template_id',

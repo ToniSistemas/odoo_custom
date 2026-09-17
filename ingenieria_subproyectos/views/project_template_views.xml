@@ -36,6 +36,7 @@
                                     <field name="sequence"/>
                                     <field name="name"/>
                                     <field name="stage_id"/>
+                                    <field name="task_type_id"/>
                                 </list>
                                 <form>
                                     <group>
@@ -43,6 +44,7 @@
                                             <field name="sequence"/>
                                             <field name="name"/>
                                             <field name="stage_id"/>
+                                            <field name="task_type_id"/>
                                         </group>
                                     </group>
                                     <group>
@@ -53,6 +55,7 @@
                                             <field name="sequence"/>
                                             <field name="name"/>
                                             <field name="stage_id"/>
+                                            <field name="task_type_id"/>
                                         </list>
                                     </field>
                                 </form>
