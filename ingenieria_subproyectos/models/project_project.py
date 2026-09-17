@@ -163,11 +163,11 @@ class ProjectProject(models.Model):
                 'La plantilla seleccionada debe pertenecer a la misma compania que el proyecto principal.'
             ))
 
-            Project = self.env['project.project']
+        Project = self.env['project.project']
 
-            all_task_templates = template.main_task_template_ids.sorted(lambda x: (x.sequence, x.id))
-            assigned_task_templates = template.subproject_template_ids.mapped('task_template_ids')
-            main_task_templates = all_task_templates - assigned_task_templates
+        all_task_templates = template.main_task_template_ids.sorted(lambda x: (x.sequence, x.id))
+        assigned_task_templates = template.subproject_template_ids.mapped('task_template_ids')
+        main_task_templates = all_task_templates - assigned_task_templates
         main_stage_ids = self._collect_stage_ids(template.main_task_stage_ids.ids, main_task_templates)
         if main_stage_ids:
             self.write({'type_ids': [(4, stage_id) for stage_id in main_stage_ids]})
