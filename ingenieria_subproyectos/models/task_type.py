@@ -1,4 +1,4 @@
-from odoo import fields, models
+from odoo import _, fields, models
 
 
 class ProjectTaskType(models.Model):
@@ -20,3 +20,9 @@ class ProjectTask(models.Model):
         ondelete='restrict',
         index=True,
     )
+
+    def _get_view(self, view_id=None, view_type='form', **options):
+        arch, view = super()._get_view(view_id, view_type, **options)
+        for node in arch.xpath("//field[@name='type_id']"):
+            node.set('string', _('Tipo de proyecto'))
+        return arch, view
