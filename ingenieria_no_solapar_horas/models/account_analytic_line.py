@@ -35,8 +35,18 @@ class AccountAnalyticLine(models.Model):
     @api.model
     def get_day_timeline(self, date_value, employee_id, exclude_id=False):
         target_date = fields.Date.to_date(date_value)
+        if isinstance(employee_id, dict):
+            employee_id = employee_id.get('id') or employee_id.get('resId')
+        elif isinstance(employee_id, (list, tuple)):
+            employee_id = employee_id[0] if employee_id else False
+        try:
+            employee_id = int(employee_id)
+        except (TypeError, ValueError):
+            employee_id = False
+        if not target_date or not employee_id:
+            return {'working': [], 'occupied': []}
         employee = self.env['hr.employee'].browse(employee_id).exists()
-        if not target_date or not employee:
+        if not employee:
             return {'working': [], 'occupied': []}
 
         resource = employee.resource_id

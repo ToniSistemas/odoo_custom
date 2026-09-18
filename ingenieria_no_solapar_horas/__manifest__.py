@@ -1,6 +1,6 @@
 {
     'name': 'Ingeniería - No solapar horas',
-    'version': '19.0.1.1.0',
+    'version': '19.0.1.1.1',
     'summary': 'Imputaciones por intervalos de 15 minutos sin solapes',
     'category': 'Services/Timesheets',
     'author': 'Equipo Ingenieria',

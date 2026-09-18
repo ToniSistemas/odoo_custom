@@ -76,6 +76,25 @@ class TestTimesheetIntervals(SavepointCase):
         )
         self.assertFalse(timeline_without_current['occupied'])
 
+    def test_day_timeline_accepts_many2one_formats(self):
+        for employee_value in (
+            self.employee.id,
+            [self.employee.id, self.employee.display_name],
+            {'id': self.employee.id},
+            {'resId': self.employee.id},
+        ):
+            timeline = self.env['account.analytic.line'].get_day_timeline(
+                '2026-09-18',
+                employee_value,
+            )
+            self.assertTrue(timeline['working'])
+
+        invalid_timeline = self.env['account.analytic.line'].get_day_timeline(
+            '2026-09-18',
+            '[object Object]',
+        )
+        self.assertEqual(invalid_timeline, {'working': [], 'occupied': []})
+
     def test_write_rejects_overlap(self):
         self._create_timesheet(self.task_a, 15 * 60, 16 * 60)
         timesheet = self._create_timesheet(self.task_b, 16 * 60, 17 * 60)

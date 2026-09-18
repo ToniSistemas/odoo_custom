@@ -3,7 +3,6 @@
 import { Component, onWillUnmount, useEffect, useRef, useState } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
-import { getId } from "@web/model/relational_model/utils";
 import { standardFieldProps } from "@web/views/fields/standard_field_props";
 
 export class TimesheetDayTimeline extends Component {
@@ -41,7 +40,17 @@ export class TimesheetDayTimeline extends Component {
     }
 
     get employeeId() {
-        return getId(this.props.record.data.employee_id) || false;
+        const value = this.props.record.data.employee_id;
+        if (!value) {
+            return false;
+        }
+        if (typeof value === "number") {
+            return value;
+        }
+        if (Array.isArray(value)) {
+            return value[0] || false;
+        }
+        return value.id || value.resId || false;
     }
 
     get slots() {
