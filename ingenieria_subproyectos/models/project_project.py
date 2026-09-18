@@ -43,6 +43,22 @@ class ProjectProject(models.Model):
         for project in self:
             project.child_count = len(project.child_ids)
 
+    def copy(self, default=None):
+        self.ensure_one()
+        default = dict(default or {})
+        child_projects = self.child_ids
+        if self.is_parent_project:
+            default.setdefault(
+                'hierarchy_template_applied',
+                self.hierarchy_template_applied,
+            )
+
+        copied_project = super().copy(default)
+        if self.is_parent_project:
+            for child_project in child_projects:
+                child_project.copy({'parent_id': copied_project.id})
+        return copied_project
+
     @api.constrains('parent_id')
     def _check_no_cycles(self):
         if not self._check_recursion('parent_id'):

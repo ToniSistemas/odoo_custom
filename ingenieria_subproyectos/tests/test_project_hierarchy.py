@@ -60,3 +60,35 @@ class TestProjectHierarchy(SavepointCase):
                 parent_id=parent.id,
                 company_id=self.company_b.id,
             )
+
+    def test_copy_parent_project_copies_hierarchy_and_tasks(self):
+        parent = self._create_project(
+            name='Parent to copy',
+            is_parent_project=True,
+            hierarchy_template_applied=True,
+            company_id=self.company_a.id,
+        )
+        child = self._create_project(
+            name='Child to copy',
+            parent_id=parent.id,
+            company_id=self.company_a.id,
+        )
+        self.env['project.task'].sudo().create({
+            'name': 'Parent task',
+            'project_id': parent.id,
+        })
+        self.env['project.task'].sudo().create({
+            'name': 'Child task',
+            'project_id': child.id,
+        })
+
+        copied_parent = parent.copy()
+
+        self.assertTrue(copied_parent.is_parent_project)
+        self.assertTrue(copied_parent.hierarchy_template_applied)
+        self.assertEqual(len(copied_parent.child_ids), 1)
+        copied_child = copied_parent.child_ids
+        self.assertEqual(copied_child.parent_id, copied_parent)
+        self.assertNotEqual(copied_child, child)
+        self.assertEqual(copied_parent.task_count, 1)
+        self.assertEqual(copied_child.task_count, 1)
