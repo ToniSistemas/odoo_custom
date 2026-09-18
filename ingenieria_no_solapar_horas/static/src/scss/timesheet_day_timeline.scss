@@ -1,0 +1,81 @@
+.o_timesheet_timeline_widget {
+    min-width: 360px;
+    padding: 4px 0;
+}
+
+.o_timesheet_timeline_legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 4px;
+    font-size: 11px;
+    color: #495057;
+
+    i {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        margin-right: 3px;
+        border: 1px solid #adb5bd;
+    }
+}
+
+.o_timesheet_legend_free { background: #ffffff; }
+.o_timesheet_legend_selected { background: #62b77a; }
+.o_timesheet_legend_occupied { background: #d96b6b; }
+.o_timesheet_legend_unavailable { background: #d8dadd; }
+
+.o_timesheet_timeline_scroll {
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    touch-action: pan-x;
+    user-select: none;
+}
+
+.o_timesheet_timeline_hours,
+.o_timesheet_timeline_slots {
+    display: grid;
+    grid-template-columns: repeat(96, 18px);
+    width: 1728px;
+}
+
+.o_timesheet_timeline_hour {
+    height: 16px;
+    font-size: 9px;
+    color: #6c757d;
+    overflow: visible;
+    white-space: nowrap;
+}
+
+.o_timesheet_timeline_slot {
+    width: 18px;
+    height: 24px;
+    padding: 0;
+    border: 1px solid #c9ccd0;
+    border-right: 0;
+    border-radius: 0;
+
+    &:nth-child(4n + 1) {
+        border-left-color: #6c757d;
+    }
+
+    &:last-child {
+        border-right: 1px solid #c9ccd0;
+    }
+}
+
+.o_timesheet_timeline_slot--available {
+    background: #ffffff;
+    cursor: crosshair;
+
+    &:hover { background: #d9f0df; }
+}
+
+.o_timesheet_timeline_slot--selected { background: #62b77a; }
+.o_timesheet_timeline_slot--occupied { background: #d96b6b; cursor: not-allowed; }
+.o_timesheet_timeline_slot--unavailable { background: #d8dadd; cursor: not-allowed; }
+
+@media (max-width: 767px) {
+    .o_timesheet_timeline_widget { min-width: 260px; }
+}

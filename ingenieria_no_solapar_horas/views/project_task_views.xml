@@ -8,12 +8,19 @@
             <xpath expr="//field[@name='timesheet_ids']/list/field[@name='employee_id']" position="after">
                 <field name="start_slot" required="1" readonly="readonly_timesheet"/>
                 <field name="end_slot" required="1" readonly="readonly_timesheet"/>
-                <field name="occupied_intervals" readonly="1" optional="show"/>
+                  <field name="occupied_intervals"
+                      string="Horario del día"
+                      widget="timesheet_day_timeline"
+                      readonly="readonly_timesheet"
+                      optional="show"/>
             </xpath>
             <xpath expr="//field[@name='timesheet_ids']/form//field[@name='employee_id']" position="after">
                 <field name="start_slot" required="1" readonly="readonly_timesheet"/>
                 <field name="end_slot" required="1" readonly="readonly_timesheet"/>
-                <field name="occupied_intervals" readonly="1"/>
+                  <field name="occupied_intervals"
+                      string="Horario del día"
+                      widget="timesheet_day_timeline"
+                      readonly="readonly_timesheet"/>
             </xpath>
             <xpath expr="//field[@name='timesheet_ids']/list/field[@name='unit_amount']" position="attributes">
                 <attribute name="readonly">True</attribute>

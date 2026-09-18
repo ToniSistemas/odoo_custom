@@ -8,7 +8,10 @@
             <xpath expr="//field[@name='date']" position="after">
                 <field name="start_slot" required="project_id" readonly="readonly_timesheet"/>
                 <field name="end_slot" required="project_id" readonly="readonly_timesheet"/>
-                <field name="occupied_intervals" readonly="1"/>
+                  <field name="occupied_intervals"
+                      string="Horario del día"
+                      widget="timesheet_day_timeline"
+                      readonly="readonly_timesheet"/>
             </xpath>
             <xpath expr="//field[@name='unit_amount']" position="attributes">
                 <attribute name="readonly">True</attribute>
@@ -24,7 +27,11 @@
             <xpath expr="//field[@name='date']" position="after">
                 <field name="start_slot" optional="show" readonly="readonly_timesheet"/>
                 <field name="end_slot" optional="show" readonly="readonly_timesheet"/>
-                <field name="occupied_intervals" optional="show" readonly="1"/>
+                  <field name="occupied_intervals"
+                      string="Horario del día"
+                      widget="timesheet_day_timeline"
+                      optional="show"
+                      readonly="readonly_timesheet"/>
             </xpath>
             <xpath expr="//field[@name='unit_amount']" position="attributes">
                 <attribute name="readonly">True</attribute>

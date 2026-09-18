@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="ingenieria_no_solapar_horas.TimesheetDayTimeline">
+        <div class="o_timesheet_timeline_widget">
+            <div class="o_timesheet_timeline_legend">
+                <span><i class="o_timesheet_legend_free"/> Libre</span>
+                <span><i class="o_timesheet_legend_selected"/> Selección</span>
+                <span><i class="o_timesheet_legend_occupied"/> Ocupado</span>
+                <span><i class="o_timesheet_legend_unavailable"/> No laborable</span>
+            </div>
+            <div t-if="!dateValue or !employeeId" class="text-muted small">
+                Selecciona fecha y empleado para ver el horario.
+            </div>
+            <div t-else="" class="o_timesheet_timeline_scroll"
+                 t-ref="timeline"
+                 t-on-pointermove="onPointerMove">
+                <div class="o_timesheet_timeline_hours">
+                    <t t-foreach="slots" t-as="slot" t-key="slot.index">
+                        <div class="o_timesheet_timeline_hour">
+                            <span t-if="slot.hourLabel" t-esc="slot.hourLabel"/>
+                        </div>
+                    </t>
+                </div>
+                <div class="o_timesheet_timeline_slots">
+                    <t t-foreach="slots" t-as="slot" t-key="slot.index">
+                        <button type="button"
+                                t-att-class="'o_timesheet_timeline_slot ' + slotClass(slot)"
+                                t-att-title="slotTitle(slot)"
+                                t-on-pointerdown="(event) => this.onPointerDown(event, slot)"
+                                tabindex="-1"/>
+                    </t>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

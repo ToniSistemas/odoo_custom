@@ -32,6 +32,64 @@ class AccountAnalyticLine(models.Model):
         compute='_compute_occupied_intervals',
     )
 
+    @api.model
+    def get_day_timeline(self, date_value, employee_id, exclude_id=False):
+        target_date = fields.Date.to_date(date_value)
+        employee = self.env['hr.employee'].browse(employee_id).exists()
+        if not target_date or not employee:
+            return {'working': [], 'occupied': []}
+
+        resource = employee.resource_id
+        calendar = resource.calendar_id or employee.company_id.resource_calendar_id
+        working = []
+        if calendar:
+            timezone = pytz.timezone(calendar.tz or self.env.user.tz or 'UTC')
+            day_start = timezone.localize(datetime.combine(target_date, time.min))
+            day_end = timezone.localize(datetime.combine(
+                target_date + timedelta(days=1),
+                time.min,
+            ))
+            intervals = calendar._work_intervals_batch(
+                day_start,
+                day_end,
+                resources=resource,
+                tz=timezone,
+            )[resource.id]
+            working = [
+                {
+                    'start': start.astimezone(timezone).hour * 60
+                    + start.astimezone(timezone).minute,
+                    'end': (
+                        24 * 60
+                        if stop.astimezone(timezone).date() > target_date
+                        else stop.astimezone(timezone).hour * 60
+                        + stop.astimezone(timezone).minute
+                    ),
+                }
+                for start, stop, _meta in intervals
+            ]
+
+        domain = [
+            ('employee_id', '=', employee.id),
+            ('date', '=', target_date),
+            ('start_slot', '!=', False),
+            ('end_slot', '!=', False),
+        ]
+        if exclude_id:
+            domain.append(('id', '!=', exclude_id))
+        occupied_lines = self.search(domain, order='start_slot')
+        return {
+            'working': working,
+            'occupied': [
+                {
+                    'start': int(line.start_slot),
+                    'end': int(line.end_slot),
+                    'label': line.task_id.display_name or line.name,
+                }
+                for line in occupied_lines
+            ],
+        }
+
     @api.depends('date', 'employee_id', 'start_slot', 'end_slot')
     def _compute_occupied_intervals(self):
         for line in self:
@@ -145,10 +203,13 @@ class AccountAnalyticLine(models.Model):
             local_start,
             local_end,
             resources=resource,
+            tz=timezone,
         )[resource.id]
-        worked_seconds = sum((stop - start).total_seconds() for start, stop, _meta in intervals)
-        requested_seconds = (local_end - local_start).total_seconds()
-        if worked_seconds < requested_seconds:
+        is_working_interval = any(
+            start <= local_start and stop >= local_end
+            for start, stop, _meta in intervals
+        )
+        if not is_working_interval:
             raise ValidationError(_(
                 'No puedes imputar este intervalo porque está fuera del horario laboral, es festivo o corresponde a una ausencia.'
             ))
