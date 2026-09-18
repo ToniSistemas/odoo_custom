@@ -15,7 +15,7 @@
     """,
     'author': 'Equipo Ingenieria',
     'category': 'Project',
-    'depends': ['project'],
+    'depends': ['project', 'project_task_description_template'],
     'data': [
         'security/ir.model.access.csv',
         'views/task_type_views.xml',

@@ -122,28 +122,42 @@ class ProjectProject(models.Model):
     def _create_tasks_from_templates(self, project, task_templates):
         Task = self.env['project.task']
         for task_line in task_templates:
+            description_template = task_line.task_type_id.description_template_id
             task_vals = {
                 'name': task_line.name,
                 'project_id': project.id,
-                'description': task_line.description or False,
+                'description': task_line.description or description_template.description or False,
             }
             if task_line.stage_id:
                 task_vals['stage_id'] = task_line.stage_id.id
             if task_line.task_type_id:
                 task_vals['task_type_id'] = task_line.task_type_id.id
+            if description_template:
+                task_vals['description_template_id'] = description_template.id
 
             task = Task.create(task_vals)
             for subtask_line in task_line.subtask_template_ids:
+                subtask_description_template = (
+                    subtask_line.task_type_id.description_template_id
+                )
                 subtask_vals = {
                     'name': subtask_line.name,
                     'project_id': project.id,
                     'parent_id': task.id,
-                    'description': subtask_line.description or False,
+                    'description': (
+                        subtask_line.description
+                        or subtask_description_template.description
+                        or False
+                    ),
                 }
                 if subtask_line.stage_id:
                     subtask_vals['stage_id'] = subtask_line.stage_id.id
                 if subtask_line.task_type_id:
                     subtask_vals['task_type_id'] = subtask_line.task_type_id.id
+                if subtask_description_template:
+                    subtask_vals['description_template_id'] = (
+                        subtask_description_template.id
+                    )
                 Task.create(subtask_vals)
 
     def action_apply_hierarchy_template(self):

@@ -9,6 +9,11 @@ class ProjectTaskType(models.Model):
     name = fields.Char(string='Nombre', required=True)
     active = fields.Boolean(default=True)
     sequence = fields.Integer(default=10)
+    description_template_id = fields.Many2one(
+        'project.task.description.template',
+        string='Plantilla de descripción',
+        ondelete='set null',
+    )
 
 
 class ProjectTask(models.Model):
