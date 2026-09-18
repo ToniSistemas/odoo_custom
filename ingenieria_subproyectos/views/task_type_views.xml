@@ -46,9 +46,6 @@
         <field name="model">project.task</field>
         <field name="inherit_id" ref="project.view_task_form2"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='type_id']" position="attributes">
-                <attribute name="invisible">True</attribute>
-            </xpath>
             <xpath expr="//field[@name='project_id']" position="after">
                 <field name="task_type_id" string="Tipo de tarea"/>
             </xpath>
