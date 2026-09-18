@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_timesheet_line_form_slots" model="ir.ui.view">
+        <field name="name">account.analytic.line.form.timesheet.slots</field>
+        <field name="model">account.analytic.line</field>
+        <field name="inherit_id" ref="hr_timesheet.hr_timesheet_line_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='date']" position="after">
+                <field name="start_slot" required="project_id" readonly="readonly_timesheet"/>
+                <field name="end_slot" required="project_id" readonly="readonly_timesheet"/>
+                <field name="occupied_intervals" readonly="1"/>
+            </xpath>
+            <xpath expr="//field[@name='unit_amount']" position="attributes">
+                <attribute name="readonly">True</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="hr_timesheet_line_list_slots" model="ir.ui.view">
+        <field name="name">account.analytic.line.list.timesheet.slots</field>
+        <field name="model">account.analytic.line</field>
+        <field name="inherit_id" ref="hr_timesheet.hr_timesheet_line_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='date']" position="after">
+                <field name="start_slot" optional="show" readonly="readonly_timesheet"/>
+                <field name="end_slot" optional="show" readonly="readonly_timesheet"/>
+                <field name="occupied_intervals" optional="show" readonly="1"/>
+            </xpath>
+            <xpath expr="//field[@name='unit_amount']" position="attributes">
+                <attribute name="readonly">True</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>
