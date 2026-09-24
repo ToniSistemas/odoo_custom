@@ -34,7 +34,7 @@
                     <group>
                         <group string="Producto">
                             <field name="product_id" required="1" options="{'no_create': True}"/>
-                            <field name="lot_id" domain="[('product_id', '=', product_id)]" options="{'no_create': True}"/>
+                            <field name="lot_id" required="1" domain="[('product_id', '=', product_id)]" options="{'no_create': True}"/>
                             <field name="producto_codigo" readonly="1"/>
                             <field name="epigrafe_fiscal" readonly="1"/>
                             <field name="cantidad_litros"/>

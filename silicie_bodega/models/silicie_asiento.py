@@ -73,7 +73,7 @@ class SilicieAsiento(models.Model):
     # ── Producto ──────────────────────────────────────────────────────────────
     product_id = fields.Many2one(
         'product.product', string='Producto',
-        help='El lote aporta los datos efectivos; el producto se usa como valor predeterminado.',
+        help='El lote aporta los datos fiscales efectivos de la operación.',
     )
     producto_codigo = fields.Char(
         string='Código NC', readonly=True,
@@ -127,19 +127,13 @@ class SilicieAsiento(models.Model):
             if lot and lot.product_id:
                 product = lot.product_id
                 record.product_id = product
-            if not product:
+            if not product or not lot:
                 continue
-            code = lot.silicie_codigo_nc_id if lot else product.silicie_codigo_nc_id
+            code = lot.silicie_codigo_nc_id
             record.producto_codigo = code.codigo if code else False
             record.epigrafe_fiscal = code.epigrafe_fiscal if code else False
-            record.grado_alcoholico = (
-                lot.silicie_grado_alcoholico if lot and lot.silicie_grado_alcoholico
-                else product.silicie_grado_alcoholico
-            )
-            record.capacidad_envase = (
-                lot.silicie_capacidad_envase if lot and lot.silicie_capacidad_envase
-                else product.silicie_capacidad_envase
-            )
+            record.grado_alcoholico = lot.silicie_grado_alcoholico
+            record.capacidad_envase = lot.silicie_capacidad_envase
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -149,21 +143,15 @@ class SilicieAsiento(models.Model):
             if lot and lot.product_id:
                 product = lot.product_id
                 vals.setdefault('product_id', product.id)
-            code = lot.silicie_codigo_nc_id if lot else product.silicie_codigo_nc_id
+            code = lot.silicie_codigo_nc_id if lot else False
             if code and not vals.get('producto_codigo'):
                 vals['producto_codigo'] = code.codigo
             if code and not vals.get('epigrafe_fiscal'):
                 vals['epigrafe_fiscal'] = code.epigrafe_fiscal
             if not vals.get('grado_alcoholico'):
-                vals['grado_alcoholico'] = (
-                    lot.silicie_grado_alcoholico if lot and lot.silicie_grado_alcoholico
-                    else product.silicie_grado_alcoholico
-                )
+                vals['grado_alcoholico'] = lot.silicie_grado_alcoholico if lot else 0.0
             if not vals.get('capacidad_envase'):
-                vals['capacidad_envase'] = (
-                    lot.silicie_capacidad_envase if lot and lot.silicie_capacidad_envase
-                    else product.silicie_capacidad_envase
-                )
+                vals['capacidad_envase'] = lot.silicie_capacidad_envase if lot else 0.0
         return super().create(vals_list)
 
     # ── Cómputos ──────────────────────────────────────────────────────────────

@@ -40,23 +40,17 @@ class StockPicking(models.Model):
         for move_line in self.move_line_ids.filtered(lambda ml: ml.qty_done > 0):
             lot = move_line.lot_id
             product = move_line.product_id
-            code = lot.silicie_codigo_nc_id if lot and lot.silicie_codigo_nc_id else product.silicie_codigo_nc_id
-            if not code:
+            if not lot or not lot.silicie_codigo_nc_id:
                 from odoo.exceptions import UserError
                 raise UserError(
-                    'El producto "%s" no tiene configurado un Código NC de SILICIE.'
-                    % product.display_name
+                    'El lote de "%s" debe tener configurados el Código NC, '
+                    'la graduación y la capacidad de SILICIE.' % product.display_name
                 )
+            code = lot.silicie_codigo_nc_id
 
             cantidad = move_line.qty_done
-            grado = (
-                lot.silicie_grado_alcoholico if lot and lot.silicie_grado_alcoholico
-                else product.silicie_grado_alcoholico
-            )
-            capacidad = (
-                lot.silicie_capacidad_envase if lot and lot.silicie_capacidad_envase
-                else product.silicie_capacidad_envase
-            )
+            grado = lot.silicie_grado_alcoholico
+            capacidad = lot.silicie_capacidad_envase
             if capacidad:
                 cantidad *= capacidad
 
