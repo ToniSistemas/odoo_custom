@@ -13,7 +13,7 @@ class SilicieImportNcWizard(models.TransientModel):
     _description = 'Importar códigos NC desde Internet'
 
     url = fields.Char(
-        string='URL del fichero CSV o JSON', required=True,
+        string='URL del fichero CSV o JSON',
         help='El fichero debe incluir codigo y descripcion. También puede incluir epigrafe_fiscal.',
     )
     sobrescribir_descripcion = fields.Boolean(
@@ -34,7 +34,7 @@ class SilicieImportNcWizard(models.TransientModel):
 
     def action_importar(self):
         self.ensure_one()
-        if not self.url.startswith(('https://', 'http://')):
+        if not self.url or not self.url.startswith(('https://', 'http://')):
             raise UserError(_('La URL debe comenzar por http:// o https://.'))
 
         try:

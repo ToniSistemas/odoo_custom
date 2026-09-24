@@ -6,7 +6,7 @@
         <field name="arch" type="xml">
             <form string="Importar Códigos NC desde Internet">
                 <group>
-                    <field name="url" placeholder="https://ejemplo.org/codigos-nc.csv"/>
+                    <field name="url" required="1" placeholder="https://ejemplo.org/codigos-nc.csv"/>
                     <field name="sobrescribir_descripcion"/>
                 </group>
                 <group string="Resultado" invisible="not num_creados and not num_actualizados">
