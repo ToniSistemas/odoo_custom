@@ -35,4 +35,13 @@
         <field name="res_model">silicie.codigo.nc</field>
         <field name="view_mode">list,form</field>
     </record>
+
+    <record id="action_import_silicie_codigo_nc" model="ir.actions.server">
+        <field name="name">Importar desde Internet</field>
+        <field name="model_id" ref="model_silicie_codigo_nc"/>
+        <field name="binding_model_id" ref="model_silicie_codigo_nc"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">action = env['silicie.import.nc.wizard'].create({}).action_open()</field>
+    </record>
 </odoo>
