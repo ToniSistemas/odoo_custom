@@ -71,21 +71,26 @@ class SilicieAsiento(models.Model):
     tipo_movimiento = fields.Selection(TIPOS_MOVIMIENTO, string='Tipo de movimiento', required=True)
 
     # ── Producto ──────────────────────────────────────────────────────────────
+    product_id = fields.Many2one(
+        'product.product', string='Producto', required=True,
+        domain=[('silicie_codigo_nc_id', '!=', False)],
+        help='El producto aporta automáticamente sus datos fiscales SILICIE.',
+    )
     producto_codigo = fields.Char(
-        string='Código producto SILICIE',
-        required=True,
-        help='Código según catálogo SILICIE de la AEAT.\n'
-             'Ejemplos para vino (verificar en sede.agenciatributaria.gob.es):\n'
-             ' - Vino tranquilo ≤15% vol\n'
-             ' - Vino espumoso\n'
-             ' - Mosto de uva',
+        related='product_id.silicie_codigo_nc_id.codigo',
+        string='Código NC', store=True, readonly=True,
+    )
+    epigrafe_fiscal = fields.Char(
+        related='product_id.silicie_epigrafe_fiscal',
+        string='Epígrafe fiscal AEAT', store=True, readonly=True,
     )
     cantidad_litros = fields.Float(
         string='Cantidad (litros)', digits=(14, 2), required=True,
     )
     grado_alcoholico = fields.Float(
+        related='product_id.silicie_grado_alcoholico',
         string='Grado alcohólico (% vol)', digits=(5, 2),
-        help='Grado alcohólico volumétrico adquirido.',
+        store=True, readonly=True,
     )
     litros_alcohol_puro = fields.Float(
         string='Litros de alcohol puro (LAP)',
@@ -107,7 +112,9 @@ class SilicieAsiento(models.Model):
     # ── Envases ───────────────────────────────────────────────────────────────
     num_envases = fields.Integer(string='Nº envases')
     capacidad_envase = fields.Float(
+        related='product_id.silicie_capacidad_envase',
         string='Capacidad envase (litros)', digits=(5, 3),
+        store=True, readonly=True,
     )
 
     # ── Observaciones ─────────────────────────────────────────────────────────

@@ -2,3 +2,5 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_silicie_asiento_user,silicie.asiento user,model_silicie_asiento,base.group_user,1,1,1,0
 access_silicie_asiento_manager,silicie.asiento manager,model_silicie_asiento,stock.group_stock_manager,1,1,1,1
 access_silicie_export_wizard_user,silicie.export.wizard user,model_silicie_export_wizard,base.group_user,1,1,1,1
+access_silicie_codigo_nc_user,silicie.codigo.nc user,model_silicie_codigo_nc,base.group_user,1,0,0,0
+access_silicie_codigo_nc_manager,silicie.codigo.nc manager,model_silicie_codigo_nc,stock.group_stock_manager,1,1,1,1

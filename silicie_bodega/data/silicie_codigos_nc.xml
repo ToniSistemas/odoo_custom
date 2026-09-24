@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="silicie_codigo_nc_22042138" model="silicie.codigo.nc">
+            <field name="codigo">22042138</field>
+            <field name="epigrafe_fiscal">V0</field>
+            <field name="descripcion">Vino tranquilo en envase de hasta 2 litros</field>
+        </record>
+    </data>
+</odoo>

@@ -33,9 +33,11 @@
                     </group>
                     <group>
                         <group string="Producto">
-                            <field name="producto_codigo"/>
+                            <field name="product_id" options="{'no_create': True}"/>
+                            <field name="producto_codigo" readonly="1"/>
+                            <field name="epigrafe_fiscal" readonly="1"/>
                             <field name="cantidad_litros"/>
-                            <field name="grado_alcoholico"/>
+                            <field name="grado_alcoholico" readonly="1"/>
                             <field name="litros_alcohol_puro" readonly="1"/>
                         </group>
                         <group string="Justificante">
@@ -51,7 +53,7 @@
                         </group>
                         <group string="Envases">
                             <field name="num_envases"/>
-                            <field name="capacidad_envase"/>
+                            <field name="capacidad_envase" readonly="1"/>
                         </group>
                     </group>
                     <group string="Vínculos en Odoo">
@@ -77,6 +79,7 @@
                 <field name="name"/>
                 <field name="fecha"/>
                 <field name="tipo_movimiento"/>
+                <field name="product_id"/>
                 <field name="producto_codigo"/>
                 <field name="cantidad_litros" sum="Total litros"/>
                 <field name="litros_alcohol_puro" sum="Total LAP"/>

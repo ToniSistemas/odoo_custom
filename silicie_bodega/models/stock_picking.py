@@ -39,15 +39,17 @@ class StockPicking(models.Model):
 
         for move_line in self.move_line_ids.filtered(lambda ml: ml.qty_done > 0):
             lot = move_line.lot_id
-
-            # Intentar obtener el grado alcohólico desde los parámetros del lote
-            grado = 0.0
-            if lot:
-                param_alcohol = lot.parametro_quimico_ids.filtered(
-                    lambda p: p.tipo_id and 'alcohol' in (p.tipo_id.name or '').lower()
+            product = move_line.product_id
+            if not product.silicie_codigo_nc_id:
+                from odoo.exceptions import UserError
+                raise UserError(
+                    'El producto "%s" no tiene configurado un Código NC de SILICIE.'
+                    % product.display_name
                 )
-                if param_alcohol:
-                    grado = param_alcohol[0].valor
+
+            cantidad = move_line.qty_done
+            if product.silicie_capacidad_envase:
+                cantidad *= product.silicie_capacidad_envase
 
             self.env['silicie.asiento'].create({
                 'company_id': company.id,
@@ -55,9 +57,9 @@ class StockPicking(models.Model):
                 'cae': company.silicie_cae,
                 'fecha': self.date_done.date() if self.date_done else fields.Date.today(),
                 'tipo_movimiento': tipo,
-                'producto_codigo': '',   # El usuario debe rellenar el código SILICIE del producto
-                'cantidad_litros': move_line.qty_done,
-                'grado_alcoholico': grado,
+                'product_id': product.id,
+                'cantidad_litros': cantidad,
+                'num_envases': int(move_line.qty_done) if product.silicie_capacidad_envase else 0,
                 'justificante_tipo': 'alb',
                 'justificante_numero': self.name,
                 'origen_destino_nombre': self.partner_id.name if self.partner_id else '',

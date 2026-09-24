@@ -17,4 +17,16 @@
               parent="menu_silicie_root"
               action="action_silicie_export_wizard"
               sequence="20"/>
+
+    <menuitem id="menu_silicie_configuracion"
+              name="Configuración"
+              parent="menu_silicie_root"
+              sequence="90"/>
+
+    <menuitem id="menu_silicie_codigos_nc"
+              name="Códigos NC"
+              parent="menu_silicie_configuracion"
+              action="action_silicie_codigo_nc"
+              groups="stock.group_stock_manager"
+              sequence="10"/>
 </odoo>

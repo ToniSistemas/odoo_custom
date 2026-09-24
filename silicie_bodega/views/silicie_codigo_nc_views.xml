@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_silicie_codigo_nc_list" model="ir.ui.view">
+        <field name="name">silicie.codigo.nc.list</field>
+        <field name="model">silicie.codigo.nc</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="codigo"/>
+                <field name="epigrafe_fiscal"/>
+                <field name="descripcion"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_silicie_codigo_nc_form" model="ir.ui.view">
+        <field name="name">silicie.codigo.nc.form</field>
+        <field name="model">silicie.codigo.nc</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="codigo"/>
+                        <field name="epigrafe_fiscal"/>
+                        <field name="active"/>
+                    </group>
+                    <field name="descripcion"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_silicie_codigo_nc" model="ir.actions.act_window">
+        <field name="name">Códigos NC</field>
+        <field name="res_model">silicie.codigo.nc</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>
