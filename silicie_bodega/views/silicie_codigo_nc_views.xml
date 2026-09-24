@@ -42,6 +42,6 @@
         <field name="binding_model_id" ref="model_silicie_codigo_nc"/>
         <field name="binding_view_types">list</field>
         <field name="state">code</field>
-        <field name="code">action = env['silicie.import.nc.wizard'].create({}).action_open()</field>
+        <field name="code">action = env['silicie.import.nc.wizard'].create({'url': ''}).action_open()</field>
     </record>
 </odoo>
