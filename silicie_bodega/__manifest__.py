@@ -17,6 +17,7 @@
         'data/silicie_codigos_nc.xml',
         'views/res_company_views.xml',
         'views/product_template_views.xml',
+        'views/stock_lot_views.xml',
         'views/silicie_codigo_nc_views.xml',
         'views/silicie_import_nc_wizard.xml',
         'views/silicie_asiento_views.xml',

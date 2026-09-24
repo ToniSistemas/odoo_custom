@@ -40,7 +40,8 @@ class StockPicking(models.Model):
         for move_line in self.move_line_ids.filtered(lambda ml: ml.qty_done > 0):
             lot = move_line.lot_id
             product = move_line.product_id
-            if not product.silicie_codigo_nc_id:
+            code = lot.silicie_codigo_nc_id if lot and lot.silicie_codigo_nc_id else product.silicie_codigo_nc_id
+            if not code:
                 from odoo.exceptions import UserError
                 raise UserError(
                     'El producto "%s" no tiene configurado un Código NC de SILICIE.'
@@ -48,8 +49,16 @@ class StockPicking(models.Model):
                 )
 
             cantidad = move_line.qty_done
-            if product.silicie_capacidad_envase:
-                cantidad *= product.silicie_capacidad_envase
+            grado = (
+                lot.silicie_grado_alcoholico if lot and lot.silicie_grado_alcoholico
+                else product.silicie_grado_alcoholico
+            )
+            capacidad = (
+                lot.silicie_capacidad_envase if lot and lot.silicie_capacidad_envase
+                else product.silicie_capacidad_envase
+            )
+            if capacidad:
+                cantidad *= capacidad
 
             self.env['silicie.asiento'].create({
                 'company_id': company.id,
@@ -58,13 +67,17 @@ class StockPicking(models.Model):
                 'fecha': self.date_done.date() if self.date_done else fields.Date.today(),
                 'tipo_movimiento': tipo,
                 'product_id': product.id,
+                'lot_id': lot.id if lot else False,
                 'cantidad_litros': cantidad,
-                'num_envases': int(move_line.qty_done) if product.silicie_capacidad_envase else 0,
+                'producto_codigo': code.codigo,
+                'epigrafe_fiscal': code.epigrafe_fiscal,
+                'grado_alcoholico': grado,
+                'capacidad_envase': capacidad,
+                'num_envases': int(move_line.qty_done) if capacidad else 0,
                 'justificante_tipo': 'alb',
                 'justificante_numero': self.name,
                 'origen_destino_nombre': self.partner_id.name if self.partner_id else '',
                 'origen_destino_nif': self.partner_id.vat if self.partner_id else '',
-                'lot_id': lot.id if lot else False,
                 'picking_id': self.id,
                 'estado': 'borrador',
             })

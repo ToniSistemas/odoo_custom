@@ -72,25 +72,21 @@ class SilicieAsiento(models.Model):
 
     # ── Producto ──────────────────────────────────────────────────────────────
     product_id = fields.Many2one(
-        'product.product', string='Producto', required=True,
-        domain=[('silicie_codigo_nc_id', '!=', False)],
-        help='El producto aporta automáticamente sus datos fiscales SILICIE.',
+        'product.product', string='Producto',
+        help='El lote aporta los datos efectivos; el producto se usa como valor predeterminado.',
     )
     producto_codigo = fields.Char(
-        related='product_id.silicie_codigo_nc_id.codigo',
-        string='Código NC', store=True, readonly=True,
+        string='Código NC', readonly=True,
     )
     epigrafe_fiscal = fields.Char(
-        related='product_id.silicie_epigrafe_fiscal',
-        string='Epígrafe fiscal AEAT', store=True, readonly=True,
+        string='Epígrafe fiscal AEAT', readonly=True,
     )
     cantidad_litros = fields.Float(
         string='Cantidad (litros)', digits=(14, 2), required=True,
     )
     grado_alcoholico = fields.Float(
-        related='product_id.silicie_grado_alcoholico',
         string='Grado alcohólico (% vol)', digits=(5, 2),
-        store=True, readonly=True,
+        readonly=True,
     )
     litros_alcohol_puro = fields.Float(
         string='Litros de alcohol puro (LAP)',
@@ -112,9 +108,8 @@ class SilicieAsiento(models.Model):
     # ── Envases ───────────────────────────────────────────────────────────────
     num_envases = fields.Integer(string='Nº envases')
     capacidad_envase = fields.Float(
-        related='product_id.silicie_capacidad_envase',
         string='Capacidad envase (litros)', digits=(5, 3),
-        store=True, readonly=True,
+        readonly=True,
     )
 
     # ── Observaciones ─────────────────────────────────────────────────────────
@@ -123,6 +118,53 @@ class SilicieAsiento(models.Model):
     # ── Vínculos con Odoo ─────────────────────────────────────────────────────
     lot_id = fields.Many2one('stock.lot', string='Lote/Partida (Bodega)')
     picking_id = fields.Many2one('stock.picking', string='Albarán origen')
+
+    @api.onchange('product_id', 'lot_id')
+    def _onchange_product_lot(self):
+        for record in self:
+            product = record.product_id
+            lot = record.lot_id
+            if lot and lot.product_id:
+                product = lot.product_id
+                record.product_id = product
+            if not product:
+                continue
+            code = lot.silicie_codigo_nc_id if lot else product.silicie_codigo_nc_id
+            record.producto_codigo = code.codigo if code else False
+            record.epigrafe_fiscal = code.epigrafe_fiscal if code else False
+            record.grado_alcoholico = (
+                lot.silicie_grado_alcoholico if lot and lot.silicie_grado_alcoholico
+                else product.silicie_grado_alcoholico
+            )
+            record.capacidad_envase = (
+                lot.silicie_capacidad_envase if lot and lot.silicie_capacidad_envase
+                else product.silicie_capacidad_envase
+            )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            product = self.env['product.product'].browse(vals['product_id']) if vals.get('product_id') else self.env['product.product']
+            lot = self.env['stock.lot'].browse(vals['lot_id']) if vals.get('lot_id') else self.env['stock.lot']
+            if lot and lot.product_id:
+                product = lot.product_id
+                vals.setdefault('product_id', product.id)
+            code = lot.silicie_codigo_nc_id if lot else product.silicie_codigo_nc_id
+            if code and not vals.get('producto_codigo'):
+                vals['producto_codigo'] = code.codigo
+            if code and not vals.get('epigrafe_fiscal'):
+                vals['epigrafe_fiscal'] = code.epigrafe_fiscal
+            if not vals.get('grado_alcoholico'):
+                vals['grado_alcoholico'] = (
+                    lot.silicie_grado_alcoholico if lot and lot.silicie_grado_alcoholico
+                    else product.silicie_grado_alcoholico
+                )
+            if not vals.get('capacidad_envase'):
+                vals['capacidad_envase'] = (
+                    lot.silicie_capacidad_envase if lot and lot.silicie_capacidad_envase
+                    else product.silicie_capacidad_envase
+                )
+        return super().create(vals_list)
 
     # ── Cómputos ──────────────────────────────────────────────────────────────
     @api.depends('cantidad_litros', 'grado_alcoholico')
