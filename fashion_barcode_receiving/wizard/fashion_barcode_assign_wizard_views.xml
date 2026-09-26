@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="fashion_barcode_assign_wizard_form" model="ir.ui.view">
+        <field name="name">fashion.barcode.assign.wizard.form</field>
+        <field name="model">fashion.barcode.assign.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Asignar EAN">
+                <div class="alert alert-success" role="status" invisible="not last_message">
+                    <field name="last_message" nolabel="1"/>
+                </div>
+                <field name="picking_id" invisible="1" force_save="1"/>
+                <field name="allowed_product_ids" invisible="1"/>
+                <group>
+                    <field name="barcode" default_focus="1" placeholder="Escanee el EAN de la etiqueta..."/>
+                    <field name="known_product_id" readonly="1" invisible="not known_product_id"
+                           string="Variante reconocida"/>
+                    <field name="product_id" invisible="known_product_id"
+                           options="{'no_create': True, 'no_open': True}"/>
+                </group>
+                <field name="line_ids" readonly="0" invisible="known_product_id">
+                    <list create="0" delete="0" no_open="1">
+                        <field name="product_id" force_save="1"/>
+                        <field name="default_code" optional="show"/>
+                        <field name="qty_demand" force_save="1"/>
+                        <field name="qty_done" force_save="1"/>
+                        <button name="action_assign_and_receive" type="object" string="Asignar y Recibir"
+                                icon="fa-barcode" class="btn-link"/>
+                    </list>
+                </field>
+                <footer>
+                    <button name="action_assign_and_receive" type="object" string="Asignar y Recibir"
+                            class="btn-primary" invisible="known_product_id" data-hotkey="q"/>
+                    <button name="action_assign_and_receive" type="object" string="Recibir +1"
+                            class="btn-primary" invisible="not known_product_id" data-hotkey="q"/>
+                    <button string="Cerrar" special="cancel" class="btn-secondary" data-hotkey="x"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

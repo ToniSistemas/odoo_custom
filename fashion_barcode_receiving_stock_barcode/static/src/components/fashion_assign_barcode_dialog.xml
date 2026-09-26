@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="fashion_barcode_receiving_stock_barcode.AssignBarcodeDialog">
+        <Dialog title="'EAN desconocido: ' + props.barcode" size="'md'">
+            <p class="text-muted">
+                Seleccione la variante de esta recepción a la que corresponde el código.
+                Se asignará el EAN a la variante y se recibirá 1 unidad.
+            </p>
+            <input t-if="props.candidates.length > 6" type="text" class="form-control mb-2"
+                   placeholder="Filtrar variante..." t-model="state.filter"/>
+            <div class="list-group">
+                <button t-foreach="filteredCandidates" t-as="candidate" t-key="candidate.id"
+                        type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                        t-att-disabled="state.busy" t-on-click="() => this.assign(candidate)">
+                    <span>
+                        <i class="fa fa-barcode me-2"/>
+                        <t t-esc="candidate.display_name"/>
+                    </span>
+                    <span class="badge text-bg-secondary">
+                        <t t-esc="candidate.qty_done"/> / <t t-esc="candidate.qty_demand"/> <t t-esc="candidate.uom"/>
+                    </span>
+                </button>
+            </div>
+            <t t-set-slot="footer">
+                <button class="btn btn-secondary" t-on-click="props.close">Cancelar</button>
+            </t>
+        </Dialog>
+    </t>
+</templates>

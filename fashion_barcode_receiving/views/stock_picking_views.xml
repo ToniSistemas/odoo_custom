@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_picking_form_fashion_barcode" model="ir.ui.view">
+        <field name="name">stock.picking.form.fashion.barcode</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@name='action_assign']" position="after">
+                <button name="action_fashion_open_assign_wizard" type="object" string="Asignar EAN"
+                        icon="fa-barcode" groups="stock.group_stock_user" data-hotkey="shift+e"
+                        invisible="picking_type_code != 'incoming' or state in ('draft', 'done', 'cancel')"/>
+            </xpath>
+            <xpath expr="//field[@name='move_ids']/list/field[@name='product_id']" position="after">
+                <field name="fashion_product_barcode" column_invisible="True"/>
+                <button name="action_fashion_open_assign_wizard" type="object" icon="fa-barcode"
+                        title="Asignar EAN" groups="stock.group_stock_user"
+                        invisible="fashion_product_barcode or picking_code != 'incoming' or state in ('draft', 'done', 'cancel')"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
