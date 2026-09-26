@@ -7,10 +7,6 @@
         etiqueta en fábrica. Durante la recepción, al escanear un EAN desconocido
         se muestran SOLO las variantes pendientes del albarán actual para
         asignarle el código y recibir +1 unidad en un solo paso.
-
-        - Wizard "Asignar EAN" en la recepción (Community).
-        - La app Barcode (Enterprise) se integra con el módulo puente
-          fashion_barcode_receiving_stock_barcode (auto-instalable).
     """,
     'author': 'Toni',
     'category': 'Inventory/Inventory',
