@@ -29,7 +29,7 @@
                     </list>
                 </field>
                 <footer>
-                    <button name="action_assign_and_receive" type="object" string="Asignar y Recibir"
+                        <button name="action_assign_all_and_receive" type="object" string="Asignar y Recibir"
                             class="btn-primary" invisible="known_product_id" data-hotkey="q"/>
                     <button name="action_assign_and_receive" type="object" string="Recibir +1"
                             class="btn-primary" invisible="not known_product_id" data-hotkey="q"/>

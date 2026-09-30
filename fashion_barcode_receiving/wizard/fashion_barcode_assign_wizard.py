@@ -83,6 +83,35 @@ class FashionBarcodeAssignWizard(models.TransientModel):
     def action_assign_and_receive(self):
         return self._fashion_process(self.product_id)
 
+    def action_assign_all_and_receive(self):
+        self.ensure_one()
+        lines = self.line_ids.filtered(lambda line: (line.barcode or '').strip())
+        if not lines:
+            raise UserError(_("Escriba al menos un EAN en las líneas antes de asignar."))
+
+        barcodes = [line.barcode.strip() for line in lines]
+        if len(barcodes) != len(set(barcodes)):
+            raise UserError(_("No puede repetir el mismo EAN en varias líneas."))
+
+        for line, barcode in zip(lines, barcodes):
+            if self.picking_id._fashion_barcode_in_use(barcode):
+                raise UserError(_(
+                    "El código %(barcode)s de %(product)s ya está en uso en el sistema.",
+                    barcode=barcode, product=line.product_id.display_name))
+            if not self.picking_id._fashion_pending_moves().filtered(
+                    lambda move: move.product_id == line.product_id):
+                raise UserError(_(
+                    "La variante %(product)s ya no está pendiente en este albarán.",
+                    product=line.product_id.display_name))
+
+        messages = []
+        for line, barcode in zip(lines, barcodes):
+            result = self.picking_id.fashion_assign_barcode_and_receive(
+                barcode, line.product_id.id)
+            messages.append(result['message'])
+        return self._fashion_action(self.picking_id, message=_(
+            "Se han asignado %s EAN y recibido una unidad por cada variante.", len(messages)))
+
 
 class FashionBarcodeAssignWizardLine(models.TransientModel):
     _name = 'fashion.barcode.assign.wizard.line'
