@@ -91,11 +91,16 @@ class FashionBarcodeAssignWizardLine(models.TransientModel):
     wizard_id = fields.Many2one('fashion.barcode.assign.wizard', required=True, ondelete='cascade')
     product_id = fields.Many2one('product.product', string="Variante", required=True, readonly=True)
     default_code = fields.Char(related='product_id.default_code')
+    barcode = fields.Char(string="EAN")
     qty_demand = fields.Float(string="Pedido", digits='Product Unit', readonly=True)
     qty_done = fields.Float(string="Recibido", digits='Product Unit', readonly=True)
 
     def action_assign_and_receive(self):
         self.ensure_one()
-        if self.wizard_id.known_product_id:
-            raise UserError(_("El código %s ya existe; pulse «Recibir +1».", self.wizard_id.barcode))
-        return self.wizard_id._fashion_process(self.product_id)
+        barcode = (self.barcode or '').strip()
+        if not barcode:
+            raise UserError(_("Escriba el EAN en la línea de %s.", self.product_id.display_name))
+        result = self.wizard_id.picking_id.fashion_assign_barcode_and_receive(
+            barcode, self.product_id.id)
+        return self.wizard_id._fashion_action(
+            self.wizard_id.picking_id, message=result['message'])
