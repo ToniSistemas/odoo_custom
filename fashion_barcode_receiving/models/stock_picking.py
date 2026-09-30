@@ -26,7 +26,6 @@ class StockPicking(models.Model):
             return self.env['stock.move']
         return self.move_ids.filtered(
             lambda m: m.state not in ('draft', 'done', 'cancel')
-            and not m.product_id.barcode
             and m._fashion_qty_picked() < m.product_uom_qty
         )
 
@@ -34,7 +33,7 @@ class StockPicking(models.Model):
         """Variantes candidatas agrupadas por producto (un producto puede tener varios moves)."""
         self.ensure_one()
         data = {}
-        for move in self._fashion_pending_moves():
+        for move in self._fashion_pending_moves().filtered(lambda m: not m.product_id.barcode):
             vals = data.setdefault(move.product_id, {
                 'id': move.product_id.id,
                 'display_name': move.product_id.display_name,
@@ -79,7 +78,8 @@ class StockPicking(models.Model):
             raise UserError(_("Solo se pueden asignar EAN en recepciones en curso."))
 
         product = self.env['product.product'].browse(int(product_id)).exists()
-        moves = self._fashion_pending_moves().filtered(lambda m: m.product_id == product)
+        moves = self._fashion_pending_moves().filtered(
+            lambda m: m.product_id == product and not m.product_id.barcode)
         if not moves:
             raise UserError(_(
                 "La variante seleccionada no está pendiente de recibir en %(picking)s "
@@ -127,8 +127,16 @@ class StockPicking(models.Model):
         lines = move.move_line_ids
         if full_demand:
             quantity = move.product_uom_qty
-            move._set_quantity_done(quantity)
-            move.move_line_ids.picked = True
+            move.write({'quantity': quantity, 'picked': True})
+            move.invalidate_recordset(['quantity'])
+            if move.product_uom.compare(move.quantity, quantity) != 0:
+                raise UserError(_(
+                    "No se pudo establecer la cantidad completa de %(product)s. "
+                    "Cantidad actual: %(current)s; demanda: %(demand)s.",
+                    product=move.product_id.display_name,
+                    current=move.quantity,
+                    demand=quantity,
+                ))
             return
 
         picked = lines.filtered('picked')

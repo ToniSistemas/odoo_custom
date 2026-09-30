@@ -99,7 +99,7 @@ class FashionBarcodeAssignWizard(models.TransientModel):
                     "El código %(barcode)s de %(product)s ya está en uso en el sistema.",
                     barcode=barcode, product=line.product_id.display_name))
             if not self.picking_id._fashion_pending_moves().filtered(
-                    lambda move: move.product_id == line.product_id):
+                    lambda move: move.product_id == line.product_id and not move.product_id.barcode):
                 raise UserError(_(
                     "La variante %(product)s ya no está pendiente en este albarán.",
                     product=line.product_id.display_name))
