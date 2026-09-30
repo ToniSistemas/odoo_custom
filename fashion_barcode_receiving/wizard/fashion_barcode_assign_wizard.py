@@ -110,7 +110,8 @@ class FashionBarcodeAssignWizard(models.TransientModel):
                 barcode, line.product_id.id)
             messages.append(result['message'])
         return self._fashion_action(self.picking_id, message=_(
-            "Se han asignado %s EAN y recibido una unidad por cada variante.", len(messages)))
+            "Se han asignado %s EAN y recibido la demanda completa de cada variante.",
+            len(messages)))
 
 
 class FashionBarcodeAssignWizardLine(models.TransientModel):

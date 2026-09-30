@@ -101,7 +101,7 @@ class StockPicking(models.Model):
                     "EAN %s asignado. La variante se gestiona por lote/serie: "
                     "registre la cantidad indicando el lote.", barcode)
             else:
-                self._fashion_receive_one(moves[0])
+                self._fashion_receive_one(moves[0], full_demand=True)
                 result.update(received=True, message=_(
                     "EAN %(barcode)s asignado a %(product)s y +1 recibido.",
                     barcode=barcode, product=product.display_name))
@@ -123,8 +123,19 @@ class StockPicking(models.Model):
         self._fashion_receive_one(move)
         return {'received': True, 'message': _("+1 %s", product.display_name)}
 
-    def _fashion_receive_one(self, move):
+    def _fashion_receive_one(self, move, full_demand=False):
         lines = move.move_line_ids
+        if full_demand:
+            quantity = move.product_uom_qty
+            if lines:
+                lines[0].write({'quantity': quantity, 'picked': True})
+            else:
+                self.env['stock.move.line'].create({
+                    **move._prepare_move_line_vals(quantity=quantity),
+                    'picked': True,
+                })
+            return
+
         picked = lines.filtered('picked')
         if picked:
             picked[0].quantity += 1
