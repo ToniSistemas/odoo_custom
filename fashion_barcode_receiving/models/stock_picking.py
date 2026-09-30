@@ -103,7 +103,7 @@ class StockPicking(models.Model):
             else:
                 self._fashion_receive_one(moves[0], full_demand=True)
                 result.update(received=True, message=_(
-                    "EAN %(barcode)s asignado a %(product)s y +1 recibido.",
+                    "EAN %(barcode)s asignado a %(product)s y demanda completa recibida.",
                     barcode=barcode, product=product.display_name))
         return result
 
@@ -127,13 +127,8 @@ class StockPicking(models.Model):
         lines = move.move_line_ids
         if full_demand:
             quantity = move.product_uom_qty
-            if lines:
-                lines[0].write({'quantity': quantity, 'picked': True})
-            else:
-                self.env['stock.move.line'].create({
-                    **move._prepare_move_line_vals(quantity=quantity),
-                    'picked': True,
-                })
+            move._set_quantity_done(quantity)
+            move.move_line_ids.picked = True
             return
 
         picked = lines.filtered('picked')
