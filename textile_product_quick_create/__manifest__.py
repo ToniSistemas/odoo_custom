@@ -1,6 +1,6 @@
 {
     'name': 'Creación rápida de productos textiles',
-    'version': '19.0.1.3.0',
+    'version': '19.0.1.3.1',
     'summary': 'Agiliza la creación de productos textiles desde las líneas de compra',
     'description': """
         * Al crear un producto desde una línea de compra se activan por defecto

@@ -16,3 +16,11 @@ class ResConfigSettings(models.TransientModel):
         config_parameter=PARAM_ENDING, default=DEFAULT_ENDING,
         help="Redondea el precio hacia arriba hasta esta terminación (p. ej. 0,95 → 24,95). "
              "0 = sin redondeo.")
+
+    def set_values(self):
+        super().set_values()
+        # Odoo borra el parámetro cuando vale 0 y se volvería al valor por defecto: se guarda explícito
+        params = self.env['ir.config_parameter'].sudo()
+        for fname, key in (('textile_price_coefficient', PARAM_COEFFICIENT),
+                           ('textile_price_ending', PARAM_ENDING)):
+            params.set_param(key, repr(self[fname]))
