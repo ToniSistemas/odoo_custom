@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="purchase_order_form_textile_quick_create" model="ir.ui.view">
+        <field name="name">purchase.order.form.textile.quick.create</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='order_line']/list/field[@name='product_id']" position="attributes">
+                <attribute name="context">{
+                    'partner_id': partner_id,
+                    'quantity': product_qty,
+                    'company_id': parent.company_id,
+                    'textile_quick_create': True,
+                    'default_type': 'consu',
+                    'default_is_storable': True,
+                    'default_available_in_pos': True,
+                    'default_sale_ok': True,
+                    'default_purchase_ok': True,
+                }</attribute>
+            </xpath>
+            <xpath expr="//field[@name='order_line']/form//field[@name='product_id']" position="attributes">
+                <attribute name="context">{
+                    'partner_id': parent.partner_id,
+                    'textile_quick_create': True,
+                    'default_type': 'consu',
+                    'default_is_storable': True,
+                    'default_available_in_pos': True,
+                    'default_sale_ok': True,
+                    'default_purchase_ok': True,
+                }</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>
