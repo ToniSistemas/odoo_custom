@@ -1,6 +1,6 @@
 {
     'name': 'Creación rápida de productos textiles',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.1.0',
     'summary': 'Agiliza la creación de productos textiles desde las líneas de compra',
     'description': """
         * Al crear un producto desde una línea de compra se activan por defecto
@@ -12,7 +12,6 @@
     'category': 'Inventory/Purchase',
     'depends': ['purchase', 'stock', 'point_of_sale'],
     'data': [
-        'views/purchase_order_views.xml',
         'views/product_template_views.xml',
     ],
     'assets': {
