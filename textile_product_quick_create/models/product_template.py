@@ -3,6 +3,11 @@ import math
 from odoo import api, fields, models
 from odoo.tools import float_round
 
+PARAM_COEFFICIENT = 'textile_product_quick_create.price_coefficient'
+PARAM_ENDING = 'textile_product_quick_create.price_ending'
+DEFAULT_COEFFICIENT = 2.5
+DEFAULT_ENDING = 0.95
+
 
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
@@ -15,12 +20,13 @@ class ProductTemplate(models.Model):
     def _textile_compute_sale_price(self, cost):
         self.ensure_one()
         company = self.company_id or self.env.company
+        params = self.env['ir.config_parameter'].sudo()
         coefficient = (self.categ_id and self.categ_id._textile_get_price_coefficient()) \
-            or company.textile_price_coefficient
+            or float(params.get_param(PARAM_COEFFICIENT, DEFAULT_COEFFICIENT))
         if not coefficient or cost <= 0:
             return False
         price = cost * coefficient
-        ending = company.textile_price_ending
+        ending = float(params.get_param(PARAM_ENDING, DEFAULT_ENDING))
         if ending:
             # Redondeo hacia arriba para no perder margen: 24,90 → 24,95; 25,00 → 25,95
             price = math.ceil(float_round(price - ending, precision_digits=6)) + ending

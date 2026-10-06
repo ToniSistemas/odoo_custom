@@ -6,7 +6,7 @@
         <field name="inherit_id" ref="purchase.res_config_settings_view_form_purchase"/>
         <field name="arch" type="xml">
             <xpath expr="//block[@name='matrix_setting_container']" position="inside">
-                <setting id="textile_sale_price" company_dependent="1"
+                <setting id="textile_sale_price"
                          string="Precio de venta textil"
                          help="Al crear productos desde compras, el precio de venta se calcula como coste × coeficiente. Cada categoría puede tener su propio coeficiente.">
                     <div class="content-group">
