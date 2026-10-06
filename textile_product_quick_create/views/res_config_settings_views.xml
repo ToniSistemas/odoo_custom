@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_textile_price" model="ir.ui.view">
+        <field name="name">res.config.settings.form.textile.price</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="purchase.res_config_settings_view_form_purchase"/>
+        <field name="arch" type="xml">
+            <xpath expr="//block[@name='matrix_setting_container']" position="inside">
+                <setting id="textile_sale_price" company_dependent="1"
+                         string="Precio de venta textil"
+                         help="Al crear productos desde compras, el precio de venta se calcula como coste × coeficiente. Cada categoría puede tener su propio coeficiente.">
+                    <div class="content-group">
+                        <div class="row mt8">
+                            <label for="textile_price_coefficient" class="col-lg-4 o_light_label"/>
+                            <field name="textile_price_coefficient"/>
+                        </div>
+                        <div class="row">
+                            <label for="textile_price_ending" class="col-lg-4 o_light_label"/>
+                            <field name="textile_price_ending"/>
+                        </div>
+                    </div>
+                </setting>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="textile_attribute_value_set_view_list" model="ir.ui.view">
+        <field name="name">textile.attribute.value.set.list</field>
+        <field name="model">textile.attribute.value.set</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="attribute_id"/>
+                <field name="name"/>
+                <field name="value_ids" widget="many2many_tags" options="{'no_create': True}"
+                       context="{'show_attribute': False}"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="textile_attribute_value_set_view_search" model="ir.ui.view">
+        <field name="name">textile.attribute.value.set.search</field>
+        <field name="model">textile.attribute.value.set</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="attribute_id"/>
+                <filter name="group_attribute" string="Atributo" context="{'group_by': 'attribute_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="textile_attribute_value_set_action" model="ir.actions.act_window">
+        <field name="name">Juegos de valores</field>
+        <field name="res_model">textile.attribute.value.set</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Cree un juego de valores</p>
+            <p>Por ejemplo "Tallas adulto" con XS, S, M, L, XL para seleccionarlas con un clic
+               al crear productos desde compras.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_textile_attribute_value_set"
+              action="textile_attribute_value_set_action"
+              parent="purchase.menu_product_in_config_purchase"
+              groups="product.group_product_variant"
+              sequence="2"/>
+
+    <record id="product_attribute_view_form_textile_value_sets" model="ir.ui.view">
+        <field name="name">product.attribute.form.textile.value.sets</field>
+        <field name="model">product.attribute</field>
+        <field name="inherit_id" ref="product.product_attribute_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='attribute_values']" position="after">
+                <page string="Juegos de valores" name="textile_value_sets">
+                    <field name="textile_value_set_ids" nolabel="1">
+                        <list editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="name"/>
+                            <field name="value_ids" widget="many2many_tags"
+                                   options="{'no_create': True}"
+                                   context="{'show_attribute': False}"
+                                   domain="[('attribute_id', '=', parent.id)]"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

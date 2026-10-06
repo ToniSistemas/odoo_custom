@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="textile_product_quick_create.ValueSetSelectDialog"
+       t-inherit="web.SelectCreateDialog" t-inherit-mode="primary">
+        <xpath expr="//t[@t-set-slot='footer']/t[@t-if='props.multiSelect']" position="after">
+            <button t-foreach="props.valueSets" t-as="valueSet" t-key="valueSet.id"
+                    class="btn btn-secondary o_textile_value_set_button"
+                    t-att-title="valueSet.value_names"
+                    t-on-click="() => this.select(valueSet.value_ids)">
+                <i class="fa fa-th-list me-1"/><t t-esc="valueSet.name"/>
+            </button>
+        </xpath>
+    </t>
+</templates>
