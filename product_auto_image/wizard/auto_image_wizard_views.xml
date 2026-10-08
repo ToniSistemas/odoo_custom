@@ -8,6 +8,7 @@
                 <field name="state" invisible="1"/>
                 <group invisible="state != 'draft'">
                     <group>
+                        <field name="scope" widget="radio"/>
                         <field name="product_count"/>
                         <field name="max_products"/>
                         <field name="run_in_background"/>
@@ -21,7 +22,7 @@
                     Los productos se encolarán y los procesará la acción planificada con la configuración general
                     (modo simulación y reemplazo según Ajustes).
                 </div>
-                <field name="product_ids" invisible="state != 'draft'" widget="many2many_tags"/>
+                <field name="product_ids" invisible="state != 'draft' or scope != 'selected'" widget="many2many_tags"/>
                 <group invisible="state != 'done'">
                     <field name="summary" nolabel="1" colspan="2"/>
                 </group>
@@ -65,4 +66,10 @@
         <field name="binding_view_types">list,kanban</field>
         <field name="group_ids" eval="[(4, ref('base.group_user'))]"/>
     </record>
+
+    <menuitem id="menu_product_auto_image_wizard"
+              name="Imágenes automáticas"
+              parent="sale.product_menu_catalog"
+              action="action_product_auto_image_wizard"
+              sequence="40"/>
 </odoo>

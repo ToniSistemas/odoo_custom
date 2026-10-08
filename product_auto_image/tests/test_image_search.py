@@ -318,6 +318,41 @@ class TestImageSearch(TransactionCase):
         self.assertFalse(template.image_1920)
         self.assertEqual(len(self.web.calls_to(DDG)), 1)
 
+    def test_reference_kept_when_variants_are_added_later(self):
+        template = self.env['product.template'].create({'name': 'Vaquero', 'default_code': 'M914Y.000.41A 182'})
+        template.attribute_line_ids = [Command.create({
+            'attribute_id': self.size_attribute.id,
+            'value_ids': [Command.set(self.size_attribute.value_ids.ids)],
+        })]
+        self.assertEqual(len(template.product_variant_ids), 4)
+        self.assertEqual(set(template.product_variant_ids.mapped('default_code')), {'M914Y.000.41A 182'})
+        self.assertEqual(template.manufacturer_reference, 'M914Y.000.41A 182')
+
+    def test_reference_kept_when_created_with_variants(self):
+        template = self.env['product.template'].create({
+            'name': 'Vaquero',
+            'default_code': 'DK4220.000.G23726',
+            'attribute_line_ids': [Command.create({
+                'attribute_id': self.size_attribute.id,
+                'value_ids': [Command.set(self.size_attribute.value_ids.ids)],
+            })],
+        })
+        self.assertEqual(set(template.product_variant_ids.mapped('default_code')), {'DK4220.000.G23726'})
+        self.assertEqual(template.manufacturer_reference, 'DK4220.000.G23726')
+
+    def test_wizard_mass_pending_in_chunks(self):
+        self.env['ir.config_parameter'].sudo().set_param('product_auto_image.max_products', '2')
+        self.env['product.template'].search([('auto_image_status', '=', 'pending')]).auto_image_status = 'manual'
+        products = self._create_product(EX1) | self._create_product(EX2) | self._create_product(EX3)
+        wizard = self.env['product.auto.image.wizard'].create({})
+        self.assertEqual(wizard.scope, 'pending')
+        self.assertEqual(wizard.product_count, 3)
+        with self.web.active():
+            wizard.action_run()
+        self.assertEqual(len(wizard.log_ids), 2)
+        self.assertIn('Quedan 1', wizard.summary)
+        self.assertEqual(len(products.filtered(lambda p: p.auto_image_status != 'pending')), 2)
+
     def test_wizard_background_queues_products(self):
         template = self._create_product(EX3)
         wizard = self.env['product.auto.image.wizard'].create({

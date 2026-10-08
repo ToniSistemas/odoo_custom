@@ -11,6 +11,11 @@ class ProductAutoImageWizard(models.TransientModel):
         return self.env['product.template']._auto_image_get_settings()[key]
 
     product_ids = fields.Many2many('product.template', string='Productos')
+    scope = fields.Selection([
+        ('selected', 'Productos seleccionados'),
+        ('pending', 'Pendientes sin imagen'),
+        ('without_image', 'Todos los productos sin imagen (reintenta no encontrados y errores)'),
+    ], string='Productos a procesar', default='selected', required=True)
     product_count = fields.Integer('Nº de productos', compute='_compute_product_count')
     replace_existing = fields.Boolean(
         'Reemplazar imágenes existentes', default=lambda self: self._default_setting('replace_existing'))
@@ -39,12 +44,28 @@ class ProductAutoImageWizard(models.TransientModel):
             else:
                 templates = self.env['product.template']
             res['product_ids'] = [Command.set(templates.ids)]
+        if 'scope' in fields_list and not active_ids:
+            res['scope'] = 'pending'
         return res
 
-    @api.depends('product_ids')
+    def _get_products(self):
+        self.ensure_one()
+        if self.scope == 'selected':
+            return self.product_ids
+        domain = [
+            ('image_1920', '=', False),
+            '|', ('manufacturer_reference', '!=', False), ('product_variant_ids.barcode', '!=', False),
+        ]
+        if self.scope == 'pending':
+            domain.append(('auto_image_status', '=', 'pending'))
+        else:
+            domain.append(('auto_image_status', '!=', 'manual'))
+        return self.env['product.template'].search(domain)
+
+    @api.depends('product_ids', 'scope')
     def _compute_product_count(self):
         for wizard in self:
-            wizard.product_count = len(wizard.product_ids)
+            wizard.product_count = len(wizard._get_products())
 
     def _reopen(self):
         return {
@@ -57,9 +78,9 @@ class ProductAutoImageWizard(models.TransientModel):
 
     def action_run(self):
         self.ensure_one()
-        products = self.product_ids
+        products = self._get_products()
         if not products:
-            raise UserError(self.env._('Seleccione al menos un producto.'))
+            raise UserError(self.env._('No hay productos que procesar.'))
         products._auto_image_check_access()
 
         if self.run_in_background:
@@ -73,12 +94,8 @@ class ProductAutoImageWizard(models.TransientModel):
             })
             return self._reopen()
 
-        if len(products) > self.max_products:
-            raise UserError(self.env._(
-                'Ha seleccionado %(count)s productos y el máximo por ejecución es %(max)s. '
-                'Marque "Procesar en segundo plano" o reduzca la selección.',
-                count=len(products), max=self.max_products))
-
+        remaining = products[self.max_products:]
+        products = products[:self.max_products]
         logs = products._auto_image_process(
             replace_existing=self.replace_existing, simulation=self.simulation)
         counts = {status: len(logs.filtered(lambda log, s=status: log.status == s))
@@ -91,13 +108,17 @@ class ProductAutoImageWizard(models.TransientModel):
             'Errores: %(error)s\n'
             'Omitidos (ya tenían imagen): %(skipped)s',
             total=len(logs), **counts)
+        if remaining:
+            summary += '\n\n' + self.env._(
+                'Quedan %(count)s productos sin procesar (máximo %(max)s por ejecución). '
+                'Vuelva a ejecutar o use "Procesar en segundo plano".',
+                count=len(remaining), max=self.max_products)
         self.write({'state': 'done', 'summary': summary, 'log_ids': [Command.set(logs.ids)]})
         return self._reopen()
 
     def action_open_logs(self):
         self.ensure_one()
         action = self.env['ir.actions.act_window']._for_xml_id('product_auto_image.action_product_auto_image_log')
-        action['domain'] = [('id', 'in', self.log_ids.ids)] if self.log_ids else [
-            ('product_id', 'in', self.product_ids.ids)]
+        action['domain'] = [('id', 'in', self.log_ids.ids)] if self.log_ids else []
         action['context'] = {}
         return action

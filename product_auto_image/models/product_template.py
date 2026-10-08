@@ -80,6 +80,26 @@ class ProductTemplate(models.Model):
         # Permite crear plantillas con variantes indicando la referencia en create().
         return super()._get_related_fields_variant_template() + ['manufacturer_reference']
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        templates = super().create(vals_list)
+        for template, vals in zip(templates, vals_list):
+            # Odoo descarta default_code de la plantilla cuando se crea con varias variantes.
+            template._auto_image_fill_variant_codes(vals.get('default_code'))
+        return templates
+
+    def _create_variant_ids(self, *args, **kwargs):
+        references = {template.id: template.manufacturer_reference for template in self}
+        result = super()._create_variant_ids(*args, **kwargs)
+        for template in self:
+            template._auto_image_fill_variant_codes(references.get(template.id))
+        return result
+
+    def _auto_image_fill_variant_codes(self, reference):
+        if reference:
+            self.product_variant_ids.filtered(lambda variant: not variant.default_code).write(
+                {'default_code': reference})
+
     def _compute_auto_image_log_count(self):
         counts = dict(self.env['product.auto.image.log']._read_group(
             [('product_id', 'in', self.ids)], ['product_id'], ['__count']))

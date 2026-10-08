@@ -96,7 +96,7 @@
 
     <menuitem id="menu_product_auto_image_log"
               name="Registro de imágenes automáticas"
-              parent="base.menu_custom"
+              parent="sale.product_menu_catalog"
               action="action_product_auto_image_log"
-              sequence="90"/>
+              sequence="41"/>
 </odoo>
