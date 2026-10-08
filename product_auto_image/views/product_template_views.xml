@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="product_template_only_form_view_auto_image" model="ir.ui.view">
+        <field name="name">product.template.form.auto.image</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_only_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_auto_image_logs" type="object" class="oe_stat_button"
+                        icon="fa-picture-o" groups="base.group_user" invisible="not auto_image_log_count">
+                    <field name="auto_image_log_count" widget="statinfo" string="Búsquedas imagen"/>
+                </button>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Imagen automática" name="auto_image" groups="base.group_user">
+                    <div class="mb-3">
+                        <button name="action_auto_image_search" type="object" class="btn-primary"
+                                icon="fa-search" string="Buscar imagen automáticamente"/>
+                    </div>
+                    <group>
+                        <group string="Fabricante" name="auto_image_manufacturer">
+                            <field name="manufacturer_brand" placeholder="p. ej. REPLAY"/>
+                            <field name="manufacturer_reference" placeholder="p. ej. M914Y.000.41A 182"/>
+                        </group>
+                        <group string="Resultado" name="auto_image_result">
+                            <field name="auto_image_status" widget="badge" readonly="1"
+                                   decoration-success="auto_image_status == 'found'"
+                                   decoration-warning="auto_image_status == 'not_found'"
+                                   decoration-danger="auto_image_status == 'error'"
+                                   decoration-info="auto_image_status == 'manual'"/>
+                            <field name="auto_image_method"/>
+                            <field name="auto_image_confidence"/>
+                            <field name="auto_image_last_search"/>
+                            <field name="auto_image_source" widget="url"/>
+                            <field name="auto_image_url" widget="url"/>
+                        </group>
+                    </group>
+                    <group invisible="not auto_image_error">
+                        <field name="auto_image_error"/>
+                    </group>
+                    <group string="Imagen encontrada" invisible="not auto_image_url">
+                        <field name="auto_image_preview_url" widget="image_url" nolabel="1" colspan="2"
+                               options="{'size': [260, 260]}"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="product_template_tree_view_auto_image" model="ir.ui.view">
+        <field name="name">product.template.list.auto.image</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_tree_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="manufacturer_brand" optional="hide"/>
+                <field name="manufacturer_reference" optional="hide"/>
+                <field name="auto_image_status" optional="hide" widget="badge"
+                       decoration-success="auto_image_status == 'found'"
+                       decoration-warning="auto_image_status == 'not_found'"
+                       decoration-danger="auto_image_status == 'error'"/>
+                <field name="auto_image_confidence" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="product_template_search_view_auto_image" model="ir.ui.view">
+        <field name="name">product.template.search.auto.image</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_search_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <field name="manufacturer_reference"/>
+                <field name="manufacturer_brand"/>
+                <separator/>
+                <filter name="auto_image_pending" string="Imagen automática pendiente"
+                        domain="[('auto_image_status', '=', 'pending')]"/>
+                <filter name="auto_image_found" string="Imagen automática encontrada"
+                        domain="[('auto_image_status', '=', 'found')]"/>
+                <filter name="auto_image_not_found" string="Imagen no encontrada"
+                        domain="[('auto_image_status', '=', 'not_found')]"/>
+                <filter name="auto_image_error" string="Error en búsqueda de imagen"
+                        domain="[('auto_image_status', '=', 'error')]"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

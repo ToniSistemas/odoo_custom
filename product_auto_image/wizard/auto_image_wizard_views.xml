@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="product_auto_image_wizard_view_form" model="ir.ui.view">
+        <field name="name">product.auto.image.wizard.form</field>
+        <field name="model">product.auto.image.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Buscar imágenes automáticamente">
+                <field name="state" invisible="1"/>
+                <group invisible="state != 'draft'">
+                    <group>
+                        <field name="product_count"/>
+                        <field name="max_products"/>
+                        <field name="run_in_background"/>
+                    </group>
+                    <group invisible="run_in_background">
+                        <field name="simulation"/>
+                        <field name="replace_existing" invisible="simulation"/>
+                    </group>
+                </group>
+                <div class="alert alert-info" role="status" invisible="state != 'draft' or not run_in_background">
+                    Los productos se encolarán y los procesará la acción planificada con la configuración general
+                    (modo simulación y reemplazo según Ajustes).
+                </div>
+                <field name="product_ids" invisible="state != 'draft'" widget="many2many_tags"/>
+                <group invisible="state != 'done'">
+                    <field name="summary" nolabel="1" colspan="2"/>
+                </group>
+                <field name="log_ids" invisible="state != 'done' or not log_ids">
+                    <list>
+                        <field name="product_id"/>
+                        <field name="search_method"/>
+                        <field name="confidence"/>
+                        <field name="status"/>
+                        <field name="image_url" widget="image_url" options="{'size': [64, 64]}" string="Imagen"/>
+                        <field name="source_url" widget="url"/>
+                    </list>
+                </field>
+                <footer>
+                    <button name="action_run" type="object" string="Buscar" class="btn-primary"
+                            invisible="state != 'draft'" data-hotkey="q"/>
+                    <button name="action_open_logs" type="object" string="Ver registro"
+                            class="btn-primary" invisible="state != 'done'"/>
+                    <button string="Cerrar" class="btn-secondary" special="cancel" data-hotkey="x"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_product_auto_image_wizard" model="ir.actions.act_window">
+        <field name="name">Buscar imágenes automáticamente</field>
+        <field name="res_model">product.auto.image.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="product.model_product_template"/>
+        <field name="binding_view_types">list,kanban</field>
+        <field name="group_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <record id="action_product_auto_image_wizard_variant" model="ir.actions.act_window">
+        <field name="name">Buscar imágenes automáticamente</field>
+        <field name="res_model">product.auto.image.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="product.model_product_product"/>
+        <field name="binding_view_types">list,kanban</field>
+        <field name="group_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+</odoo>

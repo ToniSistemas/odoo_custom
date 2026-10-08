@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_auto_image" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.product.auto.image</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="product.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//block[@id='product_general_settings']" position="after">
+                <block title="Productos · Imágenes automáticas" id="product_auto_image_settings">
+                    <setting id="auto_image_enabled_setting" string="Búsqueda automática programada"
+                             help="La acción planificada busca imágenes de los productos pendientes sin imagen.">
+                        <field name="auto_image_enabled"/>
+                    </setting>
+                    <setting id="auto_image_simulation_setting" string="Solo buscar, no descargar"
+                             help="Modo simulación: busca y muestra el resultado sin modificar la imagen del producto.">
+                        <field name="auto_image_simulation"/>
+                    </setting>
+                    <setting id="auto_image_replace_setting" string="Reemplazar imágenes existentes"
+                             help="Si está desactivado nunca se sobrescribe una imagen ya existente.">
+                        <field name="auto_image_replace_existing"/>
+                    </setting>
+                    <setting id="auto_image_min_score_setting" string="Puntuación mínima"
+                             help="Confianza mínima para aceptar una imagen (referencia +50, marca +30, EAN +20...).">
+                        <field name="auto_image_min_score"/>
+                    </setting>
+                    <setting id="auto_image_provider_setting" string="Proveedor de búsqueda"
+                             help="Buscador web público usado para localizar fichas de producto.">
+                        <field name="auto_image_provider"/>
+                        <div class="mt8" invisible="auto_image_provider != 'searxng'">
+                            <label for="auto_image_searxng_url" class="o_light_label me-2"/>
+                            <field name="auto_image_searxng_url" placeholder="https://searxng.midominio.es"
+                                   required="auto_image_provider == 'searxng'"/>
+                        </div>
+                    </setting>
+                    <setting id="auto_image_limits_setting" string="Límites de peticiones"
+                             help="Procesamiento secuencial y prudente para no saturar los sitios consultados.">
+                        <div class="content-group">
+                            <div class="row mt8">
+                                <label for="auto_image_max_results" class="col-lg-7 o_light_label"/>
+                                <field name="auto_image_max_results" class="col-lg-3"/>
+                            </div>
+                            <div class="row">
+                                <label for="auto_image_request_interval" class="col-lg-7 o_light_label"/>
+                                <field name="auto_image_request_interval" class="col-lg-3"/>
+                            </div>
+                            <div class="row">
+                                <label for="auto_image_timeout" class="col-lg-7 o_light_label"/>
+                                <field name="auto_image_timeout" class="col-lg-3"/>
+                            </div>
+                            <div class="row">
+                                <label for="auto_image_max_image_kb" class="col-lg-7 o_light_label"/>
+                                <field name="auto_image_max_image_kb" class="col-lg-3"/>
+                            </div>
+                            <div class="row">
+                                <label for="auto_image_max_products" class="col-lg-7 o_light_label"/>
+                                <field name="auto_image_max_products" class="col-lg-3"/>
+                            </div>
+                        </div>
+                    </setting>
+                    <setting id="auto_image_log_setting" string="Registro de búsquedas"
+                             help="Revise qué imágenes se han encontrado, su origen y su puntuación.">
+                        <button name="%(product_auto_image.action_product_auto_image_log)d" type="action"
+                                string="Ver registro" icon="oi-arrow-right" class="btn-link"/>
+                    </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+</odoo>

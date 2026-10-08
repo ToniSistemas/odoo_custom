@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="param_min_score" model="ir.config_parameter">
+        <field name="key">product_auto_image.min_score</field>
+        <field name="value">60</field>
+    </record>
+    <record id="param_timeout" model="ir.config_parameter">
+        <field name="key">product_auto_image.timeout</field>
+        <field name="value">10</field>
+    </record>
+    <record id="param_max_image_kb" model="ir.config_parameter">
+        <field name="key">product_auto_image.max_image_kb</field>
+        <field name="value">5120</field>
+    </record>
+    <record id="param_max_results" model="ir.config_parameter">
+        <field name="key">product_auto_image.max_results</field>
+        <field name="value">5</field>
+    </record>
+    <record id="param_request_interval" model="ir.config_parameter">
+        <field name="key">product_auto_image.request_interval</field>
+        <field name="value">2.0</field>
+    </record>
+    <record id="param_max_products" model="ir.config_parameter">
+        <field name="key">product_auto_image.max_products</field>
+        <field name="value">20</field>
+    </record>
+    <record id="param_provider" model="ir.config_parameter">
+        <field name="key">product_auto_image.provider</field>
+        <field name="value">duckduckgo</field>
+    </record>
+</odoo>
