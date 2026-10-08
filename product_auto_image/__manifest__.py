@@ -1,6 +1,6 @@
 {
     'name': 'Product Auto Image',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.1.0',
     'summary': 'Busca y descarga imágenes de producto por referencia de fabricante o EAN mediante búsqueda web',
     'description': """
 Búsqueda automática de imágenes de producto
@@ -15,7 +15,7 @@ Búsqueda automática de imágenes de producto
     'category': 'Sales/Products',
     'author': 'Toni',
     'license': 'LGPL-3',
-    'depends': ['product'],
+    'depends': ['product', 'product_brand'],
     'external_dependencies': {
         # Todas forman parte de los requisitos estándar de Odoo 19.
         'python': ['requests', 'lxml', 'Pillow'],

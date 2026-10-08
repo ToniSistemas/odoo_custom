@@ -44,6 +44,7 @@ class TestImageSearch(TransactionCase):
             'create_variant': 'always',
             'value_ids': [Command.create({'name': name}) for name in ('30', '31', '32', '33')],
         })
+        cls.brand = cls.env['product.brand'].create({'name': 'REPLAY'})
 
     def setUp(self):
         super().setUp()
@@ -52,7 +53,7 @@ class TestImageSearch(TransactionCase):
     def _create_product(self, example, **extra):
         vals = {
             'name': f'Vaquero {example["ref"]}',
-            'manufacturer_brand': example['brand'],
+            'product_brand_id': self.brand.id,
             'manufacturer_reference': example['ref'],
             **extra,
         }
@@ -100,9 +101,22 @@ class TestImageSearch(TransactionCase):
     def test_search_data_groups_variants(self):
         template = self._create_product(EX3)
         self.assertEqual(len(template.product_variant_ids), 4)
+        self.assertEqual(set(template.product_variant_ids.mapped('default_code')), {'M914Y.000.41A 182'})
         data = template._auto_image_search_data()
         self.assertEqual(data.reference, 'M914Y.000.41A 182')
+        self.assertEqual(data.brand, 'REPLAY')
         self.assertEqual(sorted(data.eans), sorted(EX3['eans']))
+
+    def test_reference_uses_default_code(self):
+        single = self._create_product(EX2)
+        self.assertEqual(single.default_code, 'W2383.000.85533')
+        single.default_code = 'W2383.000.99999'
+        self.assertEqual(single.manufacturer_reference, 'W2383.000.99999')
+        variants = self._create_product(EX3)
+        variants.product_variant_ids[0].default_code = 'OTRA'
+        self.assertEqual(variants.manufacturer_reference, 'M914Y.000.41A 182')
+        variants.manufacturer_reference = 'NUEVA.REF'
+        self.assertEqual(set(variants.product_variant_ids.mapped('default_code')), {'NUEVA.REF'})
 
     def test_example3_found_by_reference_with_single_search(self):
         template = self._create_product(EX3)

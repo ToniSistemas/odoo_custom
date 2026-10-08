@@ -11,6 +11,9 @@
                     <field name="auto_image_log_count" widget="statinfo" string="Búsquedas imagen"/>
                 </button>
             </xpath>
+            <xpath expr="//field[@name='default_code']" position="after">
+                <field name="manufacturer_reference" invisible="product_variant_count &lt;= 1"/>
+            </xpath>
             <xpath expr="//notebook" position="inside">
                 <page string="Imagen automática" name="auto_image" groups="base.group_user">
                     <div class="mb-3">
@@ -18,10 +21,6 @@
                                 icon="fa-search" string="Buscar imagen automáticamente"/>
                     </div>
                     <group>
-                        <group string="Fabricante" name="auto_image_manufacturer">
-                            <field name="manufacturer_brand" placeholder="p. ej. REPLAY"/>
-                            <field name="manufacturer_reference" placeholder="p. ej. M914Y.000.41A 182"/>
-                        </group>
                         <group string="Resultado" name="auto_image_result">
                             <field name="auto_image_status" widget="badge" readonly="1"
                                    decoration-success="auto_image_status == 'found'"
@@ -53,8 +52,6 @@
         <field name="inherit_id" ref="product.product_template_tree_view"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='name']" position="after">
-                <field name="manufacturer_brand" optional="hide"/>
-                <field name="manufacturer_reference" optional="hide"/>
                 <field name="auto_image_status" optional="hide" widget="badge"
                        decoration-success="auto_image_status == 'found'"
                        decoration-warning="auto_image_status == 'not_found'"
@@ -71,7 +68,6 @@
         <field name="arch" type="xml">
             <xpath expr="//search" position="inside">
                 <field name="manufacturer_reference"/>
-                <field name="manufacturer_brand"/>
                 <separator/>
                 <filter name="auto_image_pending" string="Imagen automática pendiente"
                         domain="[('auto_image_status', '=', 'pending')]"/>

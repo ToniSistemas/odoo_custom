@@ -1,6 +1,7 @@
 import base64
 import logging
 import re
+from collections import Counter
 
 from odoo import api, fields, models
 from odoo.exceptions import AccessError, UserError
@@ -41,11 +42,12 @@ AUTO_IMAGE_METHODS = [
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
 
-    # Odoo 19 Community no dispone de campos de fabricante/marca en product.template.
+    # Referencia estándar (default_code) visible también cuando hay variantes.
     manufacturer_reference = fields.Char(
-        'Referencia fabricante', index='btree_not_null',
-        help='Referencia del fabricante que identifica el modelo/color (común a todas las tallas).')
-    manufacturer_brand = fields.Char('Marca', index='btree_not_null')
+        'Referencia', compute='_compute_manufacturer_reference',
+        inverse='_inverse_manufacturer_reference', store=True, index='btree_not_null',
+        help='Referencia del fabricante (modelo/color). Con variantes se aplica a todas las tallas.')
+    manufacturer_brand = fields.Char(related='product_brand_id.name', string='Marca')
     auto_image_url = fields.Char('URL imagen encontrada', readonly=True, copy=False)
     auto_image_preview_url = fields.Char(related='auto_image_url', string='Vista previa')
     auto_image_source = fields.Char('Página de origen', readonly=True, copy=False)
@@ -63,6 +65,20 @@ class ProductTemplate(models.Model):
     auto_image_queued = fields.Boolean('En cola de búsqueda', copy=False, index=True)
     auto_image_log_count = fields.Integer(
         'Búsquedas de imagen', compute='_compute_auto_image_log_count', groups='base.group_user')
+
+    @api.depends('product_variant_ids.default_code')
+    def _compute_manufacturer_reference(self):
+        for template in self:
+            codes = [code.strip() for code in template.product_variant_ids.mapped('default_code') if code and code.strip()]
+            template.manufacturer_reference = Counter(codes).most_common(1)[0][0] if codes else False
+
+    def _inverse_manufacturer_reference(self):
+        for template in self:
+            template.product_variant_ids.write({'default_code': template.manufacturer_reference})
+
+    def _get_related_fields_variant_template(self):
+        # Permite crear plantillas con variantes indicando la referencia en create().
+        return super()._get_related_fields_variant_template() + ['manufacturer_reference']
 
     def _compute_auto_image_log_count(self):
         counts = dict(self.env['product.auto.image.log']._read_group(
