@@ -94,9 +94,15 @@
         </field>
     </record>
 
-    <menuitem id="menu_product_auto_image_log"
+    <menuitem id="menu_product_auto_image_log_purchase"
               name="Registro de imágenes automáticas"
-              parent="sale.product_menu_catalog"
+              parent="purchase.menu_purchase_products"
+              action="action_product_auto_image_log"
+              sequence="41"/>
+
+    <menuitem id="menu_product_auto_image_log_pos"
+              name="Registro de imágenes automáticas"
+              parent="point_of_sale.menu_point_config_product"
               action="action_product_auto_image_log"
               sequence="41"/>
 </odoo>

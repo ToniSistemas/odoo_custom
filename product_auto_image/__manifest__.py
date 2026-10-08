@@ -15,7 +15,7 @@ Búsqueda automática de imágenes de producto
     'category': 'Sales/Products',
     'author': 'Toni',
     'license': 'LGPL-3',
-    'depends': ['product', 'sale', 'product_brand'],
+    'depends': ['product', 'purchase', 'point_of_sale', 'product_brand'],
     'external_dependencies': {
         # Todas forman parte de los requisitos estándar de Odoo 19.
         'python': ['requests', 'lxml', 'Pillow'],

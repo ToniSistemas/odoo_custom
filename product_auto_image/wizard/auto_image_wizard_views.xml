@@ -67,9 +67,15 @@
         <field name="group_ids" eval="[(4, ref('base.group_user'))]"/>
     </record>
 
-    <menuitem id="menu_product_auto_image_wizard"
+    <menuitem id="menu_product_auto_image_wizard_purchase"
               name="Imágenes automáticas"
-              parent="sale.product_menu_catalog"
+              parent="purchase.menu_purchase_products"
+              action="action_product_auto_image_wizard"
+              sequence="40"/>
+
+    <menuitem id="menu_product_auto_image_wizard_pos"
+              name="Imágenes automáticas"
+              parent="point_of_sale.menu_point_config_product"
               action="action_product_auto_image_wizard"
               sequence="40"/>
 </odoo>
